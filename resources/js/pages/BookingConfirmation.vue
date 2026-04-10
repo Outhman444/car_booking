@@ -242,12 +242,11 @@ const reservation = $page.props.reservation;
                             <div class="space-y-4 text-sm text-gray-700">
                                 <div class="flex items-start space-x-3">
                                     <span
-                                        class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium"
+                                        class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600"
                                         >1</span
                                     >
-                                    <span
-                                        >We'll review your booking within 24
-                                        hours</span
+                                    <span class="pt-0.5"
+                                        >Complete your payment securely to finalize the reservation</span
                                     >
                                 </div>
                                 <div class="flex items-start space-x-3">
@@ -255,9 +254,8 @@ const reservation = $page.props.reservation;
                                         class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium"
                                         >2</span
                                     >
-                                    <span
-                                        >You'll receive confirmation email with
-                                        payment details</span
+                                    <span class="pt-0.5"
+                                        >Print your official reservation invoice once the payment succeeds</span
                                     >
                                 </div>
                                 <div class="flex items-start space-x-3">
@@ -265,9 +263,8 @@ const reservation = $page.props.reservation;
                                         class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium"
                                         >3</span
                                     >
-                                    <span
-                                        >Bring your license and confirmation on
-                                        pickup day</span
+                                    <span class="pt-0.5"
+                                        >Present your printed invoice and driving license upon collection</span
                                     >
                                 </div>
                             </div>

@@ -21,6 +21,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
+Route::post('/webhooks/stripe', [\App\Http\Controllers\Client\PaymentController::class, 'handleStripeWebhook'])->name('webhooks.stripe');
+Route::post('/webhooks/paypal', [\App\Http\Controllers\Client\PaymentController::class, 'handlePayPalWebhook'])->name('webhooks.paypal');
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/admin.php';

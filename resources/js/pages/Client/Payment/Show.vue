@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ref, onMounted } from 'vue';
-import { CreditCard, Wallet, AlertCircle, Loader2, CheckCircle, ArrowLeft } from 'lucide-vue-next';
+import { CreditCard, Wallet, AlertCircle, Loader2, CheckCircle, ArrowLeft, Info } from 'lucide-vue-next';
 import { loadStripe } from '@stripe/stripe-js';
+import axios from 'axios';
 
 const props = defineProps<{
     reservation: {
@@ -89,9 +90,22 @@ async function processStripePayment() {
     errorMessage.value = null;
 
     try {
-        const { paymentMethod, error } = await stripeInstance.createPaymentMethod({
-            type: 'card',
-            card: cardElement,
+        // 1. Get Payment Intent from backend
+        const intentResponse = await axios.post(`/client/payment/${props.reservation.id}/stripe-intent`);
+        
+        if (intentResponse.data.error) {
+            errorMessage.value = intentResponse.data.error;
+            isProcessing.value = false;
+            return;
+        }
+
+        const clientSecret = intentResponse.data.client_secret;
+
+        // 2. Confirm card payment with Stripe (Handles 3D Secure modal automatically)
+        const { paymentIntent, error } = await stripeInstance.confirmCardPayment(clientSecret, {
+            payment_method: {
+                card: cardElement,
+            }
         });
 
         if (error) {
@@ -100,22 +114,28 @@ async function processStripePayment() {
             return;
         }
 
-        router.post(
-            `/client/payment/${props.reservation.id}/stripe`,
-            { payment_method_id: paymentMethod.id },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    isProcessing.value = false;
-                },
-                onError: (errors: any) => {
-                    errorMessage.value = errors.error || 'Payment failed. Please try again.';
-                    isProcessing.value = false;
-                },
-            }
-        );
+        if (paymentIntent && paymentIntent.status === 'succeeded') {
+            // 3. Inform backend of success
+            router.post(
+                `/client/payment/${props.reservation.id}/stripe-confirm`,
+                { payment_intent_id: paymentIntent.id },
+                {
+                    preserveScroll: true,
+                    onFinish: () => {
+                        isProcessing.value = false;
+                    },
+                    onError: (errors: any) => {
+                        errorMessage.value = errors.error || 'Your payment was not finalized. Please try again or contact support if the issue persists.';
+                    },
+                }
+            );
+        } else {
+             errorMessage.value = 'We could not successfully authenticate your payment. Please try another card or payment method.';
+             isProcessing.value = false;
+        }
+
     } catch (e: any) {
-        errorMessage.value = e.message || 'An error occurred. Please try again.';
+        errorMessage.value = e.response?.data?.error || e.message || 'We encountered an error processing your request. Please try again.';
         isProcessing.value = false;
     }
 }
@@ -125,15 +145,9 @@ async function processPayPalPayment() {
     errorMessage.value = null;
 
     try {
-        const response = await fetch(`/client/payment/${props.reservation.id}/paypal`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            },
-        });
-
-        const data = await response.json();
+        const response = await axios.post(`/client/payment/${props.reservation.id}/paypal`);
+        
+        const data = response.data;
 
         if (data.error) {
             errorMessage.value = data.error;
@@ -143,9 +157,12 @@ async function processPayPalPayment() {
 
         if (data.approval_url) {
             window.location.href = data.approval_url;
+        } else {
+            errorMessage.value = 'We received an invalid response from PayPal. Please try again later or contact our team.';
+            isProcessing.value = false;
         }
     } catch (e: any) {
-        errorMessage.value = 'Failed to initiate PayPal payment. Please try again.';
+        errorMessage.value = 'We failed to securely connect to PayPal. Please check your internet connection and try again.';
         isProcessing.value = false;
     }
 }
@@ -206,9 +223,18 @@ async function submitPayment() {
             <!-- No Payment Methods -->
             <Alert v-if="!paymentMethods || paymentMethods.length === 0" variant="destructive">
                 <AlertCircle class="h-4 w-4" />
-                <AlertTitle>No Payment Methods Available</AlertTitle>
+                <AlertTitle>Systems Are Unavailable</AlertTitle>
                 <AlertDescription>
-                    Please contact support to complete your payment.
+                    We're currently unable to process digital payments. Please reach out to our customer support team to finish your reservation.
+                </AlertDescription>
+            </Alert>
+
+            <!-- Pre-Payment Instructions -->
+            <Alert v-else class="bg-blue-50 text-blue-900 border-blue-200">
+                <Info class="h-4 w-4 text-blue-600" />
+                <AlertTitle class="text-blue-800">Important Instructions</AlertTitle>
+                <AlertDescription class="text-blue-700">
+                    Once your payment is successfully completed, you must print your reservation invoice. Please bring the printed invoice with you to the agency in order to collect your car.
                 </AlertDescription>
             </Alert>
 

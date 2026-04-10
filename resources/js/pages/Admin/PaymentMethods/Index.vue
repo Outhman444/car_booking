@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { CreditCard, Wallet, AlertCircle, CheckCircle, XCircle } from 'lucide-vue-next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -24,7 +24,11 @@ const props = defineProps<{
     }>;
 }>();
 
-const localMethods = ref(props.methods);
+const localMethods = ref(JSON.parse(JSON.stringify(props.methods)));
+
+watch(() => props.methods, (newMethods) => {
+    localMethods.value = JSON.parse(JSON.stringify(newMethods));
+}, { deep: true });
 
 const getMethodIcon = (method: string) => {
     return method === 'paypal' ? Wallet : CreditCard;
@@ -42,13 +46,6 @@ const toggleMethod = (method: string) => {
             },
         }
     );
-};
-
-const updateMethod = (method: string, field: string, value: boolean | string) => {
-    const m = localMethods.value.find(m => m.method === method);
-    if (m) {
-        (m as any)[field] = value;
-    }
 };
 
 const saveMethod = (method: string) => {
@@ -145,9 +142,8 @@ const saveMethod = (method: string) => {
                                     </p>
                                 </div>
                                 <Switch
-                                    :checked="m.is_enabled"
+                                    v-model:checked="m.is_enabled"
                                     :disabled="!m.is_configured"
-                                    @update:checked="toggleMethod(m.method)"
                                 />
                             </div>
 
@@ -160,8 +156,7 @@ const saveMethod = (method: string) => {
                                     </p>
                                 </div>
                                 <Switch
-                                    :checked="m.is_sandbox"
-                                    @update:checked="(val) => updateMethod(m.method, 'is_sandbox', val)"
+                                    v-model:checked="m.is_sandbox"
                                 />
                             </div>
 
@@ -169,9 +164,8 @@ const saveMethod = (method: string) => {
                             <div class="space-y-2">
                                 <Label>Display Name</Label>
                                 <Input
-                                    :value="m.display_name"
+                                    v-model="m.display_name"
                                     placeholder="e.g., Pay with PayPal"
-                                    @input="(e) => updateMethod(m.method, 'display_name', (e.target as HTMLInputElement).value)"
                                 />
                             </div>
 
@@ -179,9 +173,8 @@ const saveMethod = (method: string) => {
                             <div class="space-y-2">
                                 <Label>Description</Label>
                                 <Input
-                                    :value="m.description"
+                                    v-model="m.description"
                                     placeholder="Short description shown to clients"
-                                    @input="(e) => updateMethod(m.method, 'description', (e.target as HTMLInputElement).value)"
                                 />
                             </div>
 

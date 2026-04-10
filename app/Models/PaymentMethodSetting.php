@@ -94,4 +94,16 @@ class PaymentMethodSetting extends Model
     {
         return config('services.stripe.key') && config('services.stripe.secret');
     }
+
+    /**
+     * Check if a specific method is configured.
+     */
+    public static function isConfigured(string $method): bool
+    {
+        return match (strtolower($method)) {
+            'paypal' => self::isPayPalConfigured(),
+            'stripe' => self::isStripeConfigured(),
+            default => false,
+        };
+    }
 }

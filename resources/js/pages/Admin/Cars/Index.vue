@@ -48,34 +48,8 @@ const props = defineProps<{
 }>()
 
 
-// Generate status colors based on the colors from the backend
-const statusColors = computed(() => {
-  const colors: Record<string, { bg: string; text: string; dot: string }> = {};
-  
-  for (const [status, data] of Object.entries(props.statuses || {})) {
-    // Convert hex to RGB for the background with opacity
-    const hex = data.color.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    
-    colors[status] = {
-      bg: `rgba(${r}, ${g}, ${b}, 0.1)`,
-      text: `text-[${data.color}]`,
-      dot: data.color,
-    };
-  }
-  
-  return colors;
-});
-
-const getStatusColor = (status: string) => {
-  return statusColors.value[status] || { 
-    bg: 'rgba(107, 114, 128, 0.1)', 
-    text: 'text-gray-500', 
-    dot: '#6B7280' 
-  };
-}
+import StatusBadge from '@/components/StatusBadge.vue';
+import Pagination from '@/components/Pagination.vue';
 
 const search = ref(props.filters?.search || '')
 
@@ -212,19 +186,11 @@ const destroyCar = () => {
                             <td class="px-4 py-3">{{ car.license_plate }}</td>
                             <td class="px-4 py-3">{{ currency.symbol }}{{ Number(car.price_per_day).toFixed(2) }}</td>
                             <td class="px-4 py-3">
-                                <span
-                                  class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium"
-                                  :style="{
-                                    backgroundColor: getStatusColor(car.status).bg,
-                                    color: getStatusColor(car.status).text
-                                  }"
-                                >
-                                  <span 
-                                    class="size-2 rounded-full" 
-                                    :style="{ backgroundColor: getStatusColor(car.status).dot }"
-                                  />
-                                  {{ car.status_label || car.status }}
-                                </span>
+                                <StatusBadge
+                                    :status="car.status"
+                                    :label="car.status_label || statuses[car.status]?.label || car.status"
+                                    :color="statuses[car.status]?.color || car.status_color"
+                                />
                             </td>
                             <td class="px-4 py-3 text-right space-x-2">
                                 <Link :href="`/admin/cars/${car.id}/edit`">
@@ -240,20 +206,7 @@ const destroyCar = () => {
                 </table>
             </div>
 
-            <nav v-if="props.cars.links?.length" class="flex gap-2">
-                <Link
-                    v-for="(link, i) in props.cars.links"
-                    :key="i"
-                    :href="link.url || ''"
-                    :class="[
-                        'px-3 py-1 rounded text-sm',
-                        link.active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700',
-                        !link.url && 'pointer-events-none opacity-50'
-                    ]"
-                >
-                  <span v-html="link.label" />
-                </Link>
-            </nav>
+            <Pagination :links="props.cars.links" />
         </main>
         <!-- Delete Confirmation Dialog -->
         <Dialog v-model:open="showDeleteDialog">

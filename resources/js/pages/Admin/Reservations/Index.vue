@@ -36,33 +36,8 @@ const props = defineProps<{
     currency: { symbol: string; code: string }
 }>();
 
-// Generate status colors based on the colors from the backend (mirrors Cars)
-const statusColors = computed(() => {
-    const colors: Record<string, { bg: string; text: string; dot: string }> =
-        {};
-    for (const [status, data] of Object.entries(props.statuses || {})) {
-        const hex = (data as any).color?.replace('#', '') || '6B7280';
-        const r = parseInt(hex.substring(0, 2), 16);
-        const g = parseInt(hex.substring(2, 4), 16);
-        const b = parseInt(hex.substring(4, 6), 16);
-        colors[status] = {
-            bg: `rgba(${r}, ${g}, ${b}, 0.1)`,
-            text: `text-[${(data as any).color}]`,
-            dot: (data as any).color,
-        };
-    }
-    return colors;
-});
-
-const getStatusColor = (status: string) => {
-    return (
-        statusColors.value[status] || {
-            bg: 'rgba(107, 114, 128, 0.1)',
-            text: 'text-gray-500',
-            dot: '#6B7280',
-        }
-    );
-};
+import StatusBadge from '@/components/StatusBadge.vue';
+import Pagination from '@/components/Pagination.vue';
 
 const search = ref(props.filters?.search || '');
 const statusFilter = ref(props.filters?.status || 'all');
@@ -263,28 +238,11 @@ watch(search, (v, ov) => {
                                 {{ props.currency.symbol }} {{ Number(res.total_amount).toFixed(2) }}
                             </td>
                             <td class="px-4 py-3">
-                                <span
-                                    class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium"
-                                    :style="{
-                                        backgroundColor: getStatusColor(
-                                            res.status,
-                                        ).bg,
-                                        color: getStatusColor(res.status).text,
-                                    }"
-                                >
-                                    <span
-                                        class="size-2 rounded-full"
-                                        :style="{
-                                            backgroundColor: getStatusColor(
-                                                res.status,
-                                            ).dot,
-                                        }"
-                                    />
-                                    {{
-                                        statuses[res.status]?.label ||
-                                        res.status
-                                    }}
-                                </span>
+                                <StatusBadge
+                                    :status="res.status"
+                                    :label="statuses[res.status]?.label || res.status"
+                                    :color="statuses[res.status]?.color"
+                                />
                             </td>
                         </tr>
                         <tr v-if="props.reservations.data.length === 0">
@@ -299,22 +257,7 @@ watch(search, (v, ov) => {
                 </table>
             </div>
 
-            <nav v-if="props.reservations.links?.length" class="flex gap-2">
-                <Link
-                    v-for="(link, i) in props.reservations.links"
-                    :key="i"
-                    :href="link.url || ''"
-                    :class="[
-                        'rounded px-3 py-1 text-sm',
-                        link.active
-                            ? 'bg-gray-900 text-white'
-                            : 'bg-gray-100 text-gray-700',
-                        !link.url && 'pointer-events-none opacity-50',
-                    ]"
-                >
-                    <span v-html="link.label" />
-                </Link>
-            </nav>
+            <Pagination :links="props.reservations.links" />
         </main>
     </AdminLayout>
 </template>

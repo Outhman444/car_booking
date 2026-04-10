@@ -18,7 +18,8 @@ Route::middleware(['auth', 'verified', 'active', 'client'])
         // Payment (with rate limiting)
         Route::middleware(['throttle:5,1'])->group(function () {
             Route::get('/payment/{reservation}', [PaymentController::class, 'show'])->name('payment.show');
-            Route::post('/payment/{reservation}/stripe', [PaymentController::class, 'processStripe'])->name('payment.stripe');
+            Route::post('/payment/{reservation}/stripe-intent', [PaymentController::class, 'createStripeIntent'])->name('payment.stripe.intent');
+            Route::post('/payment/{reservation}/stripe-confirm', [PaymentController::class, 'confirmStripe'])->name('payment.stripe.confirm');
             Route::post('/payment/{reservation}/paypal', [PaymentController::class, 'processPayPal'])->name('payment.paypal');
         });
         Route::get('/payment/{reservation}/paypal/success', [PaymentController::class, 'paypalSuccess'])->name('payment.paypal.success');

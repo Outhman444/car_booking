@@ -16,12 +16,6 @@ class PaymentMethodsController extends Controller
     public function index(): Response
     {
         $methods = PaymentMethodSetting::orderBy('sort_order')->get()->map(function ($method) {
-            $isConfigured = match ($method->method) {
-                'paypal' => PaymentMethodSetting::isPayPalConfigured(),
-                'stripe' => PaymentMethodSetting::isStripeConfigured(),
-                default => false,
-            };
-
             return [
                 'id' => $method->id,
                 'method' => $method->method,
@@ -30,7 +24,7 @@ class PaymentMethodsController extends Controller
                 'display_name' => $method->display_name,
                 'description' => $method->description,
                 'sort_order' => $method->sort_order,
-                'is_configured' => $isConfigured,
+                'is_configured' => PaymentMethodSetting::isConfigured($method->method),
             ];
         });
 
@@ -59,18 +53,15 @@ class PaymentMethodsController extends Controller
 
         // Check if API keys are configured before enabling
         if ($validated['is_enabled']) {
-            $isConfigured = match ($method) {
-                'paypal' => PaymentMethodSetting::isPayPalConfigured(),
-                'stripe' => PaymentMethodSetting::isStripeConfigured(),
-                default => false,
-            };
-
-            if (!$isConfigured) {
+            if (!PaymentMethodSetting::isConfigured($method)) {
                 return back()->with('error', "Cannot enable {$method}: API keys are not configured in .env file.");
             }
         }
 
         $setting->update($validated);
+
+        // Clear cached payment methods so frontend updates immediately
+        PaymentMethodSetting::clearCache();
 
         return back()->with('success', ucfirst($method) . ' settings updated successfully.');
     }
@@ -88,13 +79,7 @@ class PaymentMethodsController extends Controller
 
         // Check if API keys are configured before enabling
         if (!$setting->is_enabled) {
-            $isConfigured = match ($method) {
-                'paypal' => PaymentMethodSetting::isPayPalConfigured(),
-                'stripe' => PaymentMethodSetting::isStripeConfigured(),
-                default => false,
-            };
-
-            if (!$isConfigured) {
+            if (!PaymentMethodSetting::isConfigured($method)) {
                 return back()->with('error', "Cannot enable {$method}: API keys are not configured in .env file.");
             }
         }
