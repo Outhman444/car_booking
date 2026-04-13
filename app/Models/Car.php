@@ -137,10 +137,18 @@ class Car extends Model
     public function isAvailable(string $startDate, string $endDate, ?int $excludeReservationId = null): bool
     {
         $query = $this->reservations()
-            ->whereIn('status', [
-                ReservationStatus::CONFIRMED,
-                ReservationStatus::ACTIVE
-            ])
+            ->where(function ($query) {
+                // Block the car if fully confirmed or active
+                $query->whereIn('status', [
+                    ReservationStatus::CONFIRMED,
+                    ReservationStatus::ACTIVE
+                ])
+                // Or if it's PENDING but explicitly finalized as a Cash/Agency payment
+                ->orWhere(function ($q) {
+                    $q->where('status', ReservationStatus::PENDING)
+                      ->where('notes', 'like', '%Pay at Agency%');
+                });
+            })
             ->betweenDates($startDate, $endDate);
 
         if ($excludeReservationId) {

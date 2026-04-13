@@ -2,10 +2,36 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AdminLayout from '@/layouts/AdminLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
-import { show } from '@/routes/admin/reservations';
-import { index } from '@/routes/admin/reservations';
+import Heading from '@/components/Heading.vue';
+import StatusBadge from '@/components/StatusBadge.vue';
+import Pagination from '@/components/Pagination.vue';
+import { Head, router } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { show, index, quickUpdate, markAsPaid } from '@/routes/admin/reservations';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import HelpTooltip from '@/components/HelpTooltip.vue';
+import { 
+    CheckCircle, 
+    XCircle, 
+    Clock, 
+    Car, 
+    User, 
+    Calendar, 
+    CreditCard, 
+    MoreVertical, 
+    ChevronRight,
+    Search,
+    Fingerprint
+} from 'lucide-vue-next';
 
 const props = defineProps<{
     reservations: {
@@ -25,6 +51,8 @@ const props = defineProps<{
             total_days: number;
             total_amount: number | string;
             status: string;
+            is_paid: boolean;
+            payment_method_label: string | null;
         }>;
         links: Array<{ url: string | null; label: string; active: boolean }>;
     };
@@ -36,8 +64,9 @@ const props = defineProps<{
     currency: { symbol: string; code: string }
 }>();
 
-import StatusBadge from '@/components/StatusBadge.vue';
-import Pagination from '@/components/Pagination.vue';
+const totalCount = computed(() =>
+  Object.values(props.statuses).reduce((acc, curr) => acc + curr.count, 0)
+);
 
 const search = ref(props.filters?.search || '');
 const statusFilter = ref(props.filters?.status || 'all');
@@ -60,204 +89,253 @@ function doSearch() {
     );
 }
 
-watch(search, (v, ov) => {
-    if (v === '' && ov !== '') doSearch();
-});
+function doQuickUpdate(id: number, status: string) {
+    if (confirm(`Change status to ${status}?`)) {
+        router.post(quickUpdate(id).url, { status }, {
+            preserveScroll: true
+        });
+    }
+}
+
+function doMarkAsPaid(id: number) {
+    if (confirm('Mark this reservation as paid?')) {
+        router.post(markAsPaid(id).url, {}, {
+            preserveScroll: true
+        });
+    }
+}
 </script>
 
 <template>
     <Head title="Reservations" />
     <AdminLayout>
         <!-- Main -->
-        <main class="flex-1 space-y-6 p-8">
-            <div class="flex items-center justify-between gap-4">
-                <h1 class="text-2xl font-semibold">Reservations</h1>
+        <main class="w-full p-4 sm:p-8 space-y-8 sm:space-y-10 bg-background min-h-screen">
+            <div class="mx-auto max-w-[1400px] flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+                <Heading 
+                    title="Reservations & Bookings" 
+                    description="Monitor all rental activity, process payments, and manage vehicle delivery."
+                    size="lg"
+                />
             </div>
 
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-2">
-                    <Input
-                        v-model="search"
-                        placeholder="Search reservation #, client, car, plate..."
-                        class="max-w-md"
-                        @keyup.enter="doSearch"
-                    />
-                    <Button @click="doSearch">Search</Button>
-                </div>
+            <div class="mx-auto max-w-[1400px] flex flex-col gap-8">
+                <!-- Toolbar -->
+                <div class="flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between bg-white p-6 rounded-[2.5rem] ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 transition-all hover:shadow-2xl">
+                    <div class="flex items-center gap-3 w-full xl:max-w-md">
+                        <div class="relative flex-1 group">
+                            <Search class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                            <Input
+                                v-model="search"
+                                placeholder="Search #, client, car, plate..."
+                                class="pl-12 h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:text-slate-400 w-full shadow-inner"
+                                @keyup.enter="doSearch"
+                            />
+                        </div>
+                        <Button @click="doSearch" class="h-14 px-8 rounded-2xl bg-slate-900 text-sm font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all border-none">Search</Button>
+                    </div>
 
-                <!-- Status Filter -->
-                <div class="flex flex-wrap items-center gap-2">
-                    <label class="inline-flex items-center">
-                        <input
-                            type="radio"
-                            class="hidden"
-                            v-model="statusFilter"
-                            value="all"
-                            @change="doSearch"
-                        />
-                        <span
-                            class="cursor-pointer rounded-full px-3 py-1.5 text-sm transition-colors"
-                            :class="{
-                                'bg-primary text-primary-foreground':
-                                    statusFilter === 'all',
-                                'bg-muted text-muted-foreground hover:bg-muted/80':
-                                    statusFilter !== 'all',
-                            }"
-                        >
-                            All ({{
-                                Object.values(statuses).reduce(
-                                    (acc: number, curr: any) =>
-                                        acc + (curr as any).count,
-                                    0,
-                                )
-                            }})
-                        </span>
-                    </label>
-
-                    <template v-for="(status, key) in statuses" :key="key">
+                    <!-- Status Filter -->
+                    <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-2xl ring-1 ring-slate-200/50 w-full xl:w-auto">
                         <label class="inline-flex items-center">
                             <input
                                 type="radio"
                                 class="hidden"
                                 v-model="statusFilter"
-                                :value="key"
+                                value="all"
                                 @change="doSearch"
                             />
-                            <span
-                                class="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors"
+                            <div 
+                                class="cursor-pointer whitespace-nowrap px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                                 :class="{
-                                    'bg-primary text-primary-foreground':
-                                        statusFilter === key,
-                                    'bg-muted text-muted-foreground hover:bg-muted/80':
-                                        statusFilter !== key,
+                                    'bg-white text-primary shadow-sm shadow-slate-200 ring-1 ring-slate-100': statusFilter === 'all',
+                                    'text-slate-400 hover:text-slate-600': statusFilter !== 'all'
                                 }"
                             >
-                                <span
-                                    class="h-2 w-2 rounded-full"
-                                    :style="{
-                                        backgroundColor: (status as any).color,
-                                    }"
-                                ></span>
-                                {{ (status as any).label }} ({{
-                                    (status as any).count
-                                }})
-                            </span>
+                                All ({{ totalCount }})
+                            </div>
                         </label>
-                    </template>
+
+                        <template v-for="(status, key) in statuses" :key="key">
+                            <label class="inline-flex items-center">
+                                <input
+                                    type="radio"
+                                    class="hidden"
+                                    v-model="statusFilter"
+                                    :value="key"
+                                    @change="doSearch"
+                                />
+                                <div 
+                                    class="cursor-pointer whitespace-nowrap px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                                    :class="{
+                                        'bg-white text-primary shadow-sm shadow-slate-200 ring-1 ring-slate-100': statusFilter === key,
+                                        'text-slate-400 hover:text-slate-600': statusFilter !== key
+                                    }"
+                                >
+                                    <span
+                                        class="h-1.5 w-1.5 rounded-full"
+                                        :style="{ backgroundColor: status.color }"
+                                    ></span>
+                                    {{ status.label }}
+                                </div>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <Card class="shadow-xl shadow-slate-200/50 border-none ring-1 ring-slate-100 rounded-[2.5rem] overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow class="hover:bg-transparent border-b border-slate-50">
+                                    <TableHead class="h-16 px-4 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[140px]">
+                                        <div class="flex items-center gap-2">
+                                            <Fingerprint class="size-3.5" /> ID
+                                            <HelpTooltip content="The unique alphanumeric code for this reservation. Use this for all internal and client references." />
+                                        </div>
+                                    </TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[160px]">
+                                        <div class="flex items-center gap-2">
+                                            <User class="size-3.5" /> Client
+                                            <HelpTooltip content="Customer identification details. Click on any row to view full profile and contact logs." />
+                                        </div>
+                                    </TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[160px]">
+                                        <div class="flex items-center gap-2"><Car class="size-3.5" /> Vehicle</div>
+                                    </TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[100px]">Total</TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[100px]">Status</TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[120px]">
+                                        <div class="flex items-center gap-2">
+                                            Payment
+                                            <HelpTooltip content="Track transaction states. 'COD' means payment will be collected at the agency during vehicle delivery." />
+                                        </div>
+                                    </TableHead>
+                                    <TableHead class="h-16 px-4 w-[100px] text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow
+                                    v-for="res in props.reservations.data"
+                                    :key="res.id"
+                                    @click="navigateToReservation(res.id)"
+                                    class="group border-b border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer"
+                                >
+                                    <TableCell class="px-4 py-5">
+                                        <div class="font-mono text-xs font-black text-slate-900 group-hover:text-primary transition-colors">
+                                            {{ res.reservation_number }}
+                                        </div>
+                                        <div class="mt-1 flex items-center gap-1.5 grayscale group-hover:grayscale-0 transition-all">
+                                            <span class="text-[8px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                {{ new Date(res.start_date).toLocaleDateString() }}
+                                            </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex flex-col leading-tight">
+                                            <span class="text-sm font-black text-slate-900 line-clamp-1">{{ res.user?.name || '—' }}</span>
+                                            <span class="text-[10px] font-bold text-slate-400 truncate max-w-[120px]">{{ res.user?.email }}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex flex-col items-start gap-1 leading-tight">
+                                            <span class="text-xs font-black text-slate-900 line-clamp-1">
+                                                {{ res.car ? `${res.car.year} ${res.car.make}` : '—' }}
+                                            </span>
+                                            <span class="text-[9px] font-mono font-black text-slate-400 flex items-center gap-1.5">
+                                                <span class="bg-slate-100 px-1.5 py-0.5 rounded">{{ res.car?.license_plate }}</span>
+                                            </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="text-xs font-black text-slate-900">
+                                            {{ props.currency.symbol }}{{ Number(res.total_amount).toLocaleString() }}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <StatusBadge
+                                            :status="res.status"
+                                            :label="statuses[res.status]?.label || res.status"
+                                            :color="statuses[res.status]?.color"
+                                            class="scale-90 origin-left"
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge 
+                                            variant="outline"
+                                            class="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border-none ring-1 ring-inset"
+                                            :class="res.is_paid 
+                                                ? 'bg-emerald-50 text-emerald-600 ring-emerald-200' 
+                                                : (res.status === 'confirmed' ? 'bg-amber-50 text-amber-600 ring-amber-200' : 'bg-slate-50 text-slate-500 ring-slate-200')"
+                                        >
+                                            {{ res.is_paid ? 'Paid' : (res.status === 'confirmed' ? 'COD' : 'Pending') }}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell @click.stop class="px-4 text-right">
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            <Button 
+                                                v-if="res.status === 'pending'"
+                                                variant="ghost"
+                                                size="sm"
+                                                class="h-8 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all border-none"
+                                                @click="doQuickUpdate(res.id, 'confirmed')"
+                                            >
+                                                Confirm
+                                            </Button>
+                                            <Button 
+                                                v-if="res.status === 'confirmed'"
+                                                variant="ghost"
+                                                size="sm"
+                                                class="h-8 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all border-none"
+                                                @click="doQuickUpdate(res.id, 'active')"
+                                            >
+                                                Start
+                                            </Button>
+                                            <Button 
+                                                v-if="res.status === 'active'"
+                                                variant="ghost"
+                                                size="sm"
+                                                class="h-8 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all border-none"
+                                                @click="doQuickUpdate(res.id, 'completed')"
+                                            >
+                                                End
+                                            </Button>
+                                            <Button
+                                                v-if="['pending', 'confirmed'].includes(res.status)"
+                                                variant="ghost"
+                                                size="sm"
+                                                class="h-8 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all border-none"
+                                                @click="doQuickUpdate(res.id, 'cancelled')"
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button variant="ghost" size="icon" class="h-8 w-8 rounded-lg hover:bg-slate-100 transition-all border-none">
+                                                <ChevronRight class="size-4 text-slate-400 group-hover:text-primary transition-colors" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                                <TableRow v-if="props.reservations.data.length === 0">
+                                    <TableCell colspan="7" class="h-64 text-center">
+                                        <div class="flex flex-col items-center justify-center gap-4">
+                                            <div class="p-6 rounded-full bg-slate-50 ring-1 ring-slate-100">
+                                                <Search class="size-8 text-slate-300" />
+                                            </div>
+                                            <div class="text-lg font-black text-slate-900">No Reservations Found</div>
+                                            <p class="text-sm font-bold text-slate-400">Try adjusting your search or filters.</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                </Card>
+
+                <div class="mt-8 mb-12">
+                    <Pagination :links="props.reservations.links" />
                 </div>
             </div>
-
-            <div class="overflow-x-auto rounded-md border">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                            >
-                                #
-                            </th>
-                            <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                            >
-                                Client
-                            </th>
-                            <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                            >
-                                Car
-                            </th>
-                            <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                            >
-                                Dates
-                            </th>
-                            <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                            >
-                                Total
-                            </th>
-                            <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                            >
-                                Status
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
-                        <tr
-                            v-for="res in props.reservations.data"
-                            :key="res.id"
-                            @click="navigateToReservation(res.id)"
-                            class="cursor-pointer transition-colors hover:bg-gray-50"
-                        >
-                            <td class="px-4 py-3">
-                                <div class="font-medium">
-                                    {{ res.reservation_number }}
-                                </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="font-medium">
-                                    {{ res.user?.name || '—' }}
-                                </div>
-                                <div class="text-xs text-muted-foreground">
-                                    {{ res.user?.email }}
-                                </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="font-medium">
-                                    {{
-                                        res.car
-                                            ? `${res.car.year} ${res.car.make} ${res.car.model}`
-                                            : '—'
-                                    }}
-                                </div>
-                                <div class="text-xs text-muted-foreground">
-                                    {{ res.car?.license_plate }}
-                                </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="font-medium">
-                                    {{
-                                        new Date(
-                                            res.start_date,
-                                        ).toLocaleDateString()
-                                    }}
-                                    →
-                                    {{
-                                        new Date(
-                                            res.end_date,
-                                        ).toLocaleDateString()
-                                    }}
-                                </div>
-                                <!-- duration in days-->
-                                <div class="text-xs text-muted-foreground">
-                                    {{ res.total_days }} days
-                                </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                {{ props.currency.symbol }} {{ Number(res.total_amount).toFixed(2) }}
-                            </td>
-                            <td class="px-4 py-3">
-                                <StatusBadge
-                                    :status="res.status"
-                                    :label="statuses[res.status]?.label || res.status"
-                                    :color="statuses[res.status]?.color"
-                                />
-                            </td>
-                        </tr>
-                        <tr v-if="props.reservations.data.length === 0">
-                            <td
-                                colspan="7"
-                                class="px-4 py-6 text-center text-gray-500"
-                            >
-                                No reservations found.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <Pagination :links="props.reservations.links" />
         </main>
     </AdminLayout>
 </template>

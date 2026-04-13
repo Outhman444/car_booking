@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ref, onMounted } from 'vue';
-import { CreditCard, Wallet, AlertCircle, Loader2, CheckCircle, ArrowLeft, Info } from 'lucide-vue-next';
+import { CreditCard, Wallet, Banknote, AlertCircle, Loader2, CheckCircle, ArrowLeft, Info } from 'lucide-vue-next';
 import { loadStripe } from '@stripe/stripe-js';
 import axios from 'axios';
+import HelpTooltip from '@/components/HelpTooltip.vue';
+import BookingStepper from '@/components/BookingStepper.vue';
 
 const props = defineProps<{
     reservation: {
@@ -161,8 +163,30 @@ async function processPayPalPayment() {
             errorMessage.value = 'We received an invalid response from PayPal. Please try again later or contact our team.';
             isProcessing.value = false;
         }
-    } catch (e: any) {
+    } catch {
         errorMessage.value = 'We failed to securely connect to PayPal. Please check your internet connection and try again.';
+        isProcessing.value = false;
+    }
+}
+
+async function processAgencyPayment() {
+    isProcessing.value = true;
+    errorMessage.value = null;
+
+    try {
+        const response = await axios.post(`/client/payment/${props.reservation.id}/agency`);
+        
+        if (response.data.error) {
+            errorMessage.value = response.data.error;
+            isProcessing.value = false;
+            return;
+        }
+
+        if (response.data.redirect_url) {
+            router.visit(response.data.redirect_url);
+        }
+    } catch (e: any) {
+        errorMessage.value = e.response?.data?.error || 'Failed to process payment selection.';
         isProcessing.value = false;
     }
 }
@@ -174,6 +198,8 @@ async function submitPayment() {
         await processStripePayment();
     } else if (selectedMethod.value === 'paypal') {
         await processPayPalPayment();
+    } else if (selectedMethod.value === 'agency') {
+        await processAgencyPayment();
     }
 }
 </script>
@@ -182,6 +208,9 @@ async function submitPayment() {
     <Head :title="`Pay Reservation ${reservation?.reservation_number || ''}`" />
     <ClientLayout>
         <main class="flex-1 p-8 space-y-6 max-w-3xl mx-auto">
+            <!-- Status Stepper -->
+            <BookingStepper :current-step="3" class="mb-4" />
+
             <!-- Header -->
             <div class="flex items-center gap-4">
                 <Link :href="`/client/reservations/${reservation.id}`">
@@ -214,7 +243,10 @@ async function submitPayment() {
                         </div>
                     </div>
                     <div class="mt-4 pt-4 border-t flex items-center justify-between">
-                        <span class="text-lg font-semibold">Total Amount</span>
+                        <span class="text-lg font-semibold flex items-center gap-2">
+                            Total Amount
+                            <HelpTooltip content="This is the final price including all taxes, fees, and the daily rental rate for the full duration." />
+                        </span>
                         <span class="text-2xl font-bold text-primary">{{ fmtMoney(reservation.total_amount) }}</span>
                     </div>
                 </CardContent>
@@ -230,30 +262,47 @@ async function submitPayment() {
             </Alert>
 
             <!-- Pre-Payment Instructions -->
-            <Alert v-else class="bg-blue-50 text-blue-900 border-blue-200">
-                <Info class="h-4 w-4 text-blue-600" />
-                <AlertTitle class="text-blue-800">Important Instructions</AlertTitle>
-                <AlertDescription class="text-blue-700">
-                    Once your payment is successfully completed, you must print your reservation invoice. Please bring the printed invoice with you to the agency in order to collect your car.
-                </AlertDescription>
-            </Alert>
+            <div class="grid gap-4 md:grid-cols-2 mb-2">
+                <div class="flex items-start gap-4 p-5 rounded-2xl bg-card border shadow-sm transition-all hover:shadow-md">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Info class="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-foreground">Next Steps</h3>
+                        <p class="text-sm text-muted-foreground mt-1 leading-relaxed">After reservation is confirmed, bring your reference number to the agency to collect your car.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4 p-5 rounded-2xl bg-card border shadow-sm transition-all hover:shadow-md">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+                        <AlertCircle class="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-foreground">Requirements</h3>
+                        <p class="text-sm text-muted-foreground mt-1 leading-relaxed">Bring your ID/Passport and a valid driver's license (min. {{ $page.props.settings.min_driving_experience || 2 }} years exp).</p>
+                    </div>
+                </div>
+            </div>
 
             <!-- Payment Methods Selection -->
             <div v-if="paymentMethods && paymentMethods.length > 0" class="space-y-4">
-                <h2 class="text-lg font-semibold">Select Payment Method</h2>
+                <h2 class="text-lg font-semibold flex items-center gap-2">
+                    Select Payment Method
+                    <HelpTooltip content="Choose a secure payment channel. Digital payments are processed instantly to confirm your booking." />
+                </h2>
 
                 <div class="grid gap-4">
                     <Card
                         v-for="method in paymentMethods"
                         :key="method.value"
                         class="cursor-pointer transition-all hover:border-primary"
-                        :class="{ 'border-primary ring-2 ring-primary': selectedMethod === method.value }"
+                        :class="{ 'border-primary ring-2 ring-ring': selectedMethod === method.value }"
                         @click="selectMethod(method.value)"
                     >
                         <CardContent class="p-4 flex items-center gap-4">
                             <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                                 <component
-                                    :is="method.icon === 'paypal' ? Wallet : CreditCard"
+                                    :is="method.icon === 'paypal' ? Wallet : (method.icon === 'banknote' ? Banknote : CreditCard)"
                                     class="h-6 w-6 text-primary"
                                 />
                             </div>
@@ -276,7 +325,10 @@ async function submitPayment() {
                 <div v-if="selectedMethod === 'stripe'" class="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle class="text-base">Card Details</CardTitle>
+                            <CardTitle class="text-base flex items-center gap-2">
+                                Card Details
+                                <HelpTooltip content="Your card data is processed directly by Stripe using bank-level encryption. We never store your card numbers." />
+                            </CardTitle>
                             <CardDescription>Enter your card information securely</CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -292,6 +344,18 @@ async function submitPayment() {
                     <AlertDescription>{{ errorMessage }}</AlertDescription>
                 </Alert>
 
+                <!-- Agency Rules Promiment Warning -->
+                <div v-if="selectedMethod === 'agency'" class="mt-6 p-5 rounded-2xl border border-yellow-200 bg-yellow-50 flex items-start gap-3 shadow-inner">
+                    <AlertCircle class="h-6 w-6 text-yellow-600 shrink-0 mt-0.5" />
+                    <div>
+                        <h4 class="font-bold text-yellow-900 text-base">Time-Sensitive Requirement</h4>
+                        <p class="text-sm text-yellow-800 mt-1.5 leading-relaxed">
+                            You must attend the agency personally to pay the total amount in cash within <strong class="text-yellow-950 font-bold bg-yellow-200 px-1.5 py-0.5 rounded">{{ $page.props.settings.cash_reservation_timeout || 24 }} Hours</strong>. 
+                            If you fail to do so, your reservation will be automatically cancelled and the car will be given to another customer.
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Pay Button -->
                 <Button
                     class="w-full h-12 text-lg"
@@ -299,7 +363,7 @@ async function submitPayment() {
                     @click="submitPayment"
                 >
                     <Loader2 v-if="isProcessing" class="mr-2 h-5 w-5 animate-spin" />
-                    {{ isProcessing ? 'Processing...' : `Pay ${fmtMoney(reservation.total_amount)}` }}
+                    {{ isProcessing ? 'Processing... ' : (selectedMethod === 'agency' ? 'Confirm Reservation & Pay at Agency' : `Pay ${fmtMoney(reservation.total_amount)}`) }}
                 </Button>
 
                 <!-- Security Note -->
@@ -308,7 +372,7 @@ async function submitPayment() {
                         <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                         </svg>
-                        Secure payment powered by {{ selectedMethod === 'paypal' ? 'PayPal' : 'Stripe' }}
+                        Secure payment powered by {{ selectedMethod === 'paypal' ? 'PayPal' : (selectedMethod === 'agency' ? 'Our Agency' : 'Stripe') }}
                     </span>
                 </p>
             </div>

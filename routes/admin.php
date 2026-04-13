@@ -17,11 +17,14 @@ Route::middleware(['auth', 'verified', 'active', 'admin'])
         Route::redirect('/', '/admin/cars')->name('home');
 
         // Cars
+        Route::post('cars/{car}/quick-status', [CarsController::class, 'quickUpdate'])->name('cars.quick-update');
         Route::resource('cars', CarsController::class)->except(['show']);
 
         // Reservations
         Route::resource('reservations', ReservationsController::class)->only(['index', 'show', 'edit', 'update']);
         Route::get('reservations/{reservation}/print', [ReservationsController::class, 'print'])->name('reservations.print');
+        Route::post('reservations/{reservation}/mark-as-paid', [ReservationsController::class, 'markAsPaid'])->name('reservations.mark-as-paid');
+        Route::post('reservations/{reservation}/quick-status', [ReservationsController::class, 'quickUpdate'])->name('reservations.quick-update');
 
         // Clients
         Route::resource('clients', ClientsController::class)->only(['index', 'show']);
@@ -47,5 +50,12 @@ Route::middleware(['auth', 'verified', 'active', 'admin'])
         ->name('support.reply');
         Route::post('/support/tickets/{ticket}/close', [SupportController::class, 'close'])
         ->name('support.close');
+
+        // Site Settings
+        Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+        Route::post('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+
+        // Locations
+        Route::resource('locations', \App\Http\Controllers\Admin\LocationsController::class)->except(['create', 'show', 'edit']);
 
     });

@@ -128,5 +128,5 @@ return [
     'currency_code' => env('APP_CURRENCY_CODE', 'USD'),
 
     // Tax
-    'tax_rate' => env('TAX_RATE', 0.07),
+    'tax_rate' => env('TAX_RATE', 7),
 ];

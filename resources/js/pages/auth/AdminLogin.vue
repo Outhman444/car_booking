@@ -18,151 +18,145 @@ defineProps<{
         <Head title="Admin Access" />
 
         <div
-            class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 sm:px-6 lg:px-8"
+            class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 px-4 sm:px-6 lg:px-8"
         >
             <div class="w-full max-w-md">
-                <!-- Background Pattern -->
+                <!-- Background Glows -->
                 <div
                     class="pointer-events-none absolute inset-0 overflow-hidden"
                 >
                     <div
-                        class="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-orange-500/5 blur-3xl"
+                        class="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[120px]"
                     ></div>
                     <div
-                        class="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-indigo-500/5 blur-3xl"
+                        class="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-primary/10 blur-[120px]"
                     ></div>
                 </div>
 
-                <div class="relative space-y-8">
+                <div class="relative space-y-10">
                     <!-- Header -->
                     <div class="text-center">
                         <div
-                            class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-slate-600 bg-slate-700"
+                            class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl"
                         >
-                            <Shield class="h-8 w-8 text-orange-400" />
+                            <Shield class="h-10 w-10 text-accent" />
                         </div>
-                        <h1 class="mb-2 text-2xl font-bold text-white">
-                            Administrative Access
+                        <h1 class="mb-3 text-3xl font-black tracking-tight text-white md:text-4xl">
+                            Admin <span class="text-primary font-black">Portal</span>
                         </h1>
+                        <p class="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
+                            Secure Gateway
+                        </p>
                     </div>
 
                     <!-- Login Form -->
                     <div
-                        class="rounded-xl border border-slate-700/50 bg-slate-800/50 p-8 shadow-2xl backdrop-blur-xl"
+                        class="overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/5 p-10 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10"
                     >
                         <Form
                             v-bind="AuthenticatedSessionController.storeAdminLogin.form()"
                             :reset-on-success="['password']"
                             v-slot="{ errors, processing }"
-                            class="space-y-6"
+                            class="space-y-8"
                         >
                             <!-- Email Field -->
-                            <div>
+                            <div class="space-y-2">
                                 <Label
                                     for="email"
-                                    class="mb-2 block text-sm font-semibold text-slate-200"
+                                    class="ml-1 text-xs font-black uppercase tracking-widest text-slate-400"
                                 >
-                                    Administrator Email
+                                    Administrator ID
                                 </Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autofocus
-                                    :tabindex="1"
-                                    autocomplete="email"
-                                    placeholder="admin@domain.com"
-                                    class="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-3 text-white placeholder-slate-400 transition-colors focus:border-orange-500 focus:bg-slate-700 focus:ring-2 focus:ring-orange-500/20"
-                                />
+                                <div class="relative group">
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        name="email"
+                                        required
+                                        autofocus
+                                        :tabindex="1"
+                                        autocomplete="email"
+                                        placeholder="admin@realrent.com"
+                                        class="h-14 w-full rounded-2xl border-none bg-white/5 px-6 font-bold text-white ring-1 ring-white/10 transition-all focus:bg-white/10 focus:ring-2 focus:ring-ring placeholder:text-slate-600"
+                                    />
+                                </div>
                                 <InputError
                                     :message="errors.email"
-                                    class="mt-1"
+                                    class="ml-1 mt-1 text-xs font-bold text-rose-500"
                                 />
                             </div>
 
                             <!-- Password Field -->
-                            <div>
-                                <div
-                                    class="mb-2 flex items-center justify-between"
+                            <div class="space-y-2">
+                                <Label
+                                    for="password"
+                                    class="ml-1 text-xs font-black uppercase tracking-widest text-slate-400"
                                 >
-                                    <Label
-                                        for="password"
-                                        class="block text-sm font-semibold text-slate-200"
-                                    >
-                                        <div
-                                            class="flex items-center space-x-2"
-                                        >
-                                            <Lock class="h-4 w-4" />
-                                            <span>Secure Password</span>
-                                        </div>
-                                    </Label>
+                                    Access Key
+                                </Label>
+                                <div class="relative group">
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        name="password"
+                                        required
+                                        :tabindex="2"
+                                        autocomplete="current-password"
+                                        placeholder="••••••••"
+                                        class="h-14 w-full rounded-2xl border-none bg-white/5 px-6 font-bold text-white ring-1 ring-white/10 transition-all focus:bg-white/10 focus:ring-2 focus:ring-ring placeholder:text-slate-600"
+                                    />
+                                    <Lock class="absolute right-5 top-1/2 -translate-y-1/2 size-5 text-white/20 group-focus-within:text-primary transition-colors" />
                                 </div>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    name="password"
-                                    required
-                                    :tabindex="2"
-                                    autocomplete="current-password"
-                                    placeholder="Enter secure password"
-                                    class="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-3 text-white placeholder-slate-400 transition-colors focus:border-orange-500 focus:bg-slate-700 focus:ring-2 focus:ring-orange-500/20"
-                                />
                                 <InputError
                                     :message="errors.password"
-                                    class="mt-1"
+                                    class="ml-1 mt-1 text-xs font-bold text-rose-500"
                                 />
                             </div>
 
                             <!-- Submit Button -->
                             <Button
                                 type="submit"
-                                class="flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-orange-600 to-orange-700 px-4 py-3 font-semibold text-white transition-all duration-200 hover:from-orange-700 hover:to-orange-800 hover:shadow-lg hover:shadow-orange-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+                                class="h-16 w-full rounded-2xl bg-primary text-base font-black uppercase tracking-widest text-white shadow-2xl shadow-primary/20 transition-all hover:bg-primary/90 hover:scale-[1.02] active:scale-95 disabled:opacity-50 border-none mt-4"
                                 :tabindex="4"
                                 :disabled="processing"
                                 data-test="admin-login-button"
                             >
                                 <LoaderCircle
                                     v-if="processing"
-                                    class="mr-2 h-5 w-5 animate-spin"
+                                    class="mr-2 h-6 w-6 animate-spin"
                                 />
-                                {{
-                                    processing
-                                        ? 'Authenticating...'
-                                        : 'Access System'
-                                }}
+                                <span v-else>Authorize Access</span>
                             </Button>
 
                             <!-- Security Notice -->
                             <div
-                                class="border-t border-slate-700 pt-6 text-center"
+                                class="border-t border-white/10 pt-8 text-center"
                             >
                                 <div
-                                    class="flex items-center justify-center space-x-2 text-slate-400"
+                                    class="flex items-center justify-center space-x-3 text-slate-500"
                                 >
-                                    <Shield class="h-4 w-4" />
-                                    <p class="text-xs">
-                                        Secure connection established
+                                    <Shield class="h-4 w-4 text-emerald-500" />
+                                    <p class="text-[10px] font-black uppercase tracking-widest">
+                                        End-to-End Encryption Active
                                     </p>
                                 </div>
-                                <p class="mt-2 text-xs text-slate-500">
-                                    All administrative actions are logged and
-                                    monitored
+                                <p class="mt-3 text-[10px] font-bold text-slate-600">
+                                    System events are audited and captured in real-time. Unrecognized attempts are logged.
                                 </p>
                             </div>
                         </Form>
                     </div>
 
-                    <!-- Footer Warning -->
+                    <!-- Footer Alert -->
                     <div class="text-center">
                         <div
-                            class="inline-flex items-center space-x-2 rounded-lg border border-amber-800/50 bg-amber-900/20 px-4 py-2 backdrop-blur-sm"
+                            class="inline-flex items-center space-x-3 rounded-2xl border border-accent/20 bg-accent/5 px-6 py-3 backdrop-blur-sm"
                         >
                             <div
-                                class="h-2 w-2 animate-pulse rounded-full bg-amber-400"
+                                class="h-2 w-2 animate-pulse rounded-full bg-accent"
                             ></div>
-                            <p class="text-xs text-amber-300">
-                                Unauthorized access is strictly prohibited
+                            <p class="text-xs font-black uppercase tracking-widest text-accent/80">
+                                Restricted Environment
                             </p>
                         </div>
                     </div>

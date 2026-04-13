@@ -380,7 +380,7 @@ class CarsSeeder extends Seeder
 
 
         foreach ($cars as $data) {
-            Car::query()->updateOrCreate(
+            $car = Car::query()->updateOrCreate(
                 ['license_plate' => $data['license_plate']],
                 $data
             );
@@ -388,16 +388,23 @@ class CarsSeeder extends Seeder
             $make = str_replace(' ', '_', $data['make']);
             $modelName = str_replace(' ', '_', $data['model']);
 
-            DB::insert('insert into files (original_name, filename, path, mime_type, size, collection, fileable_id, fileable_type) values (?, ?, ?, ?, ?, ?, ?, ?)', [
-                $make . '_' . $modelName,
-                $make . '_' . $modelName . '.webp',
-                'files/car/' . $data['id'] . '/image/' . $make . '_' . $modelName . '.webp',
-                'image/webp',
-                100,
-                'image',
-                $data['id'],
-                Car::class
-            ]);
+            // Ensure we don't duplicate file records
+            DB::table('files')->updateOrInsert(
+                [
+                    'fileable_id' => $car->id,
+                    'fileable_type' => Car::class,
+                    'collection' => 'image'
+                ],
+                [
+                    'original_name' => $make . '_' . $modelName,
+                    'filename' => $make . '_' . $modelName . '.webp',
+                    'path' => 'files/car/' . $car->id . '/image/' . $make . '_' . $modelName . '.webp',
+                    'mime_type' => 'image/webp',
+                    'size' => 100,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
         }
     }
 }

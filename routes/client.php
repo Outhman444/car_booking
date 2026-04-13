@@ -21,6 +21,7 @@ Route::middleware(['auth', 'verified', 'active', 'client'])
             Route::post('/payment/{reservation}/stripe-intent', [PaymentController::class, 'createStripeIntent'])->name('payment.stripe.intent');
             Route::post('/payment/{reservation}/stripe-confirm', [PaymentController::class, 'confirmStripe'])->name('payment.stripe.confirm');
             Route::post('/payment/{reservation}/paypal', [PaymentController::class, 'processPayPal'])->name('payment.paypal');
+            Route::post('/payment/{reservation}/agency', [PaymentController::class, 'processAgency'])->name('payment.agency');
         });
         Route::get('/payment/{reservation}/paypal/success', [PaymentController::class, 'paypalSuccess'])->name('payment.paypal.success');
         Route::get('/payment/{reservation}/paypal/cancel', [PaymentController::class, 'paypalCancel'])->name('payment.paypal.cancel');

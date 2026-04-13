@@ -6,6 +6,8 @@ use App\Enums\CarStatus;
 use App\Enums\ReservationStatus;
 use App\Models\Car;
 use App\Models\Reservation;
+use App\Models\Setting;
+use App\Models\Location;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +21,11 @@ class BookingController extends Controller
             return redirect()->route('fleet')->with('error', 'This car is not available for booking.');
         }
 
-        return inertia('Booking', compact('car'));
+        return inertia('Booking', [
+            'car' => $car,
+            'locations' => Location::where('is_active', true)->get(),
+            'taxRate' => ((float) Setting::getValue('tax_rate', config('app.tax_rate', 7))) / 100,
+        ]);
     }
 
     public function book(Car $car, Request $request)
@@ -34,7 +40,7 @@ class BookingController extends Controller
             return redirect()->route('login')->with('error', 'You must be logged in to book a car.');
         }
 
-        // Fix 3.3: Check only active/pending bookings, not completed/cancelled ones
+        // Check only active/pending bookings, not completed/cancelled ones
         $hasActiveBooking = Reservation::where('car_id', $car->id)
             ->where('user_id', Auth::id())
             ->whereIn('status', [
@@ -57,7 +63,7 @@ class BookingController extends Controller
             'return_location'  => 'required|string|max:255',
         ]);
 
-        // check availability for dates
+        // check availability for dates (preliminary check before transaction)
         if (!$car->isAvailable($request->start_date, $request->end_date)) {
             return back()->with('error', 'This car is already reserved for the selected dates.');
         }
@@ -66,24 +72,46 @@ class BookingController extends Controller
         $startDate = Carbon::parse($request->start_date);
         $endDate   = Carbon::parse($request->end_date);
 
-        // Fix 3.6: Unified day calculation — diffInDays + 1 (inclusive of both start and end day)
+        // Unified day calculation — diffInDays + 1 (inclusive of both start and end day)
         $days = max(1, $startDate->diffInDays($endDate) + 1);
+
+        // Check min/max rental days
+        $minDays = (int) Setting::getValue('min_rental_days', 1);
+        $maxDays = (int) Setting::getValue('max_rental_days', 30);
+
+        if ($days < $minDays) {
+            return back()->with('error', "The minimum rental duration is {$minDays} day(s).");
+        }
+
+        if ($days > $maxDays) {
+            return back()->with('error', "The maximum rental duration is {$maxDays} day(s).");
+        }
 
         // ensure daily rate is positive
         $dailyRate = abs($car->price_per_day);
 
-        // Fix 3.4: Use centralized tax rate from config
-        $taxRate    = config('app.tax_rate', 0.07);
+        // Fetch tax rate from settings
+        $taxRate    = ((float) Setting::getValue('tax_rate', config('app.tax_rate', 7))) / 100;
         $subtotal   = $dailyRate * $days;
         $taxAmount  = round($subtotal * $taxRate, 2);
         $discount   = 0;
         $total      = $subtotal + $taxAmount - $discount;
 
-        // Fix 6.7: Use DB transaction for atomicity
+        // Atomic transaction with pessimistic locking to prevent race conditions.
+        // lockForUpdate() ensures that if two users try to book the same car at the exact
+        // same millisecond, only one will succeed — the other waits and then fails gracefully.
         $reservation = \Illuminate\Support\Facades\DB::transaction(function () use ($car, $startDate, $endDate, $request, $days, $dailyRate, $subtotal, $taxAmount, $discount, $total) {
+            // Lock the car row so no other transaction can read/write it simultaneously
+            $lockedCar = Car::lockForUpdate()->find($car->id);
+
+            // Re-verify availability INSIDE the lock (the authoritative check)
+            if ($lockedCar->status !== CarStatus::AVAILABLE || !$lockedCar->isAvailable($request->start_date, $request->end_date)) {
+                return null; // Will be caught below
+            }
+
             // create reservation
             $reservation = Reservation::create([
-                'car_id'          => $car->id,
+                'car_id'          => $lockedCar->id,
                 'user_id'         => Auth::id(),
                 'start_date'      => $startDate,
                 'end_date'        => $endDate,
@@ -97,8 +125,17 @@ class BookingController extends Controller
                 'total_amount'    => $total,
             ]);
 
+            // Do NOT sync the car status here!
+            // We wait until they actually complete checkout (Stripe or Cash)
+            // so abandoned checkouts do not falsely lock the car or show it as Pending.
+
             return $reservation;
         });
+
+        // Handle race condition: another user booked the same car at the same time
+        if (!$reservation) {
+            return back()->with('error', 'Sorry, this car was just booked by another customer for the selected dates. Please choose different dates or another car.');
+        }
 
         return redirect()->route('booking.confirmation', $reservation);
     }

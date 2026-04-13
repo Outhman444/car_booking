@@ -13,68 +13,81 @@ import {
 } from '@/components/ui/dropdown-menu';
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
+import { Zap, Phone, Mail, Car as CarIcon } from 'lucide-vue-next';
+import FlashNotifications from '@/components/FlashNotifications.vue';
+import AppLogo from '@/components/AppLogo.vue';
 
 const $page = usePage();
 const auth = computed(() => $page.props.auth);
 const role = computed(() => auth.value.user?.role);
 const dashboardLink = computed(() => role.value === 'admin' ? adminCarsIndex() : clientReservationsIndex());
+const settings = computed(() => ($page.props.settings as Record<string, string>) || {});
+const siteName = computed(() => settings.value.site_name || 'REAL RENT CAR');
+const siteNameParts = computed(() => {
+    const text = siteName.value;
+    if (text.toUpperCase().includes(' RENT ')) {
+        const parts = text.split(/ rent /i);
+        return { first: parts[0], middle: 'Rent', last: parts[1] };
+    }
+    return { first: text, middle: '', last: '' };
+});
 </script>
 
 <template>
-    <div>
+    <div class="relative min-h-screen flex flex-col bg-background font-sans text-foreground">
+        <FlashNotifications />
         <header
-            class="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md"
+            class="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
         >
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <nav class="flex h-16 items-center justify-between">
                     <!--  Logo -->
-                    <div class="flex flex-col items-center space-x-2">
-                        <img src="/logo/logo.png" alt="logo" class="h-6" />
-                        <p class="font-bold">
-                            REAL<span class="text-orange-500">RENT</span>CAR
-                        </p>
+                    <div class="flex items-center">
+                        <AppLogo class="h-8 w-auto" />
                     </div>
 
                     <!--  Navigation -->
                     <div class="hidden items-center space-x-8 md:flex">
                         <Link 
                             :href="home()" 
-                            :class="{ 'text-orange-500': $page.url === home().url, 'text-gray-700': $page.url !== home().url }" 
-                            class="font-medium transition-colors hover:text-orange-500"
+                            :class="{ 'text-primary font-semibold': $page.url === home().url, 'text-muted-foreground': $page.url !== home().url }" 
+                            class="text-sm transition-colors hover:text-primary"
                         >
                             Home
                         </Link>
                         <Link 
                             :href="fleet()" 
-                            :class="{ 'text-orange-500': $page.url.startsWith('/fleet'), 'text-gray-700': !$page.url.startsWith('/fleet') }" 
-                            class="font-medium transition-colors hover:text-orange-500"
+                            :class="{ 'text-primary font-semibold': $page.url.startsWith('/fleet'), 'text-muted-foreground': !$page.url.startsWith('/fleet') }" 
+                            class="text-sm transition-colors hover:text-primary"
                         >
                             Fleet
                         </Link>
                         <Link 
                             :href="about()" 
-                            :class="{ 'text-orange-500': $page.url === '/about', 'text-gray-700': $page.url !== '/about' }" 
-                            class="font-medium transition-colors hover:text-orange-500"
+                            :class="{ 'text-primary font-semibold': $page.url === '/about', 'text-muted-foreground': $page.url !== '/about' }" 
+                            class="text-sm transition-colors hover:text-primary"
                         >
                             About
                         </Link>
                         <Link 
                             :href="contact()" 
-                            :class="{ 'text-orange-500': $page.url === '/contact', 'text-gray-700': $page.url !== '/contact' }" 
-                            class="font-medium transition-colors hover:text-orange-500"
+                            :class="{ 'text-primary font-semibold': $page.url === '/contact', 'text-muted-foreground': $page.url !== '/contact' }" 
+                            class="text-sm transition-colors hover:text-primary"
                         >
                             Contact
                         </Link>
                     </div>
 
                     <!-- Auth Buttons -->
-                    <div class="flex items-center space-x-3">
-                        <div v-if="auth.user" class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-4">
+                        <div v-if="auth.user" class="flex items-center space-x-4">
                             <Link
                                 :href="dashboardLink.url"
-                                class="hidden items-center rounded-xl bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:bg-gray-100 md:inline-flex"
+                                class="hidden md:inline-flex"
                             >
-                                Dashboard
+                                <Button variant="secondary" size="sm">
+                                    Dashboard
+                                </Button>
                             </Link>
                             
                             <DropdownMenu>
@@ -82,21 +95,27 @@ const dashboardLink = computed(() => role.value === 'admin' ? adminCarsIndex() :
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        class="relative h-10 w-10 rounded-full focus:ring-2 focus:ring-orange-500"
+                                        class="relative h-10 w-10 rounded-full focus-visible:ring-1 focus-visible:ring-ring"
                                     >
-                                        <Avatar class="h-8 w-8 overflow-hidden rounded-full">
-                                            <AvatarImage
-                                                v-if="auth.user.avatar"
-                                                :src="auth.user.avatar"
-                                                :alt="auth.user.name"
-                                            />
-                                            <AvatarFallback class="bg-orange-100 text-orange-700 font-bold">
-                                                {{ getInitials(auth.user.name) }}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <div class="relative group/avatar">
+                                            <Avatar class="h-9 w-9 overflow-hidden rounded-xl ring-2 ring-slate-100 shadow-sm transition-all group-hover/avatar:ring-ring/40 group-hover/avatar:shadow-md">
+                                                <AvatarImage
+                                                    v-if="auth.user.avatar"
+                                                    :src="auth.user.avatar"
+                                                    :alt="auth.user.name"
+                                                />
+                                                <AvatarFallback class="bg-gradient-to-br from-slate-700 to-slate-900 text-white font-black text-xs tracking-tighter uppercase shadow-inner">
+                                                    {{ getInitials(auth.user.name) }}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <!-- Online Status Indicator -->
+                                            <span class="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-white transition-transform group-hover/avatar:scale-110">
+                                                <span class="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                                            </span>
+                                        </div>
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" class="w-56 mt-2">
+                                <DropdownMenuContent align="end" class="w-56 mt-1">
                                     <UserMenuContent :user="auth.user" />
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -104,200 +123,99 @@ const dashboardLink = computed(() => role.value === 'admin' ? adminCarsIndex() :
                         <template v-else>
                             <Link
                                 :href="login()"
-                                class="inline-flex items-center px-6 py-2.5 text-sm font-semibold text-gray-700 transition-colors duration-200 hover:text-orange-600"
+                                class="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
                             >
                                 Sign In
                             </Link>
-                            <Link
-                                :href="register()"
-                                class="inline-flex items-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:from-orange-600 hover:to-orange-700 hover:shadow-xl"
-                            >
-                                Get Started
-                            </Link>
+                            <Button as-child size="sm" class="font-semibold">
+                                <Link :href="register()">
+                                    Get Started
+                                </Link>
+                            </Button>
                         </template>
                     </div>
                 </nav>
             </div>
         </header>
 
-        <slot />
+        <div class="flex-1">
+            <slot />
+        </div>
 
-        <!--  Footer -->
-        <footer class="bg-gray-900 py-16 text-white">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="grid gap-12 md:grid-cols-4">
+        <!-- Footer -->
+        <footer class="border-t bg-muted/40">
+            <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+                <div class="grid gap-12 lg:grid-cols-4 lg:gap-8">
+                    <!-- Brand Section -->
                     <div class="space-y-6">
-                        <div class="flex items-center space-x-2">
-                            <div
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600"
-                            >
-                                <svg
-                                    class="h-6 w-6 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                                    ></path>
-                                </svg>
+                        <div class="flex items-center space-x-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+                                <Zap class="size-5 text-primary-foreground" />
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold">
-                                    REAL<span class="text-orange-500"
-                                        >RENT</span
-                                    >
+                                <h3 class="text-xl font-bold tracking-tight text-foreground">
+                                    {{ siteNameParts.first }}<span class="text-primary">{{ siteNameParts.middle }}</span>{{ siteNameParts.last }}
                                 </h3>
-                                <p class="text-xs font-medium text-gray-400">
-                                    PREMIUM CARS
-                                </p>
+                                <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mt-0.5">Authentic Excellence</p>
                             </div>
                         </div>
-                        <p class="leading-relaxed text-gray-400">
-                            Premium car rental service providing luxury and
-                            reliable vehicles for all your transportation needs
-                            with exceptional customer service.
+                        <p class="text-sm leading-relaxed text-muted-foreground">
+                            {{ settings.footer_description || "Since 2015, we've redefined premium transportation by blending high-performance vehicles with an uncompromising commitment to client satisfaction." }}
                         </p>
                     </div>
 
+                    <!-- Services -->
                     <div class="space-y-6">
-                        <h4 class="text-lg font-semibold">Services</h4>
-                        <ul class="space-y-3 text-gray-400">
-                            <li>
-                                <a
-                                    href="#"
-                                    class="transition-colors hover:text-orange-500"
-                                    >Luxury Car Rental</a
-                                >
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    class="transition-colors hover:text-orange-500"
-                                    >Long Term Rental</a
-                                >
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    class="transition-colors hover:text-orange-500"
-                                    >Corporate Solutions</a
-                                >
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    class="transition-colors hover:text-orange-500"
-                                    >Airport Transfers</a
-                                >
-                            </li>
+                        <h4 class="text-sm font-semibold text-foreground">Fleet Ecosystem</h4>
+                        <ul class="space-y-3 text-sm text-muted-foreground">
+                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Luxury & Sport</Link></li>
+                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Executive Mobility</Link></li>
+                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Long-term Leases</Link></li>
+                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Airport Concierge</Link></li>
                         </ul>
                     </div>
 
+                    <!-- Support -->
                     <div class="space-y-6">
-                        <h4 class="text-lg font-semibold">Support</h4>
-                        <ul class="space-y-3 text-gray-400">
-                            <li>
-                                <a
-                                    :href="contact.url()"
-                                    class="transition-colors hover:text-orange-500"
-                                    >Contact Us</a
-                                >
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    class="transition-colors hover:text-orange-500"
-                                    >Help Center</a
-                                >
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    class="transition-colors hover:text-orange-500"
-                                    >Terms & Conditions</a
-                                >
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    class="transition-colors hover:text-orange-500"
-                                    >Privacy Policy</a
-                                >
-                            </li>
+                        <h4 class="text-sm font-semibold text-foreground">Resources</h4>
+                        <ul class="space-y-3 text-sm text-muted-foreground">
+                            <li><Link :href="contact.url()" class="transition-colors hover:text-primary">Global Support</Link></li>
+                            <li><a href="#" class="transition-colors hover:text-primary">Rental Terms</a></li>
+                            <li><a href="#" class="transition-colors hover:text-primary">Privacy Protocol</a></li>
+                            <li><a href="#" class="transition-colors hover:text-primary">Safety Standards</a></li>
                         </ul>
                     </div>
 
+                    <!-- Contact -->
                     <div class="space-y-6">
-                        <h4 class="text-lg font-semibold">Contact Info</h4>
-                        <div class="space-y-3 text-gray-400">
-                            <div class="flex items-center space-x-3">
-                                <svg
-                                    class="h-5 w-5 text-orange-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                                    ></path>
-                                </svg>
-                                <span>+1 (555) 123-4567</span>
+                        <h4 class="text-sm font-semibold text-foreground">Contact Us</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                                <Phone class="size-4 text-primary" />
+                                <span>{{ settings.contact_phone || '+1 (555) 123-4567' }}</span>
                             </div>
-                            <div class="flex items-center space-x-3">
-                                <svg
-                                    class="h-5 w-5 text-orange-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                    ></path>
-                                </svg>
-                                <span>hello@realrent.com</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <svg
-                                    class="h-5 w-5 text-orange-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                    ></path>
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                    ></path>
-                                </svg>
-                                <span>123 Business Ave, City</span>
+                            <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                                <Mail class="size-4 text-primary" />
+                                <span>{{ settings.contact_email || 'hello@realrent.com' }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-2 border-t border-gray-800 pt-8">
-                   
-                        <p class="text-gray-400 text-center">
-                            &copy; 2025 RealRent. All rights reserved.
-                        </p>
-                       
+                <div class="mt-12 border-t pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p class="text-xs text-muted-foreground">
+                        {{ settings.footer_text || `© ${new Date().getFullYear()} ${siteName}. All rights reserved.` }}
+                    </p>
+                    <div class="flex items-center gap-6 text-xs text-muted-foreground">
+                        <div class="flex items-center gap-2">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                            System Operational
+                        </div>
+                        <span class="hidden sm:inline-block">ISO 9001 Certified</span>
+                    </div>
                 </div>
             </div>
         </footer>

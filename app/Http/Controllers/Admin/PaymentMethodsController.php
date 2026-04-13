@@ -38,27 +38,48 @@ class PaymentMethodsController extends Controller
      */
     public function update(Request $request, string $method)
     {
+        \Log::info('=== PAYMENT METHOD UPDATE START ===', [
+            'method' => $method,
+            'request_all' => $request->all(),
+            'request_method' => $request->method(),
+        ]);
+
         $validated = $request->validate([
             'is_enabled' => 'required|boolean',
-            'is_sandbox' => 'required|boolean',
+            'is_sandbox' => 'sometimes|boolean',
             'display_name' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:500',
         ]);
 
+        // Default is_sandbox to false for methods that don't use it (e.g. agency)
+        if (!isset($validated['is_sandbox'])) {
+            $validated['is_sandbox'] = false;
+        }
+
+        \Log::info('Validated data:', $validated);
+
         $setting = PaymentMethodSetting::where('method', $method)->first();
 
         if (!$setting) {
+            \Log::error('Payment method not found: ' . $method);
             return back()->with('error', 'Payment method not found.');
         }
 
-        // Check if API keys are configured before enabling
-        if ($validated['is_enabled']) {
+        \Log::info('BEFORE update:', $setting->toArray());
+
+        // Check if API keys are configured before enabling (skip for agency)
+        if ($validated['is_enabled'] && $method !== 'agency') {
             if (!PaymentMethodSetting::isConfigured($method)) {
+                \Log::warning("Cannot enable {$method}: not configured");
                 return back()->with('error', "Cannot enable {$method}: API keys are not configured in .env file.");
             }
         }
 
-        $setting->update($validated);
+        $result = $setting->update($validated);
+
+        \Log::info('Update result: ' . ($result ? 'true' : 'false'));
+        \Log::info('AFTER update:', $setting->fresh()->toArray());
+        \Log::info('=== PAYMENT METHOD UPDATE END ===');
 
         // Clear cached payment methods so frontend updates immediately
         PaymentMethodSetting::clearCache();

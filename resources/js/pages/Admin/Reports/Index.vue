@@ -1,969 +1,303 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/AdminLayout.vue';
-import { router, usePage } from '@inertiajs/vue3';
-import { Chart, registerables } from 'chart.js';
-import { computed, onMounted, ref, watch } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+    TrendingUp, 
+    TrendingDown, 
+    DollarSign, 
+    Calendar, 
+    Car, 
+    Users, 
+    PieChart, 
+    BarChart3, 
+    Download,
+    Filter,
+    ArrowUpRight,
+    ArrowDownRight,
+    Search
+} from 'lucide-vue-next';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ref, computed } from 'vue';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import Heading from '@/components/Heading.vue';
 
-Chart.register(...registerables);
-
-// Types
-interface KPI {
-    value: number;
-    formatted: string;
-    label: string;
-}
-
-interface CarState {
-    value: number;
-    formatted: string;
-    label: string;
-    color: string;
-}
-
-interface ChartData {
-    labels: string[];
-    datasets: Array<{
-        label: string;
-        data: number[];
-        backgroundColor: string;
-        borderColor: string;
-        borderWidth: number;
+const props = defineProps<{
+    stats: {
+        total_revenue: number;
+        revenue_change_percent: number;
+        total_reservations: number;
+        reservations_change_percent: number;
+        average_daily_rate: number;
+        adr_change_percent: number;
+        occupancy_rate: number;
+        occupancy_change_percent: number;
+    };
+    recent_performance: Array<{
+        date: string;
+        revenue: number;
+        reservations: number;
     }>;
-    dailyTotals: number[];
-    statusColors: Record<string, string>;
-    statusLabels: Record<string, string>;
-    dateRange: {
-        start: string;
-        end: string;
+    top_cars: Array<{
+        id: number;
+        make: string;
+        model: string;
+        year: number;
+        revenue: number;
+        bookings: number;
+    }>;
+    status_distribution: Record<string, number>;
+    filters: {
+        period?: string;
+        start_date?: string;
+        end_date?: string;
     };
-}
+    currency: { symbol: string; code: string };
+}>();
 
-interface CarPerformance {
-    id: number;
-    car_name: string;
-    license_plate: string;
-    status: string;
-    status_color: string;
-    total_reservations: number;
-    total_revenue: number;
-    formatted_revenue: string;
-    total_days: number;
-    utilization_rate: number;
-    average_per_reservation: number;
-}
+const period = ref(props.filters.period || 'last_30_days');
 
-interface PeriodOption {
-    value: string;
-    label: string;
-}
-
-interface PageProps {
-    kpis: {
-        totalRevenue: KPI;
-        platformVisits: KPI;
-        activeReservations: KPI;
-        newClients: KPI;
-    };
-    carsState: {
-        totalCars: CarState;
-        availableCars: CarState;
-        rentedCars: CarState;
-        unavailableCars: CarState;
-    };
-    reservationsChart: ChartData;
-    carsPerformance: CarPerformance[];
-    currentPeriod: string;
-    periodOptions: PeriodOption[];
-}
-
-const page = usePage<PageProps>();
-const selectedPeriod = ref(page.props.currentPeriod);
-const reservationChart = ref<Chart | null>(null);
-const chartCanvas = ref<HTMLCanvasElement | null>(null);
-
-// Table sorting
-const sortField = ref<keyof CarPerformance>('total_revenue');
-const sortDirection = ref<'asc' | 'desc'>('desc');
-
-// Computed properties for easier access
-const kpis = computed(() => page.props.kpis);
-const carsState = computed(() => page.props.carsState);
-const chartData = computed(() => page.props.reservationsChart);
-const periodOptions = computed(() => page.props.periodOptions);
-
-// Sorted and limited cars performance
-const sortedCarsPerformance = computed(() => {
-    const sorted = [...page.props.carsPerformance].sort((a, b) => {
-        const aValue = a[sortField.value];
-        const bValue = b[sortField.value];
-
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-            return sortDirection.value === 'asc'
-                ? aValue.localeCompare(bValue)
-                : bValue.localeCompare(aValue);
-        }
-
-        const numA = Number(aValue);
-        const numB = Number(bValue);
-
-        return sortDirection.value === 'asc' ? numA - numB : numB - numA;
+function doFilter() {
+    router.get('/admin/reports', { period: period.value }, {
+        preserveState: true,
+        replace: true
     });
+}
 
-    return sorted.slice(0, 10); // Limit to 10 cars
-});
+function fmtMoney(v: number) {
+    return `${props.currency.symbol}${Number(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
 
-// Handle period change
-const handlePeriodChange = () => {
-    router.get(
-        '/admin/reports',
-        { period: selectedPeriod.value },
-        {
-            preserveState: false,
-            preserveScroll: false,
-            only: [
-                'kpis',
-                'carsState',
-                'reservationsChart',
-                'carsPerformance',
-                'currentPeriod',
-            ],
-        },
-    );
+function exportReport() {
+    window.location.href = '/admin/reports/export?' + new URLSearchParams({ period: period.value }).toString();
+}
+
+const statusColors: Record<string, string> = {
+    pending: 'bg-amber-100 text-amber-600 ring-amber-200',
+    confirmed: 'bg-blue-100 text-blue-600 ring-blue-200',
+    active: 'bg-indigo-100 text-indigo-600 ring-indigo-200',
+    completed: 'bg-emerald-100 text-emerald-600 ring-emerald-200',
+    cancelled: 'bg-rose-100 text-rose-600 ring-rose-200',
 };
-
-// Handle table sorting
-const sortTable = (field: keyof CarPerformance) => {
-    if (sortField.value === field) {
-        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
-    } else {
-        sortField.value = field;
-        sortDirection.value = 'desc';
-    }
-};
-
-// Create reservations chart as stacked bar chart
-const createReservationsChart = () => {
-    if (!chartCanvas.value || !chartData.value) return;
-
-    // Destroy existing chart
-    if (reservationChart.value) {
-        reservationChart.value.destroy();
-    }
-
-    const ctx = chartCanvas.value.getContext('2d');
-    if (!ctx) return;
-
-    reservationChart.value = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: chartData.value.labels,
-            datasets: chartData.value.datasets,
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        padding: 20,
-                        usePointStyle: true,
-                        pointStyle: 'rect',
-                    },
-                },
-
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleColor: 'white',
-                    bodyColor: 'white',
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                    borderWidth: 1,
-                    callbacks: {
-                        title: function (tooltipItems) {
-                            return `Date: ${tooltipItems[0].label}`;
-                        },
-                        afterBody: function (tooltipItems) {
-                            const dayIndex = tooltipItems[0].dataIndex;
-                            const total = chartData.value.dailyTotals[dayIndex];
-                            return [``, `Total Reservations: ${total}`];
-                        },
-                        label: function (context) {
-                            const label = context.dataset.label || '';
-                            const value = context.parsed.y;
-                            return `${label}: ${value}`;
-                        },
-                    },
-                },
-            },
-            scales: {
-                x: {
-                    stacked: true,
-                    grid: {
-                        display: false,
-                    },
-                    ticks: {
-                        maxRotation: 45,
-                        minRotation: 0,
-                    },
-                },
-                y: {
-                    stacked: true,
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1,
-                        callback: function (value) {
-                            if (Number.isInteger(value)) {
-                                return value;
-                            }
-                            return '';
-                        },
-                    },
-                    title: {
-                        display: true,
-                        text: 'Number of Reservations',
-                        font: {
-                            size: 12,
-                            weight: 'bold',
-                        },
-                    },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)',
-                    },
-                },
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index',
-            },
-            animation: {
-                duration: 1000,
-                easing: 'easeInOutQuart',
-            },
-            elements: {
-                bar: {
-                    borderRadius: 2,
-                    borderSkipped: false,
-                },
-            },
-        },
-    });
-};
-
-// Watch for data changes to recreate chart
-watch(() => [chartData.value, selectedPeriod.value], createReservationsChart, {
-    deep: true,
-});
-
-// Watch for period changes in props
-watch(
-    () => page.props.currentPeriod,
-    (newPeriod) => {
-        selectedPeriod.value = newPeriod;
-    },
-);
-
-onMounted(() => {
-    createReservationsChart();
-});
 </script>
 
 <template>
+    <Head title="Business Intelligence" />
     <AdminLayout>
-        <div class="space-y-6 px-8 py-4">
-            <!-- Header -->
-            <div class="flex items-center justify-between">
-                <h2 class="text-2xl font-bold text-gray-900">
-                    Reports & Analytics
-                </h2>
-
-                <!-- Period Selector -->
-                <div class="flex items-center space-x-2">
-                    <label
-                        for="period"
-                        class="text-sm font-medium text-gray-700"
-                    >
-                        Period:
-                    </label>
-                    <select
-                        id="period"
-                        v-model="selectedPeriod"
-                        @change="handlePeriodChange"
-                        class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    >
-                        <option
-                            v-for="option in periodOptions"
-                            :key="option.value"
-                            :value="option.value"
-                        >
-                            {{ option.label }}
-                        </option>
-                    </select>
-                </div>
+        <main class="w-full p-4 sm:p-8 space-y-8 sm:space-y-10 bg-background min-h-screen pb-24">
+            <div class="mx-auto max-w-[1400px] flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+                <Heading 
+                    title="Business Intelligence" 
+                    description="Analyze revenue growth, fleet performance, and customer retention metrics."
+                    size="lg"
+                />
+                <Button @click="exportReport" class="h-14 px-8 rounded-2xl bg-slate-900 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all border-none">
+                    <Download class="w-5 h-5 mr-2" /> Export PDF
+                </Button>
             </div>
 
-            <!-- High-level KPIs -->
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                <!-- Total Revenue -->
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-md bg-green-500"
-                                >
-                                    <svg
-                                        class="h-5 w-5 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                                        ></path>
-                                    </svg>
-                                </div>
+            <div class="mx-auto max-w-[1400px] space-y-10">
+                <!-- Advanced Filters -->
+                <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between bg-white p-6 rounded-[2.5rem] ring-1 ring-slate-100 shadow-xl shadow-slate-200/50">
+                    <div class="flex items-center gap-4 w-full lg:max-w-xs">
+                        <div class="p-3 rounded-2xl bg-primary/5 text-primary shrink-0">
+                            <Filter class="size-5" />
+                        </div>
+                        <Select v-model="period" @update:model-value="doFilter">
+                            <SelectTrigger class="h-14 rounded-2xl border-none bg-slate-50 font-black text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all">
+                                <SelectValue placeholder="Select Period" />
+                            </SelectTrigger>
+                            <SelectContent class="rounded-2xl border-none shadow-2xl p-2">
+                                <SelectItem value="today" class="rounded-xl font-bold py-3">Today</SelectItem>
+                                <SelectItem value="yesterday" class="rounded-xl font-bold py-3">Yesterday</SelectItem>
+                                <SelectItem value="last_7_days" class="rounded-xl font-bold py-3">Last 7 Days</SelectItem>
+                                <SelectItem value="last_30_days" class="rounded-xl font-bold py-3">Last 30 Days</SelectItem>
+                                <SelectItem value="this_month" class="rounded-xl font-bold py-3">This Month</SelectItem>
+                                <SelectItem value="last_month" class="rounded-xl font-bold py-3">Last Month</SelectItem>
+                                <SelectItem value="this_year" class="rounded-xl font-bold py-3">This Year</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-6">
+                        <div class="flex items-center gap-2 px-6 py-4 rounded-2xl bg-emerald-50 ring-1 ring-emerald-100">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-200">
+                                <DollarSign class="h-5 w-5" />
                             </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt
-                                        class="truncate text-sm font-medium text-gray-500"
-                                    >
-                                        {{ kpis.totalRevenue.label }}
-                                    </dt>
-                                    <dd
-                                        class="text-lg font-medium text-gray-900"
-                                    >
-                                        {{ kpis.totalRevenue.formatted }}
-                                    </dd>
-                                </dl>
+                            <div>
+                                <div class="text-[10px] font-black uppercase tracking-widest text-emerald-600/60">Profitability</div>
+                                <div class="text-sm font-black text-emerald-700 tracking-tight">+{{ stats.revenue_change_percent }}% Variance</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Platform Visits -->
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500"
-                                >
-                                    <svg
-                                        class="h-5 w-5 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                        ></path>
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                        ></path>
-                                    </svg>
-                                </div>
+                <!-- KPI Cards -->
+                <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                    <!-- Total Revenue -->
+                    <Card class="rounded-[2.5rem] border-none bg-white ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 p-8 hover:shadow-2xl transition-all">
+                        <div class="flex items-start justify-between">
+                            <div class="p-4 rounded-3xl bg-indigo-50 text-indigo-600">
+                                <DollarSign class="h-8 w-8" />
                             </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt
-                                        class="truncate text-sm font-medium text-gray-500"
-                                    >
-                                        {{ kpis.platformVisits.label }}
-                                    </dt>
-                                    <dd
-                                        class="text-lg font-medium text-gray-900"
-                                    >
-                                        {{ kpis.platformVisits.formatted }}
-                                    </dd>
-                                </dl>
+                            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black" :class="stats.revenue_change_percent >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'">
+                                <component :is="stats.revenue_change_percent >= 0 ? ArrowUpRight : ArrowDownRight" class="h-3.5 w-3.5" />
+                                {{ Math.abs(stats.revenue_change_percent) }}%
                             </div>
                         </div>
-                    </div>
+                        <div class="mt-8 space-y-1">
+                            <div class="text-[11px] font-black uppercase tracking-widest text-slate-400">Total Revenue</div>
+                            <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ fmtMoney(stats.total_revenue) }}</div>
+                        </div>
+                    </Card>
+
+                    <!-- Reservations -->
+                    <Card class="rounded-[2.5rem] border-none bg-white ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 p-8 hover:shadow-2xl transition-all">
+                        <div class="flex items-start justify-between">
+                            <div class="p-4 rounded-3xl bg-amber-50 text-amber-600">
+                                <Calendar class="h-8 w-8" />
+                            </div>
+                            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black" :class="stats.reservations_change_percent >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'">
+                                <component :is="stats.reservations_change_percent >= 0 ? ArrowUpRight : ArrowDownRight" class="h-3.5 w-3.5" />
+                                {{ Math.abs(stats.reservations_change_percent) }}%
+                            </div>
+                        </div>
+                        <div class="mt-8 space-y-1">
+                            <div class="text-[11px] font-black uppercase tracking-widest text-slate-400">Reservations</div>
+                            <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ stats.total_reservations }}</div>
+                        </div>
+                    </Card>
+
+                    <!-- Average Daily Rate -->
+                    <Card class="rounded-[2.5rem] border-none bg-white ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 p-8 hover:shadow-2xl transition-all">
+                        <div class="flex items-start justify-between">
+                            <div class="p-4 rounded-3xl bg-primary/5 text-primary">
+                                <TrendingUp class="h-8 w-8" />
+                            </div>
+                            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black" :class="stats.adr_change_percent >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'">
+                                <component :is="stats.adr_change_percent >= 0 ? ArrowUpRight : ArrowDownRight" class="h-3.5 w-3.5" />
+                                {{ Math.abs(stats.adr_change_percent) }}%
+                            </div>
+                        </div>
+                        <div class="mt-8 space-y-1">
+                            <div class="text-[11px] font-black uppercase tracking-widest text-slate-400">Avg. Daily Rate</div>
+                            <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ fmtMoney(stats.average_daily_rate) }}</div>
+                        </div>
+                    </Card>
+
+                    <!-- Occupancy -->
+                    <Card class="rounded-[2.5rem] border-none bg-white ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 p-8 hover:shadow-2xl transition-all">
+                        <div class="flex items-start justify-between">
+                            <div class="p-4 rounded-3xl bg-rose-50 text-rose-600">
+                                <Car class="h-8 w-8" />
+                            </div>
+                            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black" :class="stats.occupancy_change_percent >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'">
+                                <component :is="stats.occupancy_change_percent >= 0 ? ArrowUpRight : ArrowDownRight" class="h-3.5 w-3.5" />
+                                {{ Math.abs(stats.occupancy_change_percent) }}%
+                            </div>
+                        </div>
+                        <div class="mt-8 space-y-1">
+                            <div class="text-[11px] font-black uppercase tracking-widest text-slate-400">Occupancy Rate</div>
+                            <div class="text-3xl font-black text-slate-900 tracking-tighter">{{ stats.occupancy_rate }}%</div>
+                        </div>
+                    </Card>
                 </div>
 
-                <!-- Active Reservations -->
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-md bg-yellow-500"
-                                >
-                                    <svg
-                                        class="h-5 w-5 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                        ></path>
-                                    </svg>
+                <div class="grid gap-10 lg:grid-cols-3">
+                    <!-- Top Performing Vehicles -->
+                    <Card class="lg:col-span-2 rounded-[2.5rem] border-none bg-white ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+                        <CardHeader class="p-8 border-b border-slate-50">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <CardTitle class="text-xl font-black text-slate-900">Fleet Performance</CardTitle>
+                                    <CardDescription class="font-bold text-slate-400 mt-1">Top generating vehicles by total revenue.</CardDescription>
+                                </div>
+                                <div class="p-3 rounded-2xl bg-slate-50 text-slate-400">
+                                    <BarChart3 class="size-6" />
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt
-                                        class="truncate text-sm font-medium text-gray-500"
-                                    >
-                                        {{ kpis.activeReservations.label }}
-                                    </dt>
-                                    <dd
-                                        class="text-lg font-medium text-gray-900"
-                                    >
-                                        {{ kpis.activeReservations.formatted }}
-                                    </dd>
-                                </dl>
+                        </CardHeader>
+                        <CardContent class="p-0">
+                            <div class="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow class="hover:bg-transparent border-none">
+                                            <TableHead class="h-14 px-8 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[250px]">Vehicle Details</TableHead>
+                                            <TableHead class="h-14 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[120px]">Bookings</TableHead>
+                                            <TableHead class="h-14 px-8 text-right text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[150px]">Total Revenue</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        <TableRow v-for="car in top_cars" :key="car.id" class="group border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                                            <TableCell class="px-8 py-5">
+                                                <div class="flex items-center gap-4">
+                                                    <div class="h-12 w-16 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200">
+                                                        <Car class="size-full p-3 text-slate-400" />
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-sm font-black text-slate-900 group-hover:text-primary transition-colors">{{ car.year }} {{ car.make }} {{ car.model }}</div>
+                                                        <div class="text-[10px] font-bold text-slate-400 mt-0.5">ID: #{{ car.id }}</div>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div class="text-sm font-black text-slate-600">{{ car.bookings }} <span class="text-[10px] opacity-60">Trips</span></div>
+                                            </TableCell>
+                                            <TableCell class="px-8 text-right">
+                                                <div class="text-sm font-black text-slate-900 tracking-tight">{{ fmtMoney(car.revenue) }}</div>
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
                             </div>
-                        </div>
-                    </div>
-                </div>
+                        </CardContent>
+                    </Card>
 
-                <!-- New Clients -->
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-md bg-purple-500"
-                                >
-                                    <svg
-                                        class="h-5 w-5 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                        ></path>
-                                    </svg>
-                                </div>
+                    <!-- Distribution -->
+                    <Card class="rounded-[2.5rem] border-none bg-white ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 p-8 flex flex-col">
+                        <div class="flex items-center justify-between mb-8">
+                            <div>
+                                <CardTitle class="text-xl font-black text-slate-900">Distribution</CardTitle>
+                                <CardDescription class="font-bold text-slate-400 mt-1">Status allocation breakdown.</CardDescription>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt
-                                        class="truncate text-sm font-medium text-gray-500"
-                                    >
-                                        {{ kpis.newClients.label }}
-                                    </dt>
-                                    <dd
-                                        class="text-lg font-medium text-gray-900"
-                                    >
-                                        {{ kpis.newClients.formatted }}
-                                    </dd>
-                                </dl>
+                            <div class="p-3 rounded-2xl bg-indigo-50 text-indigo-500">
+                                <PieChart class="size-6" />
                             </div>
                         </div>
-                    </div>
+                        
+                        <div class="flex-1 space-y-6">
+                            <div v-for="(count, status) in status_distribution" :key="status" class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-2 w-2 rounded-full" :class="statusColors[status]?.split(' ')[0] || 'bg-slate-300'"></div>
+                                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">{{ status }}</span>
+                                    </div>
+                                    <span class="text-xs font-black text-slate-900">{{ count }}</span>
+                                </div>
+                                <div class="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
+                                    <div 
+                                        class="h-full rounded-full transition-all duration-1000" 
+                                        :class="statusColors[status]?.split(' ')[0] || 'bg-slate-200'"
+                                        :style="{ width: `${(count / Math.max(...Object.values(status_distribution)) * 100)}%` }"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-10 p-6 rounded-3xl bg-slate-900 text-white relative overflow-hidden group">
+                            <div class="relative z-10">
+                                <div class="text-[10px] font-black uppercase tracking-widest opacity-60">Report Summary</div>
+                                <div class="text-lg font-black mt-2">Executive Insights</div>
+                                <p class="text-[11px] font-bold opacity-40 mt-2 leading-relaxed">System performance is within optimal thresholds for the current fiscal period.</p>
+                            </div>
+                            <TrendingUp class="absolute -right-4 -bottom-4 size-24 opacity-10 group-hover:scale-110 transition-transform" />
+                        </div>
+                    </Card>
                 </div>
             </div>
-
-            <!-- Cars State -->
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                <!-- Total Cars -->
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-md"
-                                    :style="{
-                                        backgroundColor:
-                                            carsState.totalCars.color,
-                                    }"
-                                >
-                                    <svg
-                                        class="h-5 w-5 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                                        ></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt
-                                        class="truncate text-sm font-medium text-gray-500"
-                                    >
-                                        {{ carsState.totalCars.label }}
-                                    </dt>
-                                    <dd
-                                        class="text-lg font-medium text-gray-900"
-                                    >
-                                        {{ carsState.totalCars.formatted }}
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Available Cars -->
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-md"
-                                    :style="{
-                                        backgroundColor:
-                                            carsState.availableCars.color,
-                                    }"
-                                >
-                                    <svg
-                                        class="h-5 w-5 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M5 13l4 4L19 7"
-                                        ></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt
-                                        class="truncate text-sm font-medium text-gray-500"
-                                    >
-                                        {{ carsState.availableCars.label }}
-                                    </dt>
-                                    <dd
-                                        class="text-lg font-medium text-gray-900"
-                                    >
-                                        {{ carsState.availableCars.formatted }}
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Rented Cars -->
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-md"
-                                    :style="{
-                                        backgroundColor:
-                                            carsState.rentedCars.color,
-                                    }"
-                                >
-                                    <svg
-                                        class="h-5 w-5 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                        ></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt
-                                        class="truncate text-sm font-medium text-gray-500"
-                                    >
-                                        {{ carsState.rentedCars.label }}
-                                    </dt>
-                                    <dd
-                                        class="text-lg font-medium text-gray-900"
-                                    >
-                                        {{ carsState.rentedCars.formatted }}
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Unavailable Cars -->
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-md"
-                                    :style="{
-                                        backgroundColor:
-                                            carsState.unavailableCars.color,
-                                    }"
-                                >
-                                    <svg
-                                        class="h-5 w-5 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636"
-                                        ></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt
-                                        class="truncate text-sm font-medium text-gray-500"
-                                    >
-                                        {{ carsState.unavailableCars.label }}
-                                    </dt>
-                                    <dd
-                                        class="text-lg font-medium text-gray-900"
-                                    >
-                                        {{
-                                            carsState.unavailableCars.formatted
-                                        }}
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reservations Chart -->
-            <div class="rounded-lg bg-white shadow">
-                <div class="p-6">
-                    <div class="mb-4 flex items-center justify-between">
-                        <h3 class="text-lg font-medium text-gray-900">
-                            Daily Reservations Created
-                        </h3>
-                        <div class="text-sm text-gray-500">
-                            {{ chartData.dateRange.start }} to
-                            {{ chartData.dateRange.end }}
-                        </div>
-                    </div>
-
-                    <!-- Chart container -->
-                    <div class="relative h-96">
-                        <canvas ref="chartCanvas"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Cars Performance Table -->
-            <div class="rounded-lg bg-white shadow">
-                <div class="p-6">
-                    <div class="mb-4 flex items-center justify-between">
-                        <h3 class="text-lg font-medium text-gray-900">
-                            Top 10 Cars Performance
-                        </h3>
-                        <div class="text-sm text-gray-500">
-                            Click column headers to sort
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th
-                                        scope="col"
-                                        class="cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:bg-gray-100"
-                                        @click="sortTable('car_name')"
-                                    >
-                                        <div
-                                            class="flex items-center space-x-1"
-                                        >
-                                            <span>Car</span>
-                                            <svg
-                                                v-if="sortField === 'car_name'"
-                                                class="h-4 w-4"
-                                                :class="
-                                                    sortDirection === 'asc'
-                                                        ? 'rotate-180 transform'
-                                                        : ''
-                                                "
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M19 9l-7 7-7-7"
-                                                ></path>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        class="cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:bg-gray-100"
-                                        @click="sortTable('status')"
-                                    >
-                                        <div
-                                            class="flex items-center space-x-1"
-                                        >
-                                            <span>Status</span>
-                                            <svg
-                                                v-if="sortField === 'status'"
-                                                class="h-4 w-4"
-                                                :class="
-                                                    sortDirection === 'asc'
-                                                        ? 'rotate-180 transform'
-                                                        : ''
-                                                "
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M19 9l-7 7-7-7"
-                                                ></path>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        class="cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:bg-gray-100"
-                                        @click="sortTable('total_reservations')"
-                                    >
-                                        <div
-                                            class="flex items-center space-x-1"
-                                        >
-                                            <span>Reservations</span>
-                                            <svg
-                                                v-if="
-                                                    sortField ===
-                                                    'total_reservations'
-                                                "
-                                                class="h-4 w-4"
-                                                :class="
-                                                    sortDirection === 'asc'
-                                                        ? 'rotate-180 transform'
-                                                        : ''
-                                                "
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M19 9l-7 7-7-7"
-                                                ></path>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        class="cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:bg-gray-100"
-                                        @click="sortTable('total_revenue')"
-                                    >
-                                        <div
-                                            class="flex items-center space-x-1"
-                                        >
-                                            <span>Total Revenue</span>
-                                            <svg
-                                                v-if="
-                                                    sortField ===
-                                                    'total_revenue'
-                                                "
-                                                class="h-4 w-4"
-                                                :class="
-                                                    sortDirection === 'asc'
-                                                        ? 'rotate-180 transform'
-                                                        : ''
-                                                "
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M19 9l-7 7-7-7"
-                                                ></path>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        class="cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:bg-gray-100"
-                                        @click="sortTable('utilization_rate')"
-                                    >
-                                        <div
-                                            class="flex items-center space-x-1"
-                                        >
-                                            <span>Utilization Rate</span>
-                                            <svg
-                                                v-if="
-                                                    sortField ===
-                                                    'utilization_rate'
-                                                "
-                                                class="h-4 w-4"
-                                                :class="
-                                                    sortDirection === 'asc'
-                                                        ? 'rotate-180 transform'
-                                                        : ''
-                                                "
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M19 9l-7 7-7-7"
-                                                ></path>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        class="cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:bg-gray-100"
-                                        @click="
-                                            sortTable('average_per_reservation')
-                                        "
-                                    >
-                                        <div
-                                            class="flex items-center space-x-1"
-                                        >
-                                            <span>Avg per Reservation</span>
-                                            <svg
-                                                v-if="
-                                                    sortField ===
-                                                    'average_per_reservation'
-                                                "
-                                                class="h-4 w-4"
-                                                :class="
-                                                    sortDirection === 'asc'
-                                                        ? 'rotate-180 transform'
-                                                        : ''
-                                                "
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M19 9l-7 7-7-7"
-                                                ></path>
-                                            </svg>
-                                        </div>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                <tr
-                                    v-for="car in sortedCarsPerformance"
-                                    :key="car.id"
-                                    class="hover:bg-gray-50"
-                                >
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div
-                                            class="text-sm font-medium text-gray-900"
-                                        >
-                                            {{ car.car_name }}
-                                        </div>
-                                        <div class="text-sm text-gray-500">
-                                            {{ car.license_plate }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            class="inline-flex rounded-full px-2 py-1 text-xs font-semibold text-white"
-                                            :style="{
-                                                backgroundColor:
-                                                    car.status_color,
-                                            }"
-                                        >
-                                            {{ car.status }}
-                                        </span>
-                                    </td>
-                                    <td
-                                        class="px-6 py-4 text-sm whitespace-nowrap text-gray-900"
-                                    >
-                                        {{ car.total_reservations }}
-                                    </td>
-                                    <td
-                                        class="px-6 py-4 text-sm whitespace-nowrap text-gray-900"
-                                    >
-                                        {{ car.formatted_revenue }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div
-                                                class="mr-2 h-2 flex-1 rounded-full bg-gray-200"
-                                            >
-                                                <div
-                                                    class="h-2 rounded-full bg-blue-500"
-                                                    :style="{
-                                                        width: `${Math.min(car.utilization_rate, 100)}%`,
-                                                    }"
-                                                ></div>
-                                            </div>
-                                            <span
-                                                class="min-w-0 text-sm text-gray-900"
-                                            >
-                                                {{ car.utilization_rate }}%
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td
-                                        class="px-6 py-4 text-sm whitespace-nowrap text-gray-900"
-                                    >
-                                        {{
-                                            car.average_per_reservation > 0
-                                                ? `$${car.average_per_reservation.toFixed(2)}`
-                                                : '$0.00'
-                                        }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </main>
     </AdminLayout>
 </template>

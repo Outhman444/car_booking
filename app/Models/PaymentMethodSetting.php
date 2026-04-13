@@ -103,6 +103,7 @@ class PaymentMethodSetting extends Model
         return match (strtolower($method)) {
             'paypal' => self::isPayPalConfigured(),
             'stripe' => self::isStripeConfigured(),
+            'agency' => true, // No API keys needed — manual/in-person payment
             default => false,
         };
     }

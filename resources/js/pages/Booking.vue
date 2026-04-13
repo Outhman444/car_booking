@@ -4,6 +4,54 @@ import { book } from '@/routes/fleet';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
 import { login } from '@/routes';
+import { 
+    ChevronRight, 
+    Calendar, 
+    MapPin, 
+    Clock, 
+    CalendarCheck, 
+    ReceiptText, 
+    TriangleAlert, 
+    LogIn, 
+    LoaderCircle, 
+    CheckCircle,
+    Zap,
+    Users,
+    Cog,
+    Gauge,
+    Palette,
+    ShieldCheck,
+    FileCheck,
+    IdCard,
+    CreditCard
+} from 'lucide-vue-next';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from '@/components/ui/alert';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { ref } from 'vue';
+import HelpTooltip from '@/components/HelpTooltip.vue';
+import BookingStepper from '@/components/BookingStepper.vue';
+import { getCarColorHex } from '@/lib/colors';
 
 interface Car {
     id: number;
@@ -17,16 +65,35 @@ interface Car {
     year: string;
     description: string;
     status: string;
+    seats: number;
+    color: string;
+    mileage: number;
 }
 
-const $page = usePage();
+const $page = usePage<any>();
 const car = computed<Car>(() => $page.props.car as Car);
+
+const locations = computed(() => $page.props.locations as any[]);
+const taxRate = computed(() => ($page.props.taxRate as number) || 0.07);
 
 const form = useForm({
     start_date: '',
     end_date: '',
     pickup_location: '',
     return_location: '',
+});
+
+const showRoleError = ref(false);
+const roleErrorMessage = ref('');
+const showPolicyModal = ref(false);
+
+const acceptExperience = ref(false);
+const acceptDocuments = ref(false);
+const acceptTerms = ref(false);
+const acceptLocation = ref(false);
+
+const policyAccepted = computed(() => {
+    return acceptExperience.value && acceptDocuments.value && acceptTerms.value && acceptLocation.value;
 });
 
 // Calculate rental details
@@ -44,7 +111,7 @@ const subtotal = computed(() => {
 });
 
 const tax = computed(() => {
-    return subtotal.value * 0.07; // 7% tax
+    return subtotal.value * taxRate.value;
 });
 
 const total = computed(() => {
@@ -65,25 +132,33 @@ const submitBooking = () => {
     const user = $page.props.auth.user;
 
     if (!user) {
-        // Not authenticated → redirect to login
         router.get(login.url());
         return;
     }
 
-    if (user.role === 'client') {
-        // Authenticated and role is "user" → make booking
-        form.post(book.url(car.value.id));
-        return;
-    }
-
     if (user.role === 'admin') {
-        // Authenticated but role is "admin" → show alert
-        alert("You cannot book as an admin.");
+        roleErrorMessage.value = "You cannot book as an admin.";
+        showRoleError.value = true;
         return;
     }
 
-    // fallback for any other role
-    alert("Your role does not allow booking.");
+    if (user.role !== 'client') {
+        roleErrorMessage.value = "Your role does not allow booking.";
+        showRoleError.value = true;
+        return;
+    }
+
+    // Show policy modal for acceptance before submitting
+    acceptExperience.value = false;
+    acceptDocuments.value = false;
+    acceptTerms.value = false;
+    acceptLocation.value = false;
+    showPolicyModal.value = true;
+};
+
+const confirmBookingAfterPolicy = () => {
+    showPolicyModal.value = false;
+    form.post(book.url(car.value.id));
 };
 
 
@@ -109,15 +184,6 @@ const images = computed(() => {
     ];
 });
 
-const commonLocations = [
-    'Downtown Office',
-    'Airport Terminal 1',
-    'Airport Terminal 2',
-    'Central Station',
-    'Mall Plaza',
-    'Hotel District',
-    'Business District',
-];
 </script>
 <template>
     <HomeLayout>
@@ -125,6 +191,9 @@ const commonLocations = [
             class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8"
         >
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <!-- Status Stepper -->
+                <BookingStepper :current-step="1" class="mb-8" />
+
                 <!--  Header -->
                 <div class="mb-8">
                     <nav
@@ -132,51 +201,27 @@ const commonLocations = [
                     >
                         <a
                             href="/fleet"
-                            class="font-medium transition-colors duration-200 hover:text-orange-500"
+                            class="font-black uppercase tracking-widest transition-colors duration-200 hover:text-primary"
                             >Fleet</a
                         >
-                        <svg
-                            class="h-4 w-4 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 5l7 7-7 7"
-                            ></path>
-                        </svg>
+                        <ChevronRight class="size-4 text-gray-400" />
                         <span class="font-medium text-gray-900"
                             >{{ car.make }} {{ car.model }}</span
                         >
                     </nav>
                     <div class="flex items-center space-x-4">
                         <div
-                            class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600"
+                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm ring-1 ring-ring/20"
                         >
-                            <svg
-                                class="h-6 w-6 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                ></path>
-                            </svg>
+                            <Calendar class="size-6" />
                         </div>
                         <div>
                             <h1
-                                class="text-4xl leading-tight font-bold text-gray-900"
+                                class="text-4xl leading-tight font-black tracking-tight text-slate-900"
                             >
-                                Book {{ car.make }} {{ car.model }}
+                                Book <span class="text-primary">{{ car.make }}</span> {{ car.model }}
                             </h1>
-                            <p class="mt-1 text-gray-600">
+                            <p class="mt-1 text-base font-bold text-slate-400 uppercase tracking-widest">
                                 Complete your reservation in just a few steps
                             </p>
                         </div>
@@ -188,7 +233,7 @@ const commonLocations = [
                     <div class="space-y-8 lg:col-span-2">
                         <!--  Car Images -->
                         <div
-                            class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg"
+                            class="overflow-hidden rounded-3xl border-none bg-white shadow-xl shadow-slate-200/50 ring-1 ring-slate-100"
                         >
                             <div
                                 class="relative h-72 bg-gradient-to-br from-gray-100 to-gray-200 sm:h-96"
@@ -215,53 +260,48 @@ const commonLocations = [
                                             class="flex items-center space-x-6 text-sm text-gray-500"
                                         >
                                             <span
-                                                class="flex items-center rounded-full bg-gray-100 px-3 py-1"
+                                                class="flex items-center rounded-full bg-primary/5 px-4 py-1.5 text-primary font-black uppercase tracking-widest text-[10px] ring-1 ring-ring/20"
                                             >
-                                                <svg
-                                                    class="mr-2 h-4 w-4"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                                    ></path>
-                                                </svg>
+                                                <Calendar class="mr-2 h-3.5 w-3.5" />
                                                 {{ car.year }}
                                             </span>
                                             <span
-                                                class="flex items-center rounded-full bg-gray-100 px-3 py-1 capitalize"
+                                                class="flex items-center rounded-full bg-emerald-50 px-4 py-1.5 capitalize text-emerald-700 font-black uppercase tracking-widest text-[10px] ring-1 ring-emerald-200"
                                             >
-                                                <svg
-                                                    class="mr-2 h-4 w-4"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                                                    ></path>
-                                                </svg>
+                                                <Zap class="mr-2 h-3.5 w-3.5" />
                                                 {{ car.fuel_type }}
                                             </span>
+                                        </div>
+
+                                        <div class="mt-6 flex flex-wrap gap-4">
+                                            <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-2.5 border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-md">
+                                                <Users class="size-4 text-primary" />
+                                                <span class="text-xs font-black text-slate-700 uppercase tracking-widest">{{ car.seats }} Seats</span>
+                                            </div>
+                                            <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-2.5 border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-md">
+                                                <Cog class="size-4 text-primary" />
+                                                <span class="text-xs font-black text-slate-700 uppercase tracking-widest capitalize">{{ car.transmission }}</span>
+                                            </div>
+                                            <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-2.5 border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-md">
+                                                <Gauge class="size-4 text-primary" />
+                                                <span class="text-xs font-black text-slate-700 uppercase tracking-widest">{{ car.mileage.toLocaleString() }} KM</span>
+                                            </div>
+                                            <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-2.5 border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-md">
+                                                <span class="size-4 rounded-full border-2 border-slate-200/50 shadow-sm" :style="{ backgroundColor: getCarColorHex(car.color) }"></span>
+                                                <span class="text-xs font-black text-slate-700 uppercase tracking-widest capitalize">{{ car.color }} Paint</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="text-right">
                                         <div
-                                            class="rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-2 text-white"
+                                            class="rounded-3xl bg-slate-900 px-8 py-5 text-white shadow-2xl shadow-slate-200"
                                         >
-                                            <span class="text-3xl font-bold"
-                                                >{{ $page.props.currency.symbol }}{{ car.price_per_day }}</span
+                                            <span class="text-4xl font-black"
+                                                >{{ $page.props.currency.symbol }}{{ Math.floor(parseFloat(car.price_per_day)) }}<span class="text-lg opacity-40">.{{ parseFloat(car.price_per_day).toFixed(2).split('.')[1] }}</span></span
                                             >
                                             <span
-                                                class="block text-sm text-orange-100"
-                                                >per day</span
+                                                class="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1"
+                                                >PER DAY</span
                                             >
                                         </div>
                                     </div>
@@ -275,106 +315,62 @@ const commonLocations = [
 
                         <!--  Booking Form -->
                         <div
-                            class="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg"
+                            class="rounded-[2.5rem] border-none bg-white p-10 shadow-xl shadow-slate-200/50 ring-1 ring-slate-100"
                         >
-                            <div class="mb-8 flex items-center space-x-3">
+                            <div class="mb-10 flex items-center space-x-4">
                                 <div
-                                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600"
+                                    class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm"
                                 >
-                                    <svg
-                                        class="h-5 w-5 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                        ></path>
-                                    </svg>
+                                    <CalendarCheck class="h-6 w-6" />
                                 </div>
-                                <h3 class="text-2xl font-bold text-gray-900">
-                                    Booking Details
-                                </h3>
+                                <div>
+                                    <h3 class="text-2xl font-black tracking-tight text-slate-900">
+                                        Booking Details
+                                    </h3>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Configure your journey</p>
+                                </div>
                             </div>
 
                             <form class="space-y-8">
                                 <!--  Rental Dates -->
                                 <div class="space-y-4">
                                     <h4
-                                        class="flex items-center text-lg font-semibold text-gray-900"
+                                        class="flex items-center text-sm font-black uppercase tracking-widest text-slate-900 mb-6"
                                     >
-                                        <svg
-                                            class="mr-2 h-5 w-5 text-orange-500"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                            ></path>
-                                        </svg>
-                                        Rental Period
+                                        <Clock class="mr-3 h-4 w-4 text-primary" />
+                                        Rental Dates
                                     </h4>
                                     <div class="grid gap-6 md:grid-cols-2">
-                                        <div class="space-y-2">
-                                            <label
-                                                class="block text-sm font-semibold text-gray-700"
-                                            >
+                                        <div class="space-y-3">
+                                            <Label class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                                                 Pickup Date *
-                                            </label>
-                                            <input
+                                                <HelpTooltip content="Select the date your journey begins. Earlier booking ensures better availability." />
+                                            </Label>
+                                            <Input
                                                 v-model="form.start_date"
                                                 type="date"
                                                 :min="$page.props.minDate"
                                                 :max="$page.props.maxDate"
-                                                required
-                                                class="w-full rounded-xl border-2 border-gray-200 px-4 py-4 text-lg transition-all duration-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
-                                                :class="{
-                                                    'border-red-500 focus:border-red-500 focus:ring-red-500':
-                                                        form.errors.start_date,
-                                                }"
+                                                class="h-14 rounded-2xl border-none bg-slate-50 px-6 font-black text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all shadow-inner"
+                                                :class="{ 'ring-rose-500 bg-rose-50': form.errors.start_date }"
                                             />
-                                            <span
-                                                v-if="form.errors.start_date"
-                                                class="text-sm font-medium text-red-500"
-                                            >
-                                                {{ form.errors.start_date }}
-                                            </span>
+                                            <span v-if="form.errors.start_date" class="text-[10px] font-black uppercase tracking-widest text-rose-500">{{ form.errors.start_date }}</span>
                                         </div>
 
-                                        <div class="space-y-2">
-                                            <label
-                                                class="block text-sm font-semibold text-gray-700"
-                                            >
+                                        <div class="space-y-3">
+                                            <Label class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                                                 Return Date *
-                                            </label>
-                                            <input
+                                                <HelpTooltip content="Select your return date. Standard daily rates apply per 24-hour period." />
+                                            </Label>
+                                            <Input
                                                 v-model="form.end_date"
                                                 type="date"
-                                                :min="
-                                                    form.start_date ||
-                                                    $page.props.minDate
-                                                "
+                                                :min="form.start_date || $page.props.minDate"
                                                 :max="$page.props.maxDate"
-                                                required
-                                                class="w-full rounded-xl border-2 border-gray-200 px-4 py-4 text-lg transition-all duration-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
-                                                :class="{
-                                                    'border-red-500 focus:border-red-500 focus:ring-red-500':
-                                                        form.errors.end_date,
-                                                }"
+                                                class="h-14 rounded-2xl border-none bg-slate-50 px-6 font-black text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all shadow-inner"
+                                                :class="{ 'ring-rose-500 bg-rose-50': form.errors.end_date }"
                                             />
-                                            <span
-                                                v-if="form.errors.end_date"
-                                                class="text-sm font-medium text-red-500"
-                                            >
-                                                {{ form.errors.end_date }}
-                                            </span>
+                                            <span v-if="form.errors.end_date" class="text-[10px] font-black uppercase tracking-widest text-rose-500">{{ form.errors.end_date }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -382,106 +378,46 @@ const commonLocations = [
                                 <!--  Locations -->
                                 <div class="space-y-4">
                                     <h4
-                                        class="flex items-center text-lg font-semibold text-gray-900"
+                                        class="flex items-center text-sm font-black uppercase tracking-widest text-slate-900 mt-12 mb-6"
                                     >
-                                        <svg
-                                            class="mr-2 h-5 w-5 text-orange-500"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                            ></path>
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                            ></path>
-                                        </svg>
-                                        Pickup & Return Locations
+                                        <MapPin class="mr-3 h-4 w-4 text-primary" />
+                                        Pickup & Return
                                     </h4>
                                     <div class="grid gap-6 md:grid-cols-2">
-                                        <div class="space-y-2">
-                                            <label
-                                                class="block text-sm font-semibold text-gray-700"
-                                            >
+                                        <div class="space-y-3">
+                                            <Label class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                                                 Pickup Location *
-                                            </label>
-                                            <select
-                                                v-model="form.pickup_location"
-                                                required
-                                                class="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-4 text-lg transition-all duration-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
-                                                :class="{
-                                                    'border-red-500 focus:border-red-500 focus:ring-red-500':
-                                                        form.errors
-                                                            .pickup_location,
-                                                }"
-                                            >
-                                                <option value="">
-                                                    Select pickup location
-                                                </option>
-                                                <option
-                                                    v-for="location in commonLocations"
-                                                    :key="location"
-                                                    :value="location"
-                                                >
-                                                    {{ location }}
-                                                </option>
-                                            </select>
-                                            <span
-                                                v-if="
-                                                    form.errors.pickup_location
-                                                "
-                                                class="text-sm font-medium text-red-500"
-                                            >
-                                                {{
-                                                    form.errors.pickup_location
-                                                }}
-                                            </span>
+                                                <HelpTooltip content="Choose your collection point. Our VIP meet & greet service is available at all airports." />
+                                            </Label>
+                                            <Select v-model="form.pickup_location">
+                                                <SelectTrigger class="h-14 rounded-2xl border-none bg-slate-50 px-6 font-black text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all" :class="{ 'ring-rose-500': form.errors.pickup_location }">
+                                                    <SelectValue placeholder="Select venue" />
+                                                </SelectTrigger>
+                                                <SelectContent class="rounded-2xl border-none shadow-2xl ring-1 ring-slate-100 font-bold">
+                                                    <SelectItem v-for="location in locations" :key="location.id" :value="location.name" class="py-3 px-4 rounded-xl cursor-pointer">
+                                                        {{ location.name }} ({{ location.city }})
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <span v-if="form.errors.pickup_location" class="text-[10px] font-black uppercase tracking-widest text-rose-500">{{ form.errors.pickup_location }}</span>
                                         </div>
 
-                                        <div class="space-y-2">
-                                            <label
-                                                class="block text-sm font-semibold text-gray-700"
-                                            >
+                                        <div class="space-y-3">
+                                            <Label class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                                                 Return Location *
-                                            </label>
-                                            <select
-                                                v-model="form.return_location"
-                                                required
-                                                class="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-4 text-lg transition-all duration-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
-                                                :class="{
-                                                    'border-red-500 focus:border-red-500 focus:ring-red-500':
-                                                        form.errors
-                                                            .return_location,
-                                                }"
-                                            >
-                                                <option value="">
-                                                    Select return location
-                                                </option>
-                                                <option
-                                                    v-for="location in commonLocations"
-                                                    :key="location"
-                                                    :value="location"
-                                                >
-                                                    {{ location }}
-                                                </option>
-                                            </select>
-                                            <span
-                                                v-if="
-                                                    form.errors.return_location
-                                                "
-                                                class="text-sm font-medium text-red-500"
-                                            >
-                                                {{
-                                                    form.errors.return_location
-                                                }}
-                                            </span>
+                                                <HelpTooltip content="Specify where you will return the vehicle. One-way rentals may be available." />
+                                            </Label>
+                                            <Select v-model="form.return_location">
+                                                <SelectTrigger class="h-14 rounded-2xl border-none bg-slate-50 px-6 font-black text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all" :class="{ 'ring-rose-500': form.errors.return_location }">
+                                                    <SelectValue placeholder="Select venue" />
+                                                </SelectTrigger>
+                                                <SelectContent class="rounded-2xl border-none shadow-2xl ring-1 ring-slate-100 font-bold">
+                                                    <SelectItem v-for="location in locations" :key="location.id" :value="location.name" class="py-3 px-4 rounded-xl cursor-pointer">
+                                                        {{ location.name }} ({{ location.city }})
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <span v-if="form.errors.return_location" class="text-[10px] font-black uppercase tracking-widest text-rose-500">{{ form.errors.return_location }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -492,71 +428,59 @@ const commonLocations = [
                     <!--  Price Summary Sidebar -->
                     <div class="lg:col-span-1">
                         <div
-                            class="sticky top-4 rounded-2xl border border-gray-100 bg-white p-8 shadow-lg"
+                            class="sticky top-4 rounded-[2.5rem] border-none bg-white p-10 shadow-2xl shadow-slate-200/50 ring-1 ring-slate-100"
                         >
-                            <div class="mb-6 flex items-center space-x-3">
+                            <div class="mb-10 flex items-center space-x-4">
                                 <div
-                                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600"
+                                    class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-200"
                                 >
-                                    <svg
-                                        class="h-5 w-5 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                                        ></path>
-                                    </svg>
+                                    <ReceiptText class="h-6 w-6" />
                                 </div>
-                                <h3 class="text-2xl font-bold text-gray-900">
-                                    Booking Summary
+                                <h3 class="text-2xl font-black tracking-tight text-slate-900">
+                                    Summary
                                 </h3>
                             </div>
 
                             <div class="mb-8 space-y-6">
                                 <div
-                                    class="space-y-4 rounded-xl bg-gray-50 p-4"
+                                    class="space-y-4 rounded-[1.5rem] bg-slate-50 p-6 ring-1 ring-slate-100"
                                 >
                                     <div
                                         class="flex items-center justify-between"
                                     >
-                                        <span class="font-medium text-gray-600"
-                                            >Rental Period</span
+                                        <span class="text-xs font-black uppercase tracking-widest text-slate-400"
+                                            >Period</span
                                         >
-                                        <span class="font-bold text-gray-900">
+                                        <span class="text-sm font-black text-slate-900">
                                             {{
                                                 rentalDays > 0
                                                     ? `${rentalDays} day${rentalDays > 1 ? 's' : ''}`
-                                                    : '-'
+                                                    : '—'
                                             }}
                                         </span>
                                     </div>
-
+ 
                                     <div
                                         class="flex items-center justify-between"
                                     >
-                                        <span class="font-medium text-gray-600"
-                                            >Daily Rate</span
+                                        <span class="text-xs font-black uppercase tracking-widest text-slate-400"
+                                            >Daily</span
                                         >
-                                        <span class="font-bold text-gray-900"
+                                        <span class="text-sm font-black text-slate-900"
                                             >{{ $page.props.currency.symbol }}{{ car.price_per_day }}</span
                                         >
                                     </div>
                                 </div>
-
-                                <div class="space-y-4">
+ 
+                                <div class="space-y-4 px-2">
                                     <div
                                         class="flex items-center justify-between py-2"
                                     >
-                                        <span class="font-medium text-gray-600"
+                                        <span class="text-sm font-bold text-slate-500"
                                             >Subtotal</span
                                         >
                                         <span
-                                            class="text-lg font-bold text-gray-900"
+                                            class="text-base font-black text-slate-900"
                                         >
                                             {{ $page.props.currency.symbol }}{{
                                                 rentalDays > 0
@@ -565,15 +489,15 @@ const commonLocations = [
                                             }}
                                         </span>
                                     </div>
-
+ 
                                     <div
                                         class="flex items-center justify-between py-2"
                                     >
-                                        <span class="font-medium text-gray-600"
-                                            >Tax (7%)</span
+                                        <span class="text-sm font-bold text-slate-500"
+                                            >Tax ({{ (taxRate * 100).toFixed(0) }}%)</span
                                         >
                                         <span
-                                            class="text-lg font-bold text-gray-900"
+                                            class="text-base font-black text-slate-900"
                                         >
                                             {{ $page.props.currency.symbol }}{{
                                                 rentalDays > 0
@@ -582,107 +506,210 @@ const commonLocations = [
                                             }}
                                         </span>
                                     </div>
-
+ 
                                     <div
-                                        class="border-t-2 border-gray-200 pt-4"
+                                        class="border-t-2 border-slate-50 pt-6"
                                     >
                                         <div
-                                            class="flex items-center justify-between"
+                                            class="flex items-end justify-between"
                                         >
-                                            <span
-                                                class="text-xl font-bold text-gray-900"
-                                                >Total</span
-                                            >
-                                            <span
-                                                class="text-2xl font-bold text-orange-500"
-                                            >
-                                                {{ $page.props.currency.symbol }}{{
-                                                    rentalDays > 0
-                                                        ? total.toFixed(2)
-                                                        : '0.00'
-                                                }}
-                                            </span>
+                                            <div class="space-y-1">
+                                                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Total Price</span>
+                                                <p class="text-4xl font-black text-slate-900">
+                                                    {{ $page.props.currency.symbol }}{{
+                                                        rentalDays > 0
+                                                            ? Math.floor(total)
+                                                            : '0'
+                                                    }}<span class="text-lg opacity-30">.{{ (rentalDays > 0 ? total.toFixed(2).split('.')[1] : '00') }}</span>
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!--  Book Now Button -->
-                            <button
+                             <!--  Book Now Button -->
+                            <Button
                                 @click="submitBooking"
                                 :disabled="!canSubmit || form.processing"
-                                :class="{
-                                    'transform cursor-pointer bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg hover:scale-[1.01] hover:from-orange-600 hover:to-orange-700 hover:shadow-xl':
-                                        canSubmit && !form.processing,
-                                    'cursor-not-allowed bg-gray-300 text-gray-500':
-                                        !canSubmit || form.processing,
-                                }"
-                                class="w-full rounded-xl px-6 py-5 text-lg font-bold transition-all duration-300"
+                                class="h-16 w-full rounded-[1.25rem] text-sm font-black uppercase tracking-[0.2em] transition-all duration-500 shadow-2xl"
+                                :class="canSubmit ? 'bg-slate-900 text-white hover:bg-primary shadow-slate-200 hover:-translate-y-1' : 'bg-slate-100 text-slate-400 border-none pointer-events-none'"
                             >
                                 <span
                                     v-if="form.processing"
-                                    class="flex items-center justify-center"
+                                    class="flex items-center justify-center gap-3"
                                 >
-                                    <svg
-                                        class="mr-3 -ml-1 h-6 w-6 animate-spin text-white"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <circle
-                                            class="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            stroke-width="4"
-                                        ></circle>
-                                        <path
-                                            class="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        ></path>
-                                    </svg>
-                                    Processing...
+                                    <LoaderCircle class="size-4 animate-spin" />
+                                    Confirming...
                                 </span>
                                 <span
                                     v-else-if="!$page.props.auth.user"
-                                    class="flex items-center justify-center"
+                                    class="flex items-center justify-center gap-3"
                                 >
-                                    <svg
-                                        class="mr-2 h-5 w-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                                        ></path>
-                                    </svg>
-                                    Login to Book
+                                    <LogIn class="size-4" />
+                                    Sign In to Book
                                 </span>
                                 <span
                                     v-else
-                                    class="flex items-center justify-center"
+                                    class="flex items-center justify-center gap-3"
                                 >
-                                    <svg
-                                        class="mr-2 h-5 w-5 fill-white"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 640 640"
-                                    >
-                                        <path
-                                            d="M416 64C433.7 64 448 78.3 448 96L448 128L480 128C515.3 128 544 156.7 544 192L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 192C96 156.7 124.7 128 160 128L192 128L192 96C192 78.3 206.3 64 224 64C241.7 64 256 78.3 256 96L256 128L384 128L384 96C384 78.3 398.3 64 416 64zM438 225.7C427.3 217.9 412.3 220.3 404.5 231L285.1 395.2L233 343.1C223.6 333.7 208.4 333.7 199.1 343.1C189.8 352.5 189.7 367.7 199.1 377L271.1 449C276.1 454 283 456.5 289.9 456C296.8 455.5 303.3 451.9 307.4 446.2L443.3 259.2C451.1 248.5 448.7 233.5 438 225.7z"
-                                        />
-                                    </svg>
-                                    Book Now
+                                    <CheckCircle class="size-4" />
+                                    Book This Car
                                 </span>
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Rental Policy Acceptance Modal -->
+        <Dialog :open="showPolicyModal" @update:open="showPolicyModal = $event">
+            <DialogContent class="sm:max-w-xl max-h-[90vh] md:max-h-[85vh] rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden flex flex-col bg-slate-50">
+                <!-- Header (Sticky) -->
+                <div class="bg-slate-900 px-6 py-8 text-white relative flex-shrink-0">
+                    <div class="absolute -right-6 -bottom-6 opacity-5 pointer-events-none">
+                        <ShieldCheck class="size-48" />
+                    </div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md">
+                                <ShieldCheck class="size-6 text-white" />
+                            </div>
+                            <div>
+                                <DialogTitle class="text-xl font-black tracking-tight text-white uppercase">Critical Rental Terms</DialogTitle>
+                                <DialogDescription class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Mandatory acknowledgment</DialogDescription>
+                            </div>
+                        </div>
+                        <p class="text-sm font-bold text-slate-300 leading-relaxed max-w-md">
+                            To ensure a smooth pickup process, please carefully review and confirm each of the following operational requirements.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Scrollable Body -->
+                <div class="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                    
+                    <!-- Requirement 1: Age/Experience -->
+                    <label class="flex items-start gap-4 p-5 rounded-2xl transition-all cursor-pointer border-2" 
+                           :class="acceptExperience ? 'bg-white border-primary/40 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors"
+                             :class="acceptExperience ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-100 text-slate-400'">
+                            <Clock class="size-5" />
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-black text-slate-900">Minimum Experience Verified</h4>
+                            <p class="text-xs font-bold text-slate-500 mt-1.5 leading-relaxed">I confirm that I possess a valid driver's license with at least <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-black">{{ $page.props.settings.min_driving_experience }} years</span> of driving experience.</p>
+                        </div>
+                        <div class="pt-1">
+                            <input type="checkbox" v-model="acceptExperience" class="h-6 w-6 rounded-lg border-2 border-slate-300 text-primary focus:ring-primary focus:ring-offset-0 transition-colors" />
+                        </div>
+                    </label>
+
+                    <!-- Requirement 2: Documents -->
+                    <label class="flex items-start gap-4 p-5 rounded-2xl transition-all cursor-pointer border-2" 
+                           :class="acceptDocuments ? 'bg-white border-violet-400 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors"
+                             :class="acceptDocuments ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/20' : 'bg-slate-100 text-slate-400'">
+                            <IdCard class="size-5" />
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-black text-slate-900">Required Documents Readiness</h4>
+                            <p class="text-xs font-bold text-slate-500 mt-1.5 leading-relaxed">I understand I must physically present the following upon arrival, or my booking will be denied without refund:</p>
+                            <ul class="mt-3 space-y-2">
+                                <li class="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-2">
+                                    <div class="size-1.5 rounded-full bg-violet-400"></div> National ID or Passport
+                                </li>
+                                <li class="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-2">
+                                    <div class="size-1.5 rounded-full bg-violet-400"></div> Original Driver's License
+                                </li>
+                                <li class="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-2">
+                                    <div class="size-1.5 rounded-full bg-violet-400"></div> Credit Card for Security Deposit
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="pt-1">
+                            <input type="checkbox" v-model="acceptDocuments" class="h-6 w-6 rounded-lg border-2 border-slate-300 text-violet-600 focus:ring-violet-600 focus:ring-offset-0 transition-colors" />
+                        </div>
+                    </label>
+
+                    <!-- Requirement 3: Pickup Location -->
+                    <label class="flex items-start gap-4 p-5 rounded-2xl transition-all cursor-pointer border-2" 
+                           :class="acceptLocation ? 'bg-white border-sky-400 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors"
+                             :class="acceptLocation ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20' : 'bg-slate-100 text-slate-400'">
+                            <MapPin class="size-5" />
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-black text-slate-900">Pickup Location Awareness</h4>
+                            <p class="text-xs font-bold text-slate-500 mt-1.5 leading-relaxed">I confirm that I am responsible for arriving at the selected pickup location: <span class="bg-sky-50 text-sky-600 px-1.5 py-0.5 rounded-md font-black">{{ form.pickup_location || 'the agency' }}</span> at the scheduled time.</p>
+                        </div>
+                        <div class="pt-1">
+                            <input type="checkbox" v-model="acceptLocation" class="h-6 w-6 rounded-lg border-2 border-slate-300 text-sky-500 focus:ring-sky-500 focus:ring-offset-0 transition-colors" />
+                        </div>
+                    </label>
+
+                    <!-- Requirement 4: Rental Terms -->
+                    <label class="flex items-start gap-4 p-5 rounded-2xl transition-all cursor-pointer border-2" 
+                           :class="acceptTerms ? 'bg-white border-emerald-400 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors shrink-0"
+                             :class="acceptTerms ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-100 text-slate-400'">
+                            <FileCheck class="size-5" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-black text-slate-900">General Conditions & Liability</h4>
+                            <div class="mt-2 text-xs font-bold text-slate-500 leading-relaxed whitespace-pre-wrap bg-slate-50 p-3 rounded-xl border border-slate-100 italic">"{{ $page.props.settings.rental_terms }}"</div>
+                            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-3">I accept these terms</p>
+                        </div>
+                        <div class="pt-1 shrink-0">
+                            <input type="checkbox" v-model="acceptTerms" class="h-6 w-6 rounded-lg border-2 border-slate-300 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0 transition-colors" />
+                        </div>
+                    </label>
+
+                </div>
+
+                <!-- Footer (Sticky) -->
+                <div class="px-6 py-5 bg-white border-t border-slate-100 flex-shrink-0 flex gap-4">
+                    <Button variant="ghost" @click="showPolicyModal = false" class="flex-1 h-14 rounded-xl font-black uppercase tracking-widest text-xs text-slate-400 hover:bg-slate-50 hover:text-slate-600 shrink-0">
+                        Cancel
+                    </Button>
+                    <Button 
+                        @click="confirmBookingAfterPolicy" 
+                        :disabled="!policyAccepted || form.processing"
+                        class="flex-[2] h-14 rounded-xl bg-slate-900 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-slate-900/10 hover:bg-black transition-all border-none disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden"
+                    >
+                        <!-- Animated background for disabled state -->
+                        <div v-if="!policyAccepted" class="absolute inset-0 bg-slate-800 flex items-center justify-center">
+                            <span class="text-[10px]">Accept all terms to continue</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-center" :class="{'opacity-0': !policyAccepted}">
+                            <LoaderCircle v-if="form.processing" class="size-4 animate-spin mr-2" />
+                            <ShieldCheck v-else class="size-4 mr-2 group-hover:scale-110 transition-transform" />
+                            {{ form.processing ? 'Reserving...' : 'Confirm & Request' }}
+                        </div>
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Role Error Dialog -->
+        <Dialog :open="showRoleError" @update:open="showRoleError = $event">
+            <DialogContent class="sm:max-w-md rounded-[2rem] border-none shadow-2xl p-8">
+                <DialogHeader>
+                    <DialogTitle class="flex items-center gap-3 text-xl font-black text-rose-600">
+                        <div class="p-2 rounded-xl bg-rose-50"><TriangleAlert class="size-5" /></div>
+                        Booking Restricted
+                    </DialogTitle>
+                    <DialogDescription class="text-sm font-bold text-slate-500 pt-4 leading-relaxed">
+                        {{ roleErrorMessage }}
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter class="sm:justify-start pt-6">
+                    <Button type="button" variant="secondary" @click="showRoleError = false" class="h-12 rounded-2xl font-black uppercase tracking-widest text-xs bg-slate-100 hover:bg-slate-200 px-8">
+                        I Understand
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </HomeLayout>
 </template>

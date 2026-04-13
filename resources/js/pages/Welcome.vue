@@ -1,10 +1,39 @@
 <script setup lang="ts">
 import CarCard from '@/components/CarCard.vue';
 import HomeLayout from '@/layouts/HomeLayout.vue';
-import { Head, usePage, router } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { fleet } from '@/routes';
-import { about } from '@/routes';
+import { 
+    fleet, 
+    about 
+} from '@/routes';
+import { 
+    Sparkles, 
+    Zap, 
+    Shield, 
+    Clock, 
+    DollarSign, 
+    ArrowRight,
+    Car as CarIcon,
+    CheckCircle, 
+    XCircle, 
+    Info, 
+    X
+} from 'lucide-vue-next';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription
+} from '@/components/ui/card';
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from '@/components/ui/alert';
 
 interface Car {
     id: number;
@@ -14,11 +43,11 @@ interface Car {
     price_per_day: string;
     description: string;
     fuel_type: string;
+    transmission: string;
+    seats: number;
+    color: string;
+    mileage: number;
     image_url: string;
-    color?: string;
-    status?: string;
-    license_plate?: string;
-    image?: string;
 }
 
 const props = defineProps<{
@@ -30,16 +59,9 @@ const props = defineProps<{
 const $page = usePage();
 const homeCars = computed(() => props.homeCars);
 
-const searchForm = ref({
-    pickup_location: '',
-    start_date: '',
-    end_date: '',
-    make: ''
-});
-
-const handleSearch = () => {
-    router.get(fleet.url(), searchForm.value);
-};
+const successMessage = ref($page.props.flash?.success || null);
+const errorMessage = ref($page.props.flash?.error || null);
+const infoMessage = ref($page.props.flash?.info || null);
 </script>
 
 <template>
@@ -53,219 +75,199 @@ const handleSearch = () => {
 
     <HomeLayout>
         <main>
-            <!--  Hero Section with Light Background -->
-            <section
-                class="relative overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12"
-            >
-                <!-- Background Pattern -->
-                <div class="absolute inset-0 opacity-5">
+            <!-- Animated Notifications -->
+            <div class="fixed top-24 right-8 z-[60] flex flex-col gap-4 pointer-events-none">
+                <!-- Success -->
+                <Transition
+                    enter-active-class="transform transition ease-out duration-500"
+                    enter-from-class="translate-x-[150%] opacity-0"
+                    enter-to-class="translate-x-0 opacity-100"
+                    leave-active-class="transition ease-in duration-300"
+                    leave-from-class="opacity-100"
+                    leave-to-class="opacity-0"
+                >
                     <div
-                        class="absolute inset-0"
-                        style="
-                            background-image: radial-gradient(
-                                circle at 1px 1px,
-                                rgba(0, 0, 0, 0.15) 1px,
-                                transparent 0
-                            );
-                            background-size: 20px 20px;
-                        "
-                    ></div>
-                </div>
+                        v-if="successMessage"
+                        class="pointer-events-auto w-96 rounded-[2rem] border-none bg-slate-900 p-6 shadow-2xl backdrop-blur-xl ring-1 ring-white/10 relative overflow-hidden group"
+                    >
+                         <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
+                            <CheckCircle class="size-32 text-white" />
+                        </div>
+                        <div class="flex items-start gap-5 relative z-10">
+                            <div class="bg-primary text-white shadow-lg shadow-primary/20 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl">
+                                <CheckCircle class="h-6 w-6" />
+                            </div>
+                            <div class="flex-1 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-base font-black tracking-tight text-white uppercase italic">System Success</h3>
+                                    <button @click="successMessage = null" class="text-white/40 hover:text-white transition-colors">
+                                        <X class="size-4" />
+                                    </button>
+                                </div>
+                                <p class="text-xs font-bold leading-relaxed text-slate-400">
+                                    {{ successMessage }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </Transition>
 
-                <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="grid items-center gap-16 lg:grid-cols-2">
-                        <!--  Left Content -->
-                        <div class="space-y-10">
+                <!-- Error -->
+                <Transition
+                    enter-active-class="transform transition ease-out duration-500"
+                    enter-from-class="translate-x-[150%] opacity-0"
+                    enter-to-class="translate-x-0 opacity-100"
+                    leave-active-class="transition ease-in duration-300"
+                    leave-from-class="opacity-100"
+                    leave-to-class="opacity-0"
+                >
+                    <div
+                        v-if="errorMessage"
+                        class="pointer-events-auto w-96 rounded-[2rem] border-none bg-slate-900 p-6 shadow-2xl backdrop-blur-xl ring-1 ring-white/10 relative overflow-hidden group"
+                    >
+                        <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
+                            <XCircle class="size-32 text-white" />
+                        </div>
+                        <div class="flex items-start gap-5 relative z-10">
+                            <div class="bg-rose-500 text-white shadow-lg shadow-rose-500/20 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl">
+                                <XCircle class="h-6 w-6" />
+                            </div>
+                            <div class="flex-1 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-base font-black tracking-tight text-white uppercase italic">Critical Failure</h3>
+                                    <button @click="errorMessage = null" class="text-white/40 hover:text-white transition-colors">
+                                        <X class="size-4" />
+                                    </button>
+                                </div>
+                                <p class="text-xs font-bold leading-relaxed text-slate-400">
+                                    {{ errorMessage }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </Transition>
+
+                <!-- Info -->
+                <Transition
+                    enter-active-class="transform transition ease-out duration-500"
+                    enter-from-class="translate-x-[150%] opacity-0"
+                    enter-to-class="translate-x-0 opacity-100"
+                    leave-active-class="transition ease-in duration-300"
+                    leave-from-class="opacity-100"
+                    leave-to-class="opacity-0"
+                >
+                    <div
+                        v-if="infoMessage"
+                        class="pointer-events-auto w-96 rounded-[2rem] border-none bg-slate-900 p-6 shadow-2xl backdrop-blur-xl ring-1 ring-white/10 relative overflow-hidden group"
+                    >
+                         <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
+                            <Info class="size-32 text-white" />
+                        </div>
+                        <div class="flex items-start gap-5 relative z-10">
+                            <div class="bg-blue-500 text-white shadow-lg shadow-blue-500/20 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl">
+                                <Info class="h-6 w-6" />
+                            </div>
+                            <div class="flex-1 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-base font-black tracking-tight text-white uppercase italic">System Broadcast</h3>
+                                    <button @click="infoMessage = null" class="text-white/40 hover:text-white transition-colors">
+                                        <X class="size-4" />
+                                    </button>
+                                </div>
+                                <p class="text-xs font-bold leading-relaxed text-slate-400">
+                                    {{ infoMessage }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </Transition>
+            </div>
+
+            <!-- Hero Section -->
+            <section class="relative overflow-hidden bg-background py-20 lg:py-32">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div class="grid items-center gap-12 lg:grid-cols-2">
+                        <!-- Left Content -->
+                        <div class="space-y-8">
                             <div class="space-y-6">
-                                <div
-                                    class="inline-flex items-center rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 ring-1 ring-orange-200"
-                                >
-                                    <svg
-                                        class="mr-2 h-4 w-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                                        ></path>
-                                    </svg>
-                                    Premium Car Rental Experience
+                                <div class="flex items-center gap-3 flex-wrap">
+                                    <Badge v-if="$page.props.settings.special_offer_text" variant="destructive" class="px-3 py-1 font-medium gap-1 animate-pulse">
+                                        <Sparkles class="size-3.5" />
+                                        {{ $page.props.settings.special_offer_text }}
+                                    </Badge>
+                                    <Badge variant="outline" class="px-3 py-1 font-medium gap-1 text-primary bg-primary/5">
+                                        <Zap class="size-3.5" />
+                                        {{ $page.props.settings.hero_badge || 'Premium Service' }}
+                                    </Badge>
                                 </div>
 
-                                <h1
-                                    class="text-3xl leading-tight font-bold text-gray-900 lg:text-6xl"
-                                >
-                                    Drive Your
-                                    <span
-                                        class="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent"
-                                    >
-                                        Dreams
-                                    </span>
+                                <h1 class="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-7xl">
+                                    {{ $page.props.settings.hero_title || 'Experience Premium Mobility' }}
                                 </h1>
 
-                                <p
-                                    class="max-w-lg text-lg leading-relaxed text-gray-600"
-                                >
-                                    Experience luxury and reliability with our
-                                    premium fleet. From business meetings to
-                                    weekend adventures, find the perfect vehicle
-                                    for every journey.
+                                <p class="max-w-xl text-lg text-muted-foreground leading-relaxed">
+                                    {{ $page.props.settings.hero_subtitle || 'Elevate your journey with our exclusive collection of luxury and performance vehicles. Exceptional service, unconditionally guaranteed.' }}
                                 </p>
                             </div>
 
-                            <!-- Search Form -->
-                            <div class="relative z-10 rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-gray-200">
-                                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                                    <div class="space-y-2">
-                                        <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Pick-up Location</label>
-                                        <select v-model="searchForm.pickup_location" class="w-full rounded-xl border-gray-200 bg-gray-50 py-3 text-sm focus:border-orange-500 focus:ring-orange-500">
-                                            <option value="">Select Location</option>
-                                            <option v-for="loc in locations" :key="loc" :value="loc">{{ loc }}</option>
-                                        </select>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Dates</label>
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <input type="date" v-model="searchForm.start_date" class="w-full rounded-xl border-gray-200 bg-gray-50 py-3 text-sm focus:border-orange-500 focus:ring-orange-500" />
-                                            <input type="date" v-model="searchForm.end_date" class="w-full rounded-xl border-gray-200 bg-gray-50 py-3 text-sm focus:border-orange-500 focus:ring-orange-500" />
-                                        </div>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Car Brand</label>
-                                        <select v-model="searchForm.make" class="w-full rounded-xl border-gray-200 bg-gray-50 py-3 text-sm focus:border-orange-500 focus:ring-orange-500">
-                                            <option value="">Any Brand</option>
-                                            <option v-for="make in makes" :key="make" :value="make">{{ make }}</option>
-                                        </select>
-                                    </div>
-                                    <div class="flex items-end">
-                                        <button @click="handleSearch" class="w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 py-3 font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
-                                            Search Cars
-                                        </button>
-                                    </div>
-                                </div>
+                            <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                                <Button as-child size="lg" class="h-14 px-8 text-base font-semibold group w-full sm:w-auto">
+                                    <a :href="fleet.url()">
+                                        Browse Fleet
+                                        <ArrowRight class="ml-2 size-5 transition-transform group-hover:translate-x-1" />
+                                    </a>
+                                </Button>
+                                <Button as-child variant="outline" size="lg" class="h-14 px-8 text-base font-semibold w-full sm:w-auto hover:bg-muted">
+                                    <a :href="about.url()">Our Story</a>
+                                </Button>
                             </div>
 
-                            <div class="flex flex-col gap-4 sm:flex-row">
-                                <a
-                                    :href="fleet.url()"
-                                    class="group cursor-pointer inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600  text-md px-5 py-2 font-semibold text-white shadow-xl transition-all duration-200 hover:scale-105 hover:from-orange-600 hover:to-orange-700 hover:shadow-2xl"
-                                >
-                                    <svg
-                                        class="mr-2 h-5 w-5 transition-transform group-hover:translate-x-1"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M13 7l5 5m0 0l-5 5m5-5H6"
-                                        ></path>
-                                    </svg>
-                                    Browse Fleet
-                                </a>
-                                <a
-                                    :href="about.url()"
-                                    class="inline-flex cursor-pointer items-center justify-center rounded-xl border-2 border-gray-300 bg-white text-md px-5 py-2 font-semibold text-gray-700 transition-all duration-200 hover:border-orange-500 hover:text-orange-600 hover:shadow-lg"
-                                >
-                                    Learn More
-                                </a>
-                            </div>
-
-                            <!--  Stats -->
-                            <div
-                                class="grid grid-cols-3 gap-8 border-t border-gray-200 pt-10"
-                            >
-                                <div class="text-center">
-                                    <div
-                                        class="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-4xl font-bold text-transparent"
-                                    >
-                                        1000+
-                                    </div>
-                                    <div
-                                        class="mt-1 text-sm font-medium text-gray-600"
-                                    >
-                                        Happy Customers
-                                    </div>
+                            <!-- Stats -->
+                            <div class="grid grid-cols-3 gap-8 pt-8 mt-8 border-t border-border/60">
+                                <div>
+                                    <div class="text-3xl font-bold tracking-tight text-primary">1000+</div>
+                                    <div class="mt-1 text-sm font-medium text-muted-foreground">Happy Clients</div>
                                 </div>
-                                <div class="text-center">
-                                    <div
-                                        class="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-4xl font-bold text-transparent"
-                                    >
-                                        150+
-                                    </div>
-                                    <div
-                                        class="mt-1 text-sm font-medium text-gray-600"
-                                    >
-                                        Premium Cars
-                                    </div>
+                                <div>
+                                    <div class="text-3xl font-bold tracking-tight text-primary">150+</div>
+                                    <div class="mt-1 text-sm font-medium text-muted-foreground">Premium Cars</div>
                                 </div>
-                                <div class="text-center">
-                                    <div
-                                        class="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-4xl font-bold text-transparent"
-                                    >
-                                        24/7
-                                    </div>
-                                    <div
-                                        class="mt-1 text-sm font-medium text-gray-600"
-                                    >
-                                        Support
-                                    </div>
+                                <div>
+                                    <div class="text-3xl font-bold tracking-tight text-primary">24/7</div>
+                                    <div class="mt-1 text-sm font-medium text-muted-foreground">Support</div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Right Image - Optimized for Dark Isometric Image -->
-                        <div class="flex justify-center lg:justify-end">
-                            <div class="relative">
-                                <div
-                                    class="absolute -inset-4 rounded-3xl bg-gradient-to-r from-orange-500/20 to-orange-600/20 blur-2xl"
-                                ></div>
-                                <img
-                                    src="/images/hero_image.png"
-                                    alt="Premium Car Garage - Isometric View"
-                                    class="relative h-auto max-w-full rounded-2xl drop-shadow-2xl"
-                                />
-                            </div>
+                        <!-- Right Image -->
+                        <div class="relative flex justify-center lg:justify-end">
+                            <div class="absolute inset-0 bg-primary/5 rounded-full blur-3xl w-[120%] h-[120%] -ml-[10%] -mt-[10%] -z-10"></div>
+                            <img
+                                src="/images/hero_image.png"
+                                alt="Premium Car Garage"
+                                class="w-full max-w-xl drop-shadow-2xl hover:-translate-y-2 transition-transform duration-700 ease-out"
+                            />
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!--  Featured Cars Section -->
-            <section id="fleet" class="bg-white py-24">
+            <!-- Featured Cars Section -->
+            <section id="fleet" class="bg-muted/30 py-24 border-y border-border/40">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="mb-20 text-center">
-                        <div
-                            class="mb-6 inline-flex items-center rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 ring-1 ring-orange-200"
-                        >
-                            Our Premium Collection
-                        </div>
-                        <h2
-                            class="mb-6 text-4xl font-bold text-gray-900 lg:text-5xl"
-                        >
-                            Discover Our
-                            <span
-                                class="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent"
-                            >
-                                Elite Fleet
-                            </span>
+                    <div class="mb-16 text-center space-y-4">
+                        <Badge variant="outline" class="bg-background text-primary font-medium tracking-wide">
+                            Our Collection
+                        </Badge>
+                        <h2 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                            Discover Our Elite Fleet
                         </h2>
-                        <p
-                            class="mx-auto max-w-3xl text-xl leading-relaxed text-gray-600"
-                        >
-                            Each vehicle in our collection is meticulously
-                            maintained and equipped with premium features to
-                            ensure your journey is nothing short of exceptional.
+                        <p class="mx-auto max-w-2xl text-lg text-muted-foreground">
+                            Each vehicle in our collection is meticulously maintained and equipped with premium features to ensure your journey is exceptional.
                         </p>
                     </div>
 
-                    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    <div class="grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                         <CarCard
                             v-for="car in homeCars"
                             :key="car.id"
@@ -274,156 +276,73 @@ const handleSearch = () => {
                     </div>
 
                     <div class="mt-16 text-center">
-                        <a
-                            :href="fleet.url()"
-                            class="inline-flex cursor-pointer items-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-8 py-4 font-semibold text-white shadow-xl transition-all duration-200 hover:scale-105 hover:from-orange-600 hover:to-orange-700 hover:shadow-2xl"
-                        >
-                            <svg
-                                class="mr-2 h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                                ></path>
-                            </svg>
-                            View Complete Fleet
-                        </a>
+                        <Button as-child size="lg" class="h-12 px-8 font-semibold">
+                            <a :href="fleet.url()">
+                                <CarIcon class="mr-2 size-5" />
+                                View Complete Fleet
+                            </a>
+                        </Button>
                     </div>
                 </div>
             </section>
 
-            <!--  Features Section -->
-            <section id="services" class="bg-gray-50 py-24">
+            <!-- Features Section -->
+            <section id="services" class="bg-background py-24">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="mb-20 text-center">
-                        <h2
-                            class="mb-6 text-4xl font-bold text-gray-900 lg:text-5xl"
-                        >
-                            Why Choose
-                            <span
-                                class="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent"
-                            >
-                                RealRent </span
-                            >?
+                    <div class="mb-16 text-center space-y-4">
+                        <h2 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                            Why Choose RealRent?
                         </h2>
-                        <p class="mx-auto max-w-2xl text-xl text-gray-600">
-                            We're committed to providing an unparalleled car
-                            rental experience with premium service at every
-                            touchpoint.
+                        <p class="mx-auto max-w-2xl text-lg text-muted-foreground">
+                            We're committed to providing an unparalleled car rental experience with premium service at every touchpoint.
                         </p>
                     </div>
 
-                    <div class="grid gap-12 md:grid-cols-3">
-                        <div class="group text-center">
-                            <div
-                                class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-xl transition-transform duration-200 group-hover:scale-110"
-                            >
-                                <svg
-                                    class="h-10 w-10 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    ></path>
-                                </svg>
-                            </div>
-                            <h3 class="mb-4 text-2xl font-bold text-gray-900">
-                                Premium Quality
-                            </h3>
-                            <p class="leading-relaxed text-gray-600">
-                                Every vehicle undergoes comprehensive inspection
-                                and maintenance to guarantee your safety,
-                                comfort, and peace of mind.
-                            </p>
-                        </div>
+                    <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                        <Card class="bg-muted/20 border-none shadow-none hover:shadow-md transition-shadow">
+                            <CardHeader>
+                                <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <Shield class="size-6" />
+                                </div>
+                                <CardTitle>Premium Quality</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p class="text-muted-foreground leading-relaxed">
+                                    Every vehicle undergoes comprehensive inspection and maintenance to guarantee your safety, comfort, and peace of mind.
+                                </p>
+                            </CardContent>
+                        </Card>
 
-                        <div class="group text-center">
-                            <div
-                                class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-xl transition-transform duration-200 group-hover:scale-110"
-                            >
-                                <svg
-                                    class="h-10 w-10 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    ></path>
-                                </svg>
-                            </div>
-                            <h3 class="mb-4 text-2xl font-bold text-gray-900">
-                                24/7 Support
-                            </h3>
-                            <p class="leading-relaxed text-gray-600">
-                                Our dedicated support team is available around
-                                the clock to assist you with any questions or
-                                concerns during your rental.
-                            </p>
-                        </div>
+                        <Card class="bg-muted/20 border-none shadow-none hover:shadow-md transition-shadow">
+                            <CardHeader>
+                                <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <Clock class="size-6" />
+                                </div>
+                                <CardTitle>24/7 Support</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p class="text-muted-foreground leading-relaxed">
+                                    Our dedicated support team is available around the clock to assist you with any questions or concerns during your rental.
+                                </p>
+                            </CardContent>
+                        </Card>
 
-                        <div class="group text-center">
-                            <div
-                                class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-xl transition-transform duration-200 group-hover:scale-110"
-                            >
-                                <svg
-                                    class="h-10 w-10 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                                    ></path>
-                                </svg>
-                            </div>
-                            <h3 class="mb-4 text-2xl font-bold text-gray-900">
-                                Best Value
-                            </h3>
-                            <p class="leading-relaxed text-gray-600">
-                                Transparent pricing with no hidden fees. Get
-                                premium car rental services at competitive rates
-                                with exceptional value.
-                            </p>
-                        </div>
+                        <Card class="bg-muted/20 border-none shadow-none hover:shadow-md transition-shadow">
+                            <CardHeader>
+                                <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <DollarSign class="size-6" />
+                                </div>
+                                <CardTitle>Best Value</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p class="text-muted-foreground leading-relaxed">
+                                    Transparent pricing with no hidden fees. Get premium car rental services at competitive rates with exceptional value.
+                                </p>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </section>
         </main>
     </HomeLayout>
 </template>
-
-<style scoped>
-.font-sans {
-    font-family:
-        'Inter',
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        Roboto,
-        sans-serif;
-}
-
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-</style>

@@ -41,6 +41,42 @@ class Reservation extends Model
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'is_paid',
+        'payment_method_label',
+    ];
+
+    /**
+     * Check if the reservation is paid.
+     */
+    public function getIsPaidAttribute(): bool
+    {
+        return $this->payments()->where('status', \App\Enums\PaymentStatus::COMPLETED)->exists();
+    }
+
+    /**
+     * Get the payment method label.
+     */
+    public function getPaymentMethodLabelAttribute(): string
+    {
+        $payment = $this->payments()->where('status', \App\Enums\PaymentStatus::COMPLETED)->first();
+        
+        if ($payment) {
+            return $payment->payment_method->label();
+        }
+
+        if ($this->status === ReservationStatus::CONFIRMED) {
+            return 'Pay at Pickup';
+        }
+
+        return 'Unpaid';
+    }
+
+    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>

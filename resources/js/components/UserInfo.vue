@@ -22,17 +22,25 @@ const showAvatar = computed(
 </script>
 
 <template>
-    <Avatar class="h-8 w-8 overflow-hidden rounded-lg">
-        <AvatarImage v-if="showAvatar" :src="user.avatar!" :alt="user.name" />
-        <AvatarFallback class="rounded-lg text-black dark:text-white">
-            {{ getInitials(user.name) }}
-        </AvatarFallback>
-    </Avatar>
+    <div class="relative group/avatar inline-flex items-center">
+        <div class="relative">
+            <Avatar class="h-9 w-9 overflow-hidden rounded-xl ring-2 ring-slate-100 shadow-sm transition-all group-hover/avatar:ring-ring/20 shadow-slate-200/50">
+                <AvatarImage v-if="showAvatar" :src="user.avatar!" :alt="user.name" />
+                <AvatarFallback class="bg-gradient-to-br from-slate-700 to-slate-900 text-white font-black text-[10px] tracking-tighter uppercase shadow-inner">
+                    {{ getInitials(user.name) }}
+                </AvatarFallback>
+            </Avatar>
+            <!-- Online Status Indicator -->
+            <span class="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-white">
+                <span class="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+            </span>
+        </div>
 
-    <div class="grid flex-1 text-left text-sm leading-tight">
-        <span class="truncate font-medium">{{ user.name }}</span>
-        <span v-if="showEmail" class="truncate text-xs text-muted-foreground">{{
-            user.email
-        }}</span>
+        <div class="grid flex-1 text-left text-sm leading-tight ml-2.5">
+            <span class="truncate font-semibold text-slate-900 group-hover:text-primary transition-colors">{{ user.name }}</span>
+            <span v-if="showEmail" class="truncate text-[10px] text-slate-500 font-medium tracking-wide">{{
+                user.email
+            }}</span>
+        </div>
     </div>
 </template>

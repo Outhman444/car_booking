@@ -53,8 +53,8 @@ const isCurrentRoute = computed(
 const activeItemStyles = computed(
     () => (url: NonNullable<InertiaLinkProps['href']>) =>
         isCurrentRoute.value(toUrl(url))
-            ? 'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100'
-            : '',
+            ? 'text-slate-900 border-b-2 border-primary font-bold'
+            : 'text-slate-600',
 );
 
 const mainNavItems: NavItem[] = [
@@ -73,7 +73,7 @@ const mainNavItems: NavItem[] = [
 
 <template>
     <div>
-        <div class="border-b border-sidebar-border/80">
+        <div class="border-b border-sidebar-border/80 bg-white/80 backdrop-blur-md sticky top-0 z-[40]">
             <div class="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
                 <!-- Mobile Menu -->
                 <div class="lg:hidden">
@@ -93,7 +93,7 @@ const mainNavItems: NavItem[] = [
                             >
                             <SheetHeader class="flex justify-start text-left">
                                 <AppLogoIcon
-                                    class="size-6 fill-current text-black dark:text-white"
+                                    class="size-8 fill-current text-black dark:text-white"
                                 />
                             </SheetHeader>
                             <div
@@ -104,13 +104,13 @@ const mainNavItems: NavItem[] = [
                                         v-for="item in mainNavItems"
                                         :key="item.title"
                                         :href="item.href"
-                                        class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                                        class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50 transition-colors"
                                         :class="activeItemStyles(item.href)"
                                     >
                                         <component
                                             v-if="item.icon"
                                             :is="item.icon"
-                                            class="h-5 w-5"
+                                            class="h-5 w-5 text-primary"
                                         />
                                         {{ item.title }}
                                     </Link>
@@ -139,7 +139,7 @@ const mainNavItems: NavItem[] = [
                                     :class="[
                                         navigationMenuTriggerStyle(),
                                         activeItemStyles(item.href),
-                                        'h-9 cursor-pointer px-3',
+                                        'h-9 cursor-pointer px-4 text-sm transition-all hover:bg-slate-50',
                                     ]"
                                     :href="item.href"
                                 >
@@ -150,10 +150,6 @@ const mainNavItems: NavItem[] = [
                                     />
                                     {{ item.title }}
                                 </Link>
-                                <div
-                                    v-if="isCurrentRoute(item.href)"
-                                    class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
-                                ></div>
                             </NavigationMenuItem>
                         </NavigationMenuList>
                     </NavigationMenu>
@@ -165,25 +161,27 @@ const mainNavItems: NavItem[] = [
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
+                                class="relative h-10 w-10 rounded-full focus-within:ring-2 focus-within:ring-ring/40"
                             >
-                                <Avatar
-                                    class="size-8 overflow-hidden rounded-full"
-                                >
-                                    <AvatarImage
-                                        v-if="auth.user.avatar"
-                                        :src="auth.user.avatar"
-                                        :alt="auth.user.name"
-                                    />
-                                    <AvatarFallback
-                                        class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white"
-                                    >
-                                        {{ getInitials(auth.user?.name) }}
-                                    </AvatarFallback>
-                                </Avatar>
+                                <div class="relative group/avatar">
+                                    <Avatar class="size-8 overflow-hidden rounded-xl ring-2 ring-slate-100 shadow-sm transition-all hover:ring-ring/20 hover:shadow-md">
+                                        <AvatarImage
+                                            v-if="auth.user.avatar"
+                                            :src="auth.user.avatar"
+                                            :alt="auth.user.name"
+                                        />
+                                        <AvatarFallback class="bg-gradient-to-br from-slate-700 to-slate-900 text-white font-black text-[10px] tracking-tighter uppercase shadow-inner">
+                                            {{ getInitials(auth.user?.name) }}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <!-- Online Status Indicator -->
+                                    <span class="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-white transition-transform group-hover/avatar:scale-110">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]"></span>
+                                    </span>
+                                </div>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" class="w-56">
+                        <DropdownMenuContent align="end" class="w-56 mt-2">
                             <UserMenuContent :user="auth.user" />
                         </DropdownMenuContent>
                     </DropdownMenu>

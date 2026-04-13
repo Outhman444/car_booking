@@ -35,6 +35,7 @@ class ReservationsController extends Controller
             ->with([
                 'user:id,name,email',
                 'car:id,make,model,year,license_plate',
+                'payments',
             ])
             ->when($request->string('search')->toString(), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -135,7 +136,8 @@ class ReservationsController extends Controller
         $totalDays = max(1, $start->diffInDays($end) + 1);
         $reservation->total_days = $totalDays;
         $reservation->subtotal = $reservation->daily_rate * $totalDays;
-        $reservation->tax_amount = round($reservation->subtotal * config('app.tax_rate', 0.07), 2);
+        $taxRate = ((float) \App\Models\Setting::getValue('tax_rate', config('app.tax_rate', 7))) / 100;
+        $reservation->tax_amount = round($reservation->subtotal * $taxRate, 2);
         $reservation->total_amount = $reservation->subtotal + $reservation->tax_amount - (float)($reservation->discount_amount ?? 0);
 
         // Maintain cancellation metadata
@@ -148,6 +150,9 @@ class ReservationsController extends Controller
         }
 
         $reservation->save();
+
+        // Sync car status
+        $this->syncCarStatusFromReservation($reservation);
 
         return redirect()
             ->route('admin.reservations.show', $reservation)
@@ -171,4 +176,93 @@ class ReservationsController extends Controller
         return $pdf->download($reservation->reservation_number . '.pdf');
     }
 
+    /**
+     * Mark a reservation as paid (for cash/agency payments).
+     */
+    public function markAsPaid(Reservation $reservation)
+    {
+        if ($reservation->isPaid()) {
+            return back()->with('error', 'This reservation is already paid.');
+        }
+
+        Payment::create([
+            'reservation_id' => $reservation->id,
+            'user_id' => $reservation->user_id,
+            'amount' => $reservation->total_amount,
+            'currency' => config('app.currency_code', 'USD'),
+            'payment_method' => \App\Enums\PaymentMethod::AGENCY,
+            'status' => \App\Enums\PaymentStatus::COMPLETED,
+            'transaction_id' => 'MANUAL-' . strtoupper(bin2hex(random_bytes(4))),
+            'gateway_response' => 'Manual payment recorded by admin',
+            'processed_at' => now(),
+        ]);
+
+        $reservation->update(['status' => ReservationStatus::CONFIRMED]);
+        $this->syncCarStatusFromReservation($reservation);
+
+        return back()->with('success', 'Payment recorded successfully.');
+    }
+
+    /**
+     * Quick update for reservation status.
+     */
+    public function quickUpdate(Request $request, Reservation $reservation)
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string', Rule::enum(ReservationStatus::class)],
+        ]);
+
+        $newStatus = ReservationStatus::from($validated['status']);
+
+        // Maintain cancellation metadata
+        $updateData = ['status' => $newStatus];
+
+        if ($newStatus === ReservationStatus::CANCELLED) {
+            $updateData['cancellation_reason'] = $updateData['cancellation_reason'] ?? 'Cancelled by admin.';
+            $updateData['cancelled_at'] = now();
+        } else {
+            $updateData['cancellation_reason'] = null;
+            $updateData['cancelled_at'] = null;
+        }
+
+        $reservation->update($updateData);
+
+        // Sync car status
+        $this->syncCarStatusFromReservation($reservation);
+
+        return back()->with('success', 'Status updated successfully.');
+    }
+
+    /**
+     * Central method: Sync the car's status based on the reservation's new status.
+     * Respects admin-only car states (Maintenance, Out of Service) by not overriding them.
+     */
+    private function syncCarStatusFromReservation(Reservation $reservation): void
+    {
+        $car = $reservation->car;
+        if (!$car) {
+            return;
+        }
+
+        // NEVER override admin-controlled car states from a reservation change.
+        // If admin put a car in Maintenance or Out of Service, only admin can release it.
+        if (in_array($car->status, [\App\Enums\CarStatus::MAINTENANCE, \App\Enums\CarStatus::OUT_OF_SERVICE])) {
+            return;
+        }
+
+        $newCarStatus = match($reservation->status) {
+            ReservationStatus::PENDING   => \App\Enums\CarStatus::PENDING,
+            ReservationStatus::CONFIRMED => \App\Enums\CarStatus::RESERVED,
+            ReservationStatus::ACTIVE    => \App\Enums\CarStatus::RENTED,
+            ReservationStatus::COMPLETED,
+            ReservationStatus::CANCELLED,
+            ReservationStatus::NO_SHOW   => \App\Enums\CarStatus::AVAILABLE,
+            default => null,
+        };
+
+        if ($newCarStatus && $car->status !== $newCarStatus) {
+            $car->update(['status' => $newCarStatus]);
+        }
+    }
 }
+

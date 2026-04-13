@@ -36,9 +36,10 @@ class PaymentController extends Controller
             ->where('status', PaymentStatus::COMPLETED)
             ->first();
 
-        if ($existingPayment) {
+        if ($existingPayment || $reservation->status === \App\Enums\ReservationStatus::CONFIRMED) {
+            $msg = $existingPayment ? 'This reservation has already been paid.' : 'This reservation is already confirmed for payment at the agency.';
             return redirect()->route('client.reservations.show', $reservation->id)
-                ->with('info', 'This reservation has already been paid. You can safely print your invoice below.');
+                ->with('info', $msg . ' You can safely print your invoice below.');
         }
 
         $enabledMethods = PaymentMethodSetting::getEnabledMethods();
@@ -129,7 +130,10 @@ class PaymentController extends Controller
                     ]);
 
                     $reservation->update(['status' => \App\Enums\ReservationStatus::CONFIRMED]);
-                    $reservation->car->update(['status' => \App\Enums\CarStatus::RESERVED]);
+                    // Only update car if it's not in an admin-controlled state
+                    if (!in_array($reservation->car->status, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
+                        $reservation->car->update(['status' => CarStatus::RESERVED]);
+                    }
                 }
 
                 return redirect()->route('client.reservations.show', $reservation->id)
@@ -321,7 +325,10 @@ class PaymentController extends Controller
 
                 // Update reservation status and reserve car
                 $reservation->update(['status' => \App\Enums\ReservationStatus::CONFIRMED]);
-                $reservation->car->update(['status' => \App\Enums\CarStatus::RESERVED]);
+                // Only update car if it's not in an admin-controlled state
+                if (!in_array($reservation->car->status, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
+                    $reservation->car->update(['status' => CarStatus::RESERVED]);
+                }
 
                 return redirect()->route('client.reservations.show', $reservation->id)
                     ->with('success', 'Payment completed successfully! Please print your reservation invoice and present it at the agency to pick up your car.');
@@ -399,6 +406,46 @@ class PaymentController extends Controller
     }
 
     /**
+     * Process payment selection for "Pay at Agency".
+     */
+    public function processAgency(Request $request, Reservation $reservation)
+    {
+        // Check if Agency payment is enabled
+        if (!PaymentMethodSetting::isEnabled('agency')) {
+            return response()->json(['error' => 'Pay at agency is not available.'], 400);
+        }
+
+        // Verify car is still available
+        if (!$reservation->car->isAvailable($reservation->start_date, $reservation->end_date, $reservation->id)) {
+            $reservation->update(['status' => \App\Enums\ReservationStatus::CANCELLED, 'cancellation_reason' => 'Car was booked by another user during payment process.']);
+            return response()->json(['error' => 'Sorry, the car was just booked by someone else for these dates.'], 400);
+        }
+
+        // Ensure user owns this reservation
+        if ($reservation->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $reservation->update([
+            'status' => ReservationStatus::PENDING,
+            'notes' => 'Chosen Payment Method: Pay at Agency (Cash). Payment is still pending.'
+        ]);
+        // Only update car if it's not in an admin-controlled state
+        if (!in_array($reservation->car->status, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
+            $reservation->car->update(['status' => CarStatus::PENDING]);
+        }
+
+        $timeout = \App\Models\Setting::getValue('cash_reservation_timeout', 24);
+        
+        session()->flash('success', "Your reservation request is submitted! You must attend the agency to pay the total amount in cash within {$timeout} hours, otherwise your reservation will be automatically cancelled.");
+
+        return response()->json([
+            'success' => true,
+            'redirect_url' => route('client.reservations.show', $reservation->id),
+        ]);
+    }
+
+    /**
      * Process completing a payment idempotently (Webhooks)
      */
     private function processWebhookPayment($transactionId, $gatewayData, $method)
@@ -439,6 +486,9 @@ class PaymentController extends Controller
         ]);
 
         $reservation->update(['status' => ReservationStatus::CONFIRMED]);
-        $reservation->car->update(['status' => CarStatus::RESERVED]);
+        // Only update car if it's not in an admin-controlled state
+        if (!in_array($reservation->car->status, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
+            $reservation->car->update(['status' => CarStatus::RESERVED]);
+        }
     }
 }

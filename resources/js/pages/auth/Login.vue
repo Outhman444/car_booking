@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 import HomeLayout from '@/layouts/HomeLayout.vue';
 import { register } from '@/routes';
 import { request } from '@/routes/password';
@@ -16,8 +17,15 @@ import {
     LoaderCircle,
     Shield,
     User,
+    Info,
+    CheckCircle,
+    ArrowRight,
+    KeyRound,
+    Mail,
+    Lock
 } from 'lucide-vue-next';
 import { ref } from 'vue';
+import HelpTooltip from '@/components/HelpTooltip.vue';
 
 defineProps<{
     status?: string;
@@ -31,265 +39,227 @@ const isDemoOpen = ref(false);
     <HomeLayout>
         <Head title="Log in" />
 
-        <div
-            class="flex min-h-[90vh] items-center justify-center px-4 sm:px-6 lg:px-8"
-        >
-            <div class="w-full max-w-md space-y-8">
-                <!-- Header -->
-                <div class="text-center">
-                    <h1 class="mb-2 text-3xl font-bold text-gray-900">
-                        Welcome Back
-                    </h1>
-                    <p class="text-gray-600">
-                        Sign in to your account to continue
-                    </p>
-                </div>
-
-                <!-- Demo Credentials (Collapsible) -->
-                <div
-                    class="overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm"
-                >
-                    <!-- Toggle Button -->
-                    <button
-                        @click="isDemoOpen = !isDemoOpen"
-                        type="button"
-                        class="flex w-full items-center justify-between px-6 py-4 transition-colors hover:bg-blue-100/50"
-                    >
-                        <div class="flex items-center space-x-3">
-                            <div class="rounded-full bg-blue-100 p-2">
-                                <svg
-                                    class="h-4 w-4 text-blue-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                            </div>
-                            <span class="text-sm font-semibold text-gray-900">
-                                Demo Credentials
-                            </span>
-                        </div>
-                        <ChevronDown
-                            v-if="!isDemoOpen"
-                            class="h-5 w-5 text-gray-600 transition-transform"
-                        />
-                        <ChevronUp
-                            v-else
-                            class="h-5 w-5 text-gray-600 transition-transform"
-                        />
-                    </button>
-
-                    <!-- Collapsible Content -->
-                    <div v-show="isDemoOpen" class="space-y-3 px-6 pb-6">
-                        <!-- Client Demo -->
-                        <div class="mt-2 rounded-lg bg-white p-3 shadow-sm">
-                            <div class="mb-2 flex items-center space-x-2">
-                                <User class="h-4 w-4 text-gray-600" />
-                                <span
-                                    class="text-xs font-semibold tracking-wide text-gray-700 uppercase"
-                                >
-                                    Client Access
-                                </span>
-                            </div>
-                            <div class="space-y-1 text-sm">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Email:</span>
-                                    <code
-                                        class="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800"
-                                    >
-                                        client@example.com
-                                    </code>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Password:</span>
-                                    <code
-                                        class="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800"
-                                    >
-                                        00000000
-                                    </code>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Admin Demo -->
-                        <div class="rounded-lg bg-white p-3 shadow-sm">
-                            <div class="mb-2 flex items-center space-x-2">
-                                <Shield class="h-4 w-4 text-orange-600" />
-                                <span
-                                    class="text-xs font-semibold tracking-wide text-orange-700 uppercase"
-                                >
-                                    Admin Access
-                                </span>
-                            </div>
-                            <div class="space-y-1 text-sm">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Email:</span>
-                                    <code
-                                        class="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800"
-                                    >
-                                        admin@example.com
-                                    </code>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Password:</span>
-                                    <code
-                                        class="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800"
-                                    >
-                                        00000000
-                                    </code>
-                                </div>
-                                <div class="mt-2 border-t border-gray-200 pt-2">
-                                    <a
-                                        href="/admin-secret-url"
-                                        class="text-xs font-medium text-orange-600 hover:text-orange-700 hover:underline"
-                                    >
-                                        → Go to Admin Panel
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+        <div class="flex min-h-[90vh] items-center justify-center px-4 sm:px-6 lg:px-8 py-12 bg-slate-50/50">
+            <div class="w-full max-w-[480px] space-y-10">
+                <!-- Header Section -->
+                <div class="text-center space-y-4">
+                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl shadow-slate-200 ring-1 ring-slate-100">
+                        <KeyRound class="size-8 text-slate-900" />
+                    </div>
+                    <div>
+                        <h1 class="text-4xl font-black tracking-tight text-slate-900 leading-tight">Welcome <span class="text-slate-500">Back</span></h1>
+                        <p class="mt-3 text-base font-bold text-slate-400 uppercase tracking-widest">Sign in to manage your rentals</p>
                     </div>
                 </div>
 
                 <!-- Status Message -->
                 <div
                     v-if="status"
-                    class="rounded-lg border border-green-200 bg-green-50 p-4 text-center"
+                    class="flex items-center gap-4 rounded-2xl border-none bg-emerald-50 p-5 shadow-sm ring-1 ring-emerald-100"
                 >
-                    <p class="text-sm font-medium text-green-800">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                        <CheckCircle class="size-5" />
+                    </div>
+                    <p class="text-sm font-bold text-emerald-900">
                         {{ status }}
                     </p>
                 </div>
 
-                <!-- Login Form -->
-                <div
-                    class="rounded-xl border border-gray-200 bg-white p-8 shadow-sm"
-                >
-                    <Form
-                        v-bind="AuthenticatedSessionController.store.form()"
-                        :reset-on-success="['password']"
-                        v-slot="{ errors, processing }"
-                        class="space-y-6"
-                    >
-                        <!-- Email Field -->
-                        <div>
-                            <Label
-                                for="email"
-                                class="mb-2 block text-sm font-semibold text-gray-900"
-                            >
-                                Email Address
-                            </Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                name="email"
-                                required
-                                autofocus
-                                :tabindex="1"
-                                autocomplete="email"
-                                placeholder="Enter your email"
-                                class="w-full rounded-lg border border-gray-300 px-4 py-3 transition-colors focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
-                            />
-                            <InputError :message="errors.email" class="mt-1" />
-                        </div>
-
-                        <!-- Password Field -->
-                        <div>
-                            <div class="mb-2 flex items-center justify-between">
-                                <Label
-                                    for="password"
-                                    class="block text-sm font-semibold text-gray-900"
-                                >
-                                    Password
-                                </Label>
-                                <TextLink
-                                    v-if="canResetPassword"
-                                    :href="request()"
-                                    class="text-sm font-medium text-orange-600 hover:text-orange-700"
-                                    :tabindex="5"
-                                >
-                                    Forgot password?
-                                </TextLink>
-                            </div>
-                            <Input
-                                id="password"
-                                type="password"
-                                name="password"
-                                required
-                                :tabindex="2"
-                                autocomplete="current-password"
-                                placeholder="Enter your password"
-                                class="w-full rounded-lg border border-gray-300 px-4 py-3 transition-colors focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
-                            />
-                            <InputError
-                                :message="errors.password"
-                                class="mt-1"
-                            />
-                        </div>
-
-                        <!-- Remember Me -->
-                        <div class="flex items-center">
-                            <Label
-                                for="remember"
-                                class="flex cursor-pointer items-center space-x-3"
-                            >
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    :tabindex="3"
-                                    class="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                                />
-                                <span class="text-sm text-gray-700"
-                                    >Remember me for 30 days</span
-                                >
-                            </Label>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <Button
-                            type="submit"
-                            class="flex w-full items-center justify-center rounded-lg bg-orange-600 px-4 py-3 font-semibold text-white transition-colors duration-200 hover:bg-orange-700"
-                            :tabindex="4"
-                            :disabled="processing"
-                            data-test="login-button"
+                <!-- Main Login Card -->
+                <Card class="overflow-hidden rounded-[2.5rem] border-none bg-white p-2 shadow-2xl shadow-slate-200/60 ring-1 ring-slate-100">
+                    <CardContent class="p-8 sm:p-10">
+                        <Form
+                            v-bind="AuthenticatedSessionController.store.form()"
+                            :reset-on-success="['password']"
+                            v-slot="{ errors, processing }"
+                            class="space-y-8"
                         >
-                            <LoaderCircle
-                                v-if="processing"
-                                class="mr-2 h-5 w-5 animate-spin"
-                            />
-                            {{ processing ? 'Signing in...' : 'Sign In' }}
-                        </Button>
+                            <!-- Email Field -->
+                            <div class="space-y-3">
+                                <Label for="email" class="text-xs font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
+                                    Email Address
+                                    <HelpTooltip content="Use the email associated with your account or the one you used during your first booking." />
+                                </Label>
+                                <div class="relative group">
+                                    <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors">
+                                        <Mail class="size-5" />
+                                    </div>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        name="email"
+                                        required
+                                        autofocus
+                                        :tabindex="1"
+                                        autocomplete="email"
+                                        placeholder="name@example.com"
+                                        class="h-14 w-full rounded-2xl border-none bg-slate-50 pl-14 pr-6 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-slate-900 transition-all placeholder:text-slate-300"
+                                    />
+                                </div>
+                                <InputError :message="errors.email" class="mt-2 text-xs font-bold text-rose-500" />
+                            </div>
 
-                        <!-- Sign Up Link -->
-                        <div class="border-t border-gray-200 pt-4 text-center">
-                            <p class="text-sm text-gray-600">
-                                Don't have an account?
-                                <TextLink
-                                    :href="register()"
-                                    :tabindex="5"
-                                    class="ml-1 font-semibold text-orange-600 hover:text-orange-700"
-                                >
-                                    Create one here
-                                </TextLink>
-                            </p>
+                            <!-- Password Field -->
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between ml-1">
+                                    <Label for="password" class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                        Password
+                                        <HelpTooltip content="Your secure access key. If you've forgotten it, use the reset link." />
+                                    </Label>
+                                    <TextLink
+                                        v-if="canResetPassword"
+                                        :href="request()"
+                                        class="text-xs font-black uppercase tracking-widest text-slate-900 hover:text-slate-600 transition-colors"
+                                        :tabindex="5"
+                                    >
+                                        Forgot?
+                                    </TextLink>
+                                </div>
+                                <div class="relative group">
+                                    <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors">
+                                        <Lock class="size-5" />
+                                    </div>
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        name="password"
+                                        required
+                                        :tabindex="2"
+                                        autocomplete="current-password"
+                                        placeholder="••••••••"
+                                        class="h-14 w-full rounded-2xl border-none bg-slate-50 pl-14 pr-6 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-slate-900 transition-all placeholder:text-slate-300"
+                                    />
+                                </div>
+                                <InputError :message="errors.password" class="mt-2 text-xs font-bold text-rose-500" />
+                            </div>
+
+                            <!-- Remember Me -->
+                            <div class="flex items-center px-1">
+                                <Label for="remember" class="flex cursor-pointer items-center gap-3">
+                                    <Checkbox
+                                        id="remember"
+                                        name="remember"
+                                        :tabindex="3"
+                                        class="size-5 rounded-lg border-slate-200 text-slate-900 focus:ring-slate-900 shadow-none ring-0 data-[state=checked]:bg-slate-900 data-[state=checked]:border-slate-900"
+                                    />
+                                    <span class="text-sm font-bold text-slate-500">Keep me logged in</span>
+                                </Label>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <Button
+                                type="submit"
+                                class="h-16 w-full rounded-2xl bg-slate-900 text-base font-black uppercase tracking-widest text-white shadow-2xl shadow-slate-200 hover:bg-slate-800 transition-all border-none active:scale-[0.98] disabled:opacity-50"
+                                :tabindex="4"
+                                :disabled="processing"
+                            >
+                                <LoaderCircle v-if="processing" class="mr-2 size-5 animate-spin" />
+                                <span v-else class="flex items-center gap-3">
+                                    Sign In <ArrowRight class="size-5" />
+                                </span>
+                            </Button>
+
+                            <!-- Sign Up Link -->
+                            <div class="pt-2 text-center">
+                                <p class="text-sm font-bold text-slate-400">
+                                    No account yet?
+                                    <TextLink
+                                        :href="register()"
+                                        :tabindex="5"
+                                        class="ml-2 font-black text-slate-900 hover:text-slate-600 border-b-2 border-slate-900/10 hover:border-slate-900 transition-all"
+                                    >
+                                        Create Account
+                                    </TextLink>
+                                </p>
+                            </div>
+                        </Form>
+                    </CardContent>
+                </Card>
+
+                <!-- Demo Credentials Section (Premium Collapsible) -->
+                <Card class="overflow-hidden rounded-3xl border-none bg-slate-50 ring-1 ring-slate-200/50 shadow-sm transition-all duration-300">
+                    <button
+                        @click="isDemoOpen = !isDemoOpen"
+                        type="button"
+                        class="flex w-full items-center justify-between p-6 hover:bg-slate-100/50 transition-colors group"
+                    >
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200 group-hover:scale-110 transition-transform">
+                                <Info class="size-5 text-slate-500" />
+                            </div>
+                            <div class="text-left">
+                                <span class="block text-sm font-black uppercase tracking-widest text-slate-900">Demo Credentials</span>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Test access information</span>
+                            </div>
                         </div>
-                    </Form>
-                </div>
+                        <ChevronDown
+                            v-if="!isDemoOpen"
+                            class="size-5 text-slate-400 group-hover:text-slate-900 transition-colors"
+                        />
+                        <ChevronUp
+                            v-else
+                            class="size-5 text-slate-900"
+                        />
+                    </button>
 
-                <!-- Additional Info -->
-                <div class="text-center">
-                    <p class="text-xs text-gray-500">
-                        By signing in, you agree to our Terms of Service and
-                        Privacy Policy
+                    <div v-show="isDemoOpen" class="p-6 pt-0 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <!-- Client Demo -->
+                            <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
+                                <div class="mb-4 flex items-center justify-between">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Client Access</span>
+                                    <User class="size-4 text-slate-300" />
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Email</p>
+                                        <p class="text-xs font-bold text-slate-900 select-all">client@example.com</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Password</p>
+                                        <code class="text-xs font-bold text-slate-900 select-all">00000000</code>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Admin Demo -->
+                            <div class="rounded-2xl bg-slate-900 p-5 shadow-2xl shadow-slate-200">
+                                <div class="mb-4 flex items-center justify-between">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Admin Portal</span>
+                                    <Shield class="size-4 text-slate-500" />
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1">Email</p>
+                                        <p class="text-xs font-bold text-white select-all">admin@example.com</p>
+                                    </div>
+                                    <div class="flex items-end justify-between gap-4">
+                                        <div>
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1">Password</p>
+                                            <code class="text-xs font-bold text-white select-all">00000000</code>
+                                        </div>
+                                        <a
+                                            href="/admin-secret-url"
+                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition-all shadow-lg"
+                                            title="Go to Admin Panel"
+                                        >
+                                            <ArrowRight class="size-4" />
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
+                <!-- Footer Info -->
+                <div class="pt-4 text-center">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-relaxed max-w-[320px] mx-auto">
+                        By signing in, you agree to our <a href="#" class="text-slate-900 hover:underline">Terms</a> & <a href="#" class="text-slate-900 hover:underline">Privacy Policy</a>
                     </p>
                 </div>
             </div>
         </div>
     </HomeLayout>
 </template>
+

@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import ClientLayout from '@/layouts/ClientLayout.vue';
 import { index, store } from '@/routes/client/support';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { ChevronLeft, Send, Info, HelpCircle, Clock } from 'lucide-vue-next';
 
 const form = useForm<{
     subject: string;
@@ -42,158 +47,132 @@ const submitTicket = async () => {
 <template>
     <Head title="Create New Ticket" />
     <ClientLayout>
-        <div class="p-4">
-            <!-- Page Header -->
-            <div class="mb-6 w-full rounded-lg bg-white p-6 shadow">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900">
-                            Create New Support Ticket
-                        </h1>
-                        <p class="mt-2 text-sm text-gray-600">
-                            Need help? Submit a support ticket and our team will
-                            get back to you as soon as possible.
-                        </p>
-                    </div>
-                    <div>
-                        <Link :href="index().url">
-                            <Button variant="outline">Back to Tickets</Button>
-                        </Link>
-                    </div>
+        <div class="space-y-8 p-4 lg:p-8 pb-12">
+            <!-- Header Section -->
+            <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <h1 class="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">New <span class="text-slate-500">Support Ticket</span></h1>
+                    <p class="mt-2 text-base font-bold text-slate-400 uppercase tracking-widest">Get assistance from our dedicated team</p>
                 </div>
+                
+                <Button as-child variant="outline" class="h-12 rounded-xl border-none bg-white ring-1 ring-slate-200 hover:bg-slate-50 font-black uppercase tracking-widest text-xs px-6">
+                    <Link :href="index().url">
+                        <ChevronLeft class="mr-2 size-4" /> Back to Tickets
+                    </Link>
+                </Button>
             </div>
 
-            <!-- Ticket Form -->
-            <div class="w-full rounded-lg bg-white p-6 shadow">
-                <form @submit.prevent="submitTicket" class="space-y-6">
-                    <!-- Subject Field -->
-                    <div>
-                        <label
-                            for="subject"
-                            class="block text-sm font-medium text-gray-700"
-                        >
-                            Subject
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                            id="subject"
-                            v-model="form.subject"
-                            type="text"
-                            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            placeholder="Brief description of your issue"
-                            required
-                            maxlength="255"
-                            aria-label="Ticket subject"
-                        />
-                        <p
-                            v-if="form.errors.subject"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.subject }}
-                        </p>
-                        <p class="mt-1 text-xs text-gray-500">
-                            {{ form.subject.length }}/255 characters
-                        </p>
-                    </div>
+            <div class="grid gap-8 lg:grid-cols-3">
+                <!-- Ticket Form -->
+                <Card class="rounded-3xl border-none bg-white p-8 shadow-xl shadow-slate-200/50 ring-1 ring-slate-100 lg:col-span-2">
+                    <CardHeader class="px-0 pt-0 pb-8 border-b border-slate-50">
+                        <CardTitle class="text-2xl font-black tracking-tight text-slate-900">Ticket Details</CardTitle>
+                        <CardDescription class="text-xs font-black uppercase tracking-widest text-slate-400">Please provide as much information as possible</CardDescription>
+                    </CardHeader>
+                    <CardContent class="pt-8 px-0">
+                        <form @submit.prevent="submitTicket" class="space-y-8">
+                            <!-- Subject Field -->
+                            <div class="space-y-3">
+                                <Label for="subject" class="text-sm font-black uppercase tracking-widest text-slate-900">
+                                    Subject <span class="text-rose-500">*</span>
+                                </Label>
+                                <Input
+                                    id="subject"
+                                    v-model="form.subject"
+                                    type="text"
+                                    class="h-14 rounded-xl border-none bg-slate-50 px-6 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-slate-900 transition-all"
+                                    placeholder="Brief description of your issue"
+                                    required
+                                    maxlength="255"
+                                />
+                                <div class="flex justify-between items-center text-xs font-bold text-slate-400">
+                                    <span>{{ form.subject.length }}/255 characters</span>
+                                    <span v-if="form.errors.subject" class="text-rose-500">{{ form.errors.subject }}</span>
+                                </div>
+                            </div>
 
-                    <!-- Message Field -->
-                    <div>
-                        <label
-                            for="message"
-                            class="block text-sm font-medium text-gray-700"
-                        >
-                            Message
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <textarea
-                            id="message"
-                            v-model="form.message"
-                            rows="8"
-                            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            placeholder="Provide detailed information about your issue..."
-                            required
-                            aria-label="Ticket message"
-                        ></textarea>
-                        <p
-                            v-if="form.errors.message"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.message }}
-                        </p>
-                        <p class="mt-1 text-xs text-gray-500">
-                            Please provide as much detail as possible to help us
-                            assist you better.
-                        </p>
-                    </div>
+                            <!-- Message Field -->
+                            <div class="space-y-3">
+                                <Label for="message" class="text-sm font-black uppercase tracking-widest text-slate-900">
+                                    Detailed Message <span class="text-rose-500">*</span>
+                                </Label>
+                                <Textarea
+                                    id="message"
+                                    v-model="form.message"
+                                    rows="10"
+                                    class="rounded-xl border-none bg-slate-50 p-6 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-slate-900 transition-all leading-relaxed"
+                                    placeholder="Describe your issue in detail..."
+                                    required
+                                />
+                                <p v-if="form.errors.message" class="text-xs font-bold text-rose-500">{{ form.errors.message }}</p>
+                            </div>
 
-                    <!-- Submit Button -->
-                    <div class="flex items-center justify-end space-x-3">
-                        <Link :href="index().url">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                :disabled="form.processing"
-                            >
-                                Cancel
-                            </Button>
-                        </Link>
-                        <button
-                            type="submit"
-                            class="rounded-md cursor-pointer bg-slate-600 px-6 py-2 text-white hover:bg-slate-700 focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                            :disabled="!canSubmit"
-                        >
-                            <span v-if="form.processing"
-                                >Creating Ticket...</span
-                            >
-                            <span v-else>Create Ticket</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
+                            <!-- Form Actions -->
+                            <div class="flex items-center justify-end gap-4 pt-4">
+                                <Button as-child variant="ghost" class="h-12 rounded-xl font-black uppercase tracking-widest text-xs px-8 text-slate-400 hover:text-slate-600">
+                                    <Link :href="index().url">Cancel</Link>
+                                </Button>
+                                <Button 
+                                    type="submit" 
+                                    class="h-12 rounded-xl bg-slate-900 px-10 text-sm font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
+                                    :disabled="!canSubmit"
+                                >
+                                    <span v-if="form.processing" class="flex items-center gap-2">
+                                        <Clock class="size-4 animate-spin text-xs" /> Processing...
+                                    </span>
+                                    <span v-else class="flex items-center gap-2">
+                                        <Send class="size-4 text-xs" /> Submit Ticket
+                                    </span>
+                                </Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
 
-            <!-- Help Text -->
-            <div class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg
-                            class="h-5 w-5 text-blue-400"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-blue-800">
-                            Tips for submitting a ticket
-                        </h3>
-                        <div class="mt-2 text-sm text-blue-700">
-                            <ul class="list-disc space-y-1 pl-5">
-                                <li>
-                                    Use a clear and descriptive subject line
+                <!-- Help/Tips Section -->
+                <div class="space-y-8">
+                    <Card class="rounded-3xl border-none bg-slate-900 p-8 text-white shadow-2xl shadow-slate-200/50">
+                        <CardHeader class="px-0 pt-0 pb-6 border-b border-white/10 flex-row items-center justify-between space-y-0 text-xs">
+                            <div>
+                                <CardTitle class="text-xl font-black tracking-tight">Submission Tips</CardTitle>
+                                <CardDescription class="text-xs font-black uppercase tracking-widest text-slate-500">How to get faster help</CardDescription>
+                            </div>
+                            <HelpCircle class="size-6 text-slate-700" />
+                        </CardHeader>
+                        <CardContent class="pt-8 px-0 space-y-6">
+                            <ul class="space-y-6">
+                                <li class="flex gap-4">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 backdrop-blur-sm">
+                                        <span class="text-sm font-black text-slate-400">01</span>
+                                    </div>
+                                    <p class="text-sm font-bold leading-relaxed text-slate-300">Use a clear and descriptive subject line.</p>
                                 </li>
-                                <li>
-                                    Include relevant details such as error
-                                    messages or screenshots
+                                <li class="flex gap-4">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 backdrop-blur-sm">
+                                        <span class="text-sm font-black text-slate-400">02</span>
+                                    </div>
+                                    <p class="text-sm font-bold leading-relaxed text-slate-300">Include relevant details such as error messages.</p>
                                 </li>
-                                <li>
-                                    Describe the steps to reproduce the issue
-                                </li>
-                                <li>
-                                    Our support team typically responds within
-                                    24 hours
+                                <li class="flex gap-4">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 backdrop-blur-sm">
+                                        <span class="text-sm font-black text-slate-400">03</span>
+                                    </div>
+                                    <p class="text-sm font-bold leading-relaxed text-slate-300">Describe the steps to reproduce the issue.</p>
                                 </li>
                             </ul>
-                        </div>
-                    </div>
+                            
+                            <div class="mt-8 rounded-2xl bg-white/5 p-6 backdrop-blur-sm border border-white/5">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <Info class="size-4 text-slate-400 text-xs" />
+                                    <p class="text-xs font-black uppercase tracking-widest text-slate-400">Response Time</p>
+                                </div>
+                                <p class="text-sm font-bold text-slate-200">Our support team typically responds within 24 hours.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>
     </ClientLayout>
 </template>
+

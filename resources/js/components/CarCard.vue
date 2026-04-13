@@ -1,6 +1,15 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { show } from '@/routes/fleet';
+import { Fuel, Calendar, Users, Cog, Gauge, ImageOff, ArrowRight } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import {
+    Card,
+    CardContent,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { getCarColorHex } from '@/lib/colors';
 
 interface Car {
     id: number;
@@ -10,6 +19,10 @@ interface Car {
     price_per_day: string;
     description: string;
     fuel_type: string;
+    transmission: string;
+    seats: number;
+    color: string;
+    mileage: number;
     image_url: string;
 }
 
@@ -17,103 +30,101 @@ interface Props {
     car: Car;
 }
 
+const props = defineProps<Props>();
+const $page = usePage();
+
+const imageError = ref(false);
+const handleImageError = () => {
+    imageError.value = true;
+};
+
+const currencySymbol = computed(() => ($page.props.currency as any)?.symbol || '$');
+
 const bookCar = (carId: number) => {
     router.get(show(carId).url);
 };
-
-defineProps<Props>();
 </script>
 
 <template>
-    <div
-        class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg transition-all duration-300 hover:shadow-2xl"
+    <Card
+        class="group relative flex flex-col p-0 gap-0 overflow-hidden border border-border/50 bg-card shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 cursor-pointer rounded-2xl"
+        @click="bookCar(car.id)"
     >
-        <!-- Car Image -->
-        <div
-            class="relative h-56 overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100"
-        >
-            <img
-                :src="car.image_url"
-                :alt="`${car.make} ${car.model}`"
-                class="h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03]"
-            />
-
-            <!-- Price Badge -->
-            <div
-                class="absolute top-4 right-4 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-2 shadow-lg"
-            >
-                <span class="text-sm font-bold text-white"
-                    >{{ $page.props.currency.symbol }}{{ car.price_per_day }}</span
-                >
-                <span class="text-xs text-orange-100">/day</span>
+        <!-- Image -->
+        <div class="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+            <template v-if="!imageError && car.image_url">
+                <img
+                    :src="car.image_url"
+                    :alt="`${car.make} ${car.model}`"
+                    @error="handleImageError"
+                    class="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
+                />
+            </template>
+            <div v-else class="flex h-full w-full flex-col items-center justify-center text-muted-foreground">
+                <ImageOff class="size-10 opacity-30" />
             </div>
 
-            <!-- Gradient Overlay -->
-            <div
-                class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            ></div>
-        </div>
+            <!-- Gradient overlay -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-        <!--  Car Details -->
-        <div class=" space-y-4 p-4">
-            <!-- Header -->
-            <div class="space-y-2">
-                <h3
-                    class="text-xl font-bold text-gray-900 transition-colors group-hover:text-orange-600"
-                >
-                    {{ car.make }} {{ car.model }} — {{ car.year }}
-                </h3>
+            <!-- Year badge -->
+            <Badge variant="secondary" class="absolute top-3 left-3 bg-background/90 backdrop-blur-md border-none text-[11px] font-bold shadow-sm">
+                {{ car.year }}
+            </Badge>
 
-                <div class="flex items-center gap-2">
-                    <div class="flex items-center gap-1 capitalize">
-                        <svg
-                            class="h-4 w-4 text-orange-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M13 10V3L4 14h7v7l9-11h-7z"
-                            ></path>
-                        </svg>
-                        <span class="font-medium">{{ car.fuel_type }}</span>
-                    </div>
+            <!-- Price badge -->
+            <div class="absolute bottom-3 right-3">
+                <div class="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-sm font-black shadow-lg shadow-primary/20 backdrop-blur-sm">
+                    {{ currencySymbol }}{{ Number(car.price_per_day).toLocaleString() }}<span class="text-[10px] font-medium opacity-70 ml-0.5">/day</span>
                 </div>
             </div>
+        </div>
 
-            <!-- Description -->
-            <p class="line-clamp-2 text-sm leading-relaxed text-gray-600">
-                {{ car.description }}
-            </p>
-        </div>
-        <!--  Book Button -->
-        <div class=" p-4">
-            <button
-                @click="bookCar(car.id)"
-                class="group/btn w-full cursor-pointer rounded-xl bg-gradient-to-r from-slate-700 to-slate-900 px-6 py-3.5 font-semibold text-white shadow-lg transition-all duration-200 hover:from-orange-600 hover:to-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none"
-            >
-                <span
-                    class="flex items-center justify-center gap-2 text-orange-500 group-hover:text-white"
-                >
-                    <svg
-                        class="h-5 w-5 transition-transform group-hover/btn:scale-110"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        ></path>
-                    </svg>
-                    Book Now
+        <!-- Content -->
+        <CardContent class="flex flex-col flex-1 p-4 pb-4">
+            <!-- Title row -->
+            <div class="mb-2">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-primary">{{ car.make }}</p>
+                <h3 class="text-lg font-extrabold tracking-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                    {{ car.model }}
+                </h3>
+            </div>
+
+            <!-- Specs pills -->
+            <div class="flex flex-wrap gap-1.5 mb-4">
+                <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+                    <Fuel class="size-3 text-primary/60" />
+                    {{ car.fuel_type || 'N/A' }}
                 </span>
-            </button>
-        </div>
-    </div>
+                <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+                    <Cog class="size-3 text-primary/60" />
+                    {{ car.transmission || 'Auto' }}
+                </span>
+                <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+                    <Users class="size-3 text-primary/60" />
+                    {{ car.seats || 2 }}
+                </span>
+                <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+                    <Gauge class="size-3 text-primary/60" />
+                    {{ (car.mileage || 0).toLocaleString() }} km
+                </span>
+                <span v-if="car.color" class="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+                    <span class="size-2.5 rounded-full border border-border/50 shadow-sm" :style="{ backgroundColor: getCarColorHex(car.color) }"></span>
+                    <span class="capitalize">{{ car.color }}</span>
+                </span>
+            </div>
+
+            <!-- CTA -->
+            <div class="mt-auto pt-3 border-t border-border/50">
+                <Button
+                    variant="ghost"
+                    class="w-full h-9 justify-between px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/5 group/btn"
+                    @click.stop="bookCar(car.id)"
+                >
+                    View Details
+                    <ArrowRight class="size-3.5 transition-transform group-hover/btn:translate-x-1" />
+                </Button>
+            </div>
+        </CardContent>
+    </Card>
 </template>

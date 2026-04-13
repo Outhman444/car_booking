@@ -8,8 +8,11 @@ import { setOptions } from "filepond";
 import { usePage } from "@inertiajs/vue3";
 
 // Import locales
+// @ts-expect-error - filepond locales don't have types
 import ar_AR from "filepond/locale/ar-ar";
+// @ts-expect-error - filepond locales don't have types
 import fr_FR from "filepond/locale/fr-fr";
+// @ts-expect-error - filepond locales don't have types
 import es_ES from "filepond/locale/es-es";
 
 const props = defineProps({
@@ -59,7 +62,7 @@ const props = defineProps({
     theme: {
         type: String,
         default: "light",
-        validator: (value) => ["light", "dark"].includes(value),
+        validator: (value: any) => ["light", "dark"].includes(value),
     },
     width: {
         type: String,
@@ -292,7 +295,7 @@ const serverOptions: any = {
             }
             return result;
         },
-        onerror: (response) => {
+        onerror: (response: any) => {
             console.error("Upload error:", response);
         },
     },
@@ -302,7 +305,7 @@ const serverOptions: any = {
         headers: {
             "X-CSRF-TOKEN": page.props.csrf_token,
         },
-        onload: (response) => {
+        onload: (response: any) => {
             // Extract response text from XMLHttpRequest object
             let responseText = response;
             if (
@@ -330,7 +333,7 @@ const serverOptions: any = {
             }
             return null;
         },
-        onerror: (response) => {
+        onerror: (response: any) => {
             console.error("Patch error:", response);
         },
     },

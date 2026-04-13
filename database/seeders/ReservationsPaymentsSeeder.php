@@ -101,29 +101,15 @@ class ReservationsPaymentsSeeder extends Seeder
         $startDate = Carbon::parse($reservationData['start_date']);
         $endDate = Carbon::parse($reservationData['end_date']);
 
-        $newStatus = match ($reservationStatus) {
-            ReservationStatus::PENDING => CarStatus::AVAILABLE, // Keep available until confirmed
-            ReservationStatus::CONFIRMED => $startDate->isFuture() ? CarStatus::RESERVED : CarStatus::RENTED,
-            ReservationStatus::ACTIVE => CarStatus::RENTED,
-            ReservationStatus::COMPLETED => CarStatus::CLEANING, // Car needs cleaning after rental
-            ReservationStatus::CANCELLED => CarStatus::AVAILABLE,
-            ReservationStatus::NO_SHOW => CarStatus::AVAILABLE,
-        };
-
-        // Additional logic for timing
-        if ($reservationStatus === ReservationStatus::CONFIRMED) {
-            if ($startDate->isToday()) {
-                $newStatus = CarStatus::RESERVED; // Reserved for today's pickup
-            } elseif ($startDate->isPast() && $endDate->isFuture()) {
-                $newStatus = CarStatus::RENTED; // Currently being rented
-            } elseif ($endDate->isPast()) {
-                $newStatus = CarStatus::CLEANING; // Should be cleaning after return
-            }
+        if ($reservationStatus === ReservationStatus::ACTIVE) {
+            $car->update(['status' => CarStatus::RENTED->value]);
+        } elseif ($reservationStatus === ReservationStatus::PENDING || $reservationStatus === ReservationStatus::CONFIRMED) {
+            $car->update(['status' => CarStatus::RESERVED->value]);
+        } else {
+            $car->update(['status' => CarStatus::AVAILABLE->value]);
         }
 
-        $car->update(['status' => $newStatus]);
-
-        $this->command->info("Updated car ID {$car->id} status to: {$newStatus->value}");
+        $this->command->info("Updated car ID {$car->id} status to: " . CarStatus::AVAILABLE->value);
     }
 
     /**
@@ -201,7 +187,7 @@ class ReservationsPaymentsSeeder extends Seeder
                 'payment_scenarios' => [
                     [
                         'status' => PaymentStatus::COMPLETED,
-                        'method' => PaymentMethod::CREDIT_CARD,
+                        'method' => PaymentMethod::STRIPE,
                         'processed_at' => $now->copy()->subDays(35),
                     ]
                 ]
@@ -259,7 +245,7 @@ class ReservationsPaymentsSeeder extends Seeder
                 'payment_scenarios' => [
                     [
                         'status' => PaymentStatus::COMPLETED,
-                        'method' => PaymentMethod::CREDIT_CARD,
+                        'method' => PaymentMethod::STRIPE,
                         'processed_at' => $now->copy()->subHours(2),
                     ]
                 ]
@@ -318,7 +304,7 @@ class ReservationsPaymentsSeeder extends Seeder
                 'payment_scenarios' => [
                     [
                         'status' => PaymentStatus::PENDING,
-                        'method' => PaymentMethod::BANK_TRANSFER,
+                        'method' => PaymentMethod::AGENCY,
                     ]
                 ]
             ],
@@ -336,7 +322,7 @@ class ReservationsPaymentsSeeder extends Seeder
                 'payment_scenarios' => [
                     [
                         'status' => PaymentStatus::REFUNDED,
-                        'method' => PaymentMethod::CREDIT_CARD,
+                        'method' => PaymentMethod::STRIPE,
                         'processed_at' => $now->copy()->subDays(8),
                         'refund_amount' => 'full',
                     ]
@@ -354,7 +340,7 @@ class ReservationsPaymentsSeeder extends Seeder
                 'payment_scenarios' => [
                     [
                         'status' => PaymentStatus::COMPLETED,
-                        'method' => PaymentMethod::DEBIT_CARD,
+                        'method' => PaymentMethod::STRIPE,
                         'processed_at' => $now->copy()->subDays(15),
                     ]
                 ]
@@ -371,7 +357,7 @@ class ReservationsPaymentsSeeder extends Seeder
                 'payment_scenarios' => [
                     [
                         'status' => PaymentStatus::FAILED,
-                        'method' => PaymentMethod::CREDIT_CARD,
+                        'method' => PaymentMethod::STRIPE,
                         'gateway_response' => 'Insufficient funds',
                     ],
                     [
@@ -414,7 +400,7 @@ class ReservationsPaymentsSeeder extends Seeder
                 'payment_scenarios' => [
                     [
                         'status' => PaymentStatus::COMPLETED,
-                        'method' => PaymentMethod::BANK_TRANSFER,
+                        'method' => PaymentMethod::AGENCY,
                         'processed_at' => $now->copy()->subDays(60),
                     ]
                 ]
@@ -435,7 +421,7 @@ class ReservationsPaymentsSeeder extends Seeder
                 'payment_scenarios' => [
                     [
                         'status' => PaymentStatus::COMPLETED,
-                        'method' => PaymentMethod::CREDIT_CARD,
+                        'method' => PaymentMethod::STRIPE,
                         'processed_at' => $now->copy()->subDays(14),
                     ]
                 ]
@@ -506,24 +492,18 @@ class ReservationsPaymentsSeeder extends Seeder
         ];
 
         return match ($method) {
-            PaymentMethod::CREDIT_CARD, PaymentMethod::DEBIT_CARD => array_merge($baseData, [
+            PaymentMethod::STRIPE => array_merge($baseData, [
                 'card_last_four' => rand(1000, 9999),
                 'card_type' => collect(['visa', 'mastercard', 'amex'])->random(),
                 'authorization_code' => 'AUTH_' . rand(100000, 999999),
+                'stripe_charge_id' => 'ch_' . uniqid(),
+                'stripe_customer_id' => 'cus_' . uniqid(),
             ]),
             PaymentMethod::PAYPAL => array_merge($baseData, [
                 'paypal_transaction_id' => 'PP_' . uniqid(),
                 'payer_email' => 'customer@example.com',
             ]),
-            PaymentMethod::STRIPE => array_merge($baseData, [
-                'stripe_charge_id' => 'ch_' . uniqid(),
-                'stripe_customer_id' => 'cus_' . uniqid(),
-            ]),
-            PaymentMethod::BANK_TRANSFER => array_merge($baseData, [
-                'bank_reference' => 'BANK_' . rand(1000000, 9999999),
-                'bank_name' => collect(['Bank of Example', 'Example National Bank', 'First Example Bank'])->random(),
-            ]),
-            PaymentMethod::CASH => array_merge($baseData, [
+            PaymentMethod::AGENCY => array_merge($baseData, [
                 'receipt_number' => 'CASH_' . rand(10000, 99999),
                 'cashier_id' => rand(1, 10),
             ]),

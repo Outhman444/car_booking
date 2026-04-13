@@ -9,7 +9,7 @@ import {
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { LogOut, UserIcon, LayoutDashboard, Globe } from 'lucide-vue-next';
 import { index as reportsIndex } from "@/routes/admin/reports/index";
 import { index as clientReservationsIndex } from "@/routes/client/reservations/index";
@@ -19,9 +19,6 @@ interface Props {
     user: User;
 }
 
-const handleLogout = () => {
-    router.flushAll();
-};
 
 defineProps<Props>();
 </script>
@@ -65,8 +62,8 @@ defineProps<Props>();
     <DropdownMenuItem :as-child="true">
         <Link
             class="block w-full"
-            :href="logout()"
-            @click="handleLogout"
+            :href="logout().url"
+            method="post"
             as="button"
             data-test="logout-button"
         >
