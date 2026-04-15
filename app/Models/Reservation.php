@@ -127,10 +127,10 @@ class Reservation extends Model
         }
 
         if ($this->status === ReservationStatus::CONFIRMED) {
-            return 'Pay at Pickup';
+            return 'Paiement à l\'agence';
         }
 
-        return 'Unpaid';
+        return 'Non payé';
     }
 
     /**

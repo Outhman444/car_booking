@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import BookingStepper from '@/components/BookingStepper.vue';
 import ReservationCountdown from '@/components/ReservationCountdown.vue';
 import { useReservationHelpers } from '@/composables/useReservationHelpers';
+import { trans } from '@/lib/translations';
 const $page = usePage<any>();
 const reservation = computed(() => $page.props.reservation);
 const helpers = computed(() => useReservationHelpers(reservation.value.currency || 'USD'));
@@ -21,14 +22,7 @@ const remainingAmount = computed(() => parseFloat(reservation.value.remaining_am
 const securityDeposit = computed(() => parseFloat(reservation.value.security_deposit_amount || 0));
 const depositPercentage = computed(() => $page.props.settings?.booking_deposit_percentage || 20);
 
-const statusLabels: Record<string, string> = {
-    pending: 'En attente',
-    confirmed: 'Confirmé',
-    active: 'Actif',
-    completed: 'Terminé',
-    cancelled: 'Annulé',
-    no_show: 'Non présenté'
-};
+const getStatusLabel = (status: string) => trans('reservation', status);
 </script>
 
 <template>
@@ -96,7 +90,7 @@ const statusLabels: Record<string, string> = {
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <span class="bg-primary/5 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ring-1 ring-ring/10">
-                                            {{ reservation.car.fuel_type }}
+                                            {{ trans('fuel', reservation.car.fuel_type) }}
                                         </span>
                                         <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
                                             Flotte Premium
@@ -171,7 +165,7 @@ const statusLabels: Record<string, string> = {
                                 <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                     <span class="text-xs font-black uppercase tracking-widest text-slate-500">Statut Actuel:</span>
                                     <span class="rounded-full bg-amber-50 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-amber-600 ring-1 ring-amber-200">
-                                        {{ statusLabels[reservation.status] || reservation.status }}
+                                        {{ getStatusLabel(reservation.status) }}
                                     </span>
                                 </div>
                                 

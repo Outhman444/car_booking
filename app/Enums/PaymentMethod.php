@@ -12,17 +12,17 @@ enum PaymentMethod: string
     {
         return match ($this) {
             self::PAYPAL => 'PayPal',
-            self::STRIPE => 'Credit/Debit Card (Stripe)',
-            self::CASH => 'Cash (Pay at Agency)',
+            self::STRIPE => 'Carte bancaire (Stripe)',
+            self::CASH => 'Espèces (Paiement à l\'agence)',
         };
     }
 
     public function description(): string
     {
         return match ($this) {
-            self::PAYPAL => 'Pay securely with your PayPal account',
-            self::STRIPE => 'Pay with credit or debit card via Stripe',
-            self::CASH => 'Pay in cash when you arrive to pick up your car',
+            self::PAYPAL => 'Payez en toute sécurité avec votre compte PayPal',
+            self::STRIPE => 'Payez par carte bancaire via Stripe',
+            self::CASH => 'Payez en espèces lors du retrait du véhicule',
         };
     }
 

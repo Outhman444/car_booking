@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { trans } from '@/lib/translations';
 
 const $page = usePage();
 
@@ -80,29 +81,12 @@ const getPaymentStatusStyle = (status: string) => {
     }
 };
 
-const statusLabels: Record<string, string> = {
-    pending: 'En attente',
-    confirmed: 'Confirmé',
-    active: 'Actif',
-    completed: 'Terminé',
-    cancelled: 'Annulé',
-    no_show: 'Non présenté'
-};
-
-const paymentStatusLabels: Record<string, string> = {
-    paid: 'Payé',
-    unpaid: 'Non payé',
-    pending: 'En attente',
-    refunded: 'Remboursé',
-    partially_refunded: 'Partiellement remboursé'
-};
-
 function formatStatus(status: string): string {
-    return statusLabels[status.toLowerCase()] || status;
+    return trans('reservation', status);
 }
 
 function formatPaymentStatus(status: string): string {
-    return paymentStatusLabels[status.toLowerCase()] || status;
+    return trans('payment', status);
 }
 </script>
 

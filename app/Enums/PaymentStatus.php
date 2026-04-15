@@ -16,7 +16,7 @@ enum PaymentStatus: string
         return array_map(function ($case) {
             return [
                 'value' => $case->value,
-                'label' => ucfirst(str_replace('_', ' ', $case->value)),
+                'label' => $case->label(),
             ];
         }, self::cases());
     }
@@ -24,12 +24,12 @@ enum PaymentStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::PENDING => 'Pending',
-            self::COMPLETED => 'Completed',
-            self::FAILED => 'Failed',
-            self::CANCELLED => 'Cancelled',
-            self::REFUNDED => 'Refunded',
-            self::PARTIALLY_REFUNDED => 'Partially Refunded',
+            self::PENDING => 'En attente',
+            self::COMPLETED => 'Complété',
+            self::FAILED => 'Échoué',
+            self::CANCELLED => 'Annulé',
+            self::REFUNDED => 'Remboursé',
+            self::PARTIALLY_REFUNDED => 'Partiellement remboursé',
         };
     }
 

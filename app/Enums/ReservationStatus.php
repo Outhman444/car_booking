@@ -23,12 +23,24 @@ enum ReservationStatus: string
         ];
     }
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::PENDING => 'En attente',
+            self::CONFIRMED => 'Confirmé',
+            self::ACTIVE => 'Actif',
+            self::COMPLETED => 'Terminé',
+            self::CANCELLED => 'Annulé',
+            self::NO_SHOW => 'Non présenté',
+        };
+    }
+
     public static function getMeta(): array
     {
         return array_map(function ($case) {
             return [
                 'value' => $case->value,
-                'label' => ucfirst(str_replace('_', ' ', $case->value)),
+                'label' => $case->label(),
                 'color' => self::statusColors()[$case->value] ?? '#6B7280',
             ];
         }, self::cases());

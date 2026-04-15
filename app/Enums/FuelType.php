@@ -13,6 +13,20 @@ enum FuelType: string
     case CNG = 'cng';
     case HYDROGEN = 'hydrogen';
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::GASOLINE => 'Essence',
+            self::DIESEL => 'Diesel',
+            self::HYBRID => 'Hybride',
+            self::ELECTRIC => 'Électrique',
+            self::PLUGIN_HYBRID => 'Hybride rechargeable',
+            self::LPG => 'GPL',
+            self::CNG => 'GNV',
+            self::HYDROGEN => 'Hydrogène',
+        };
+    }
+
     public static function values(): array
     {
         return array_column(self::cases(), 'value');
@@ -34,6 +48,9 @@ enum FuelType: string
 
     public static function forFrontend(): array
     {
-        return self::toArray();
+        return array_map(fn($case) => [
+            'value' => $case->value,
+            'label' => $case->label(),
+        ], self::cases());
     }
 }

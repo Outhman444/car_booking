@@ -14,12 +14,12 @@ enum CarStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::AVAILABLE      => 'Available',
-            self::PENDING        => 'Pending (Payment)',
-            self::RESERVED       => 'Reserved',
-            self::RENTED         => 'Rented / Active',
+            self::AVAILABLE      => 'Disponible',
+            self::PENDING        => 'En attente',
+            self::RESERVED       => 'Réservé',
+            self::RENTED         => 'Loué',
             self::MAINTENANCE    => 'Maintenance',
-            self::OUT_OF_SERVICE => 'Out of Service',
+            self::OUT_OF_SERVICE => 'Hors service',
         };
     }
 
