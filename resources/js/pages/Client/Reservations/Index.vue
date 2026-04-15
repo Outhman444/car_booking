@@ -3,10 +3,11 @@ import ClientLayout from '@/layouts/ClientLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { show } from '@/routes/client/reservations';
 import { computed } from 'vue';
-import { 
-    Hash, 
-    Car, 
-    Calendar, 
+import { computed } from 'vue';
+import {
+    Hash,
+    Car,
+    Calendar,
     ChevronRight,
     Search
 } from 'lucide-vue-next';
@@ -74,30 +75,52 @@ const getPaymentStatusStyle = (status: string) => {
     switch (status.toLowerCase()) {
         case 'paid': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200/50';
         case 'refunded': return 'bg-blue-100/50 text-blue-700 border-blue-200/50';
+        case 'partially_refunded': return 'bg-amber-100/50 text-amber-700 border-amber-200/50';
         default: return 'bg-amber-100/50 text-amber-700 border-amber-200/50';
     }
 };
 
+const statusLabels: Record<string, string> = {
+    pending: 'En attente',
+    confirmed: 'Confirmé',
+    active: 'Actif',
+    completed: 'Terminé',
+    cancelled: 'Annulé',
+    no_show: 'Non présenté'
+};
+
+const paymentStatusLabels: Record<string, string> = {
+    paid: 'Payé',
+    unpaid: 'Non payé',
+    pending: 'En attente',
+    refunded: 'Remboursé',
+    partially_refunded: 'Partiellement remboursé'
+};
+
 function formatStatus(status: string): string {
-    return (status || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return statusLabels[status.toLowerCase()] || status;
+}
+
+function formatPaymentStatus(status: string): string {
+    return paymentStatusLabels[status.toLowerCase()] || status;
 }
 </script>
 
 <template>
-    <Head title="My Reservations" />
+    <Head title="Mes Réservations" />
     <ClientLayout>
-        <div class="space-y-8 p-4 lg:p-8 pb-12 overflow-x-hidden">
+        <div class="space-y-8 p-8 overflow-x-hidden">
             <!-- Header Section -->
             <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
                 <div>
-                    <h1 class="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">My <span class="text-slate-500">Reservations</span></h1>
-                    <p class="mt-2 text-base font-bold text-slate-400 uppercase tracking-widest">Track and manage your rental history</p>
+                    <h1 class="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Mes <span class="text-slate-500">Réservations</span></h1>
+                    <p class="mt-2 text-base font-bold text-slate-400 uppercase tracking-widest">Suivez et gérez votre historique de location</p>
                 </div>
-                
+
                 <div class="flex items-center gap-3">
                     <div class="relative hidden sm:block">
                         <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                        <Input placeholder="Search reservation..." class="h-12 w-80 rounded-xl border-none bg-white pl-10 ring-1 ring-slate-200 focus:ring-slate-900 shadow-sm transition-all" />
+                        <Input placeholder="Rechercher une réservation..." class="h-12 w-80 rounded-xl border-none bg-white pl-10 ring-1 ring-slate-200 focus:ring-slate-900 shadow-sm transition-all" />
                     </div>
                 </div>
             </div>
@@ -109,17 +132,17 @@ function formatStatus(status: string): string {
                         <Table>
                             <TableHeader>
                                 <TableRow class="bg-slate-50/50 hover:bg-slate-50/50 border-b border-slate-100">
-                                    <TableHead class="h-16 px-8 text-xs font-black uppercase tracking-widest text-slate-400">Reference</TableHead>
-                                    <TableHead class="h-16 px-8 text-xs font-black uppercase tracking-widest text-slate-400">Vehicle</TableHead>
-                                    <TableHead class="h-16 px-8 text-xs font-black uppercase tracking-widest text-slate-400">Schedule</TableHead>
-                                    <TableHead class="h-16 px-8 text-xs font-black uppercase tracking-widest text-slate-400">Financials</TableHead>
-                                    <TableHead class="h-16 px-8 text-xs font-black uppercase tracking-widest text-slate-400">Status</TableHead>
+                                    <TableHead class="h-16 px-8 text-xs font-black uppercase tracking-widest text-slate-400">Référence</TableHead>
+                                    <TableHead class="h-16 px-8 text-xs font-black uppercase tracking-widest text-slate-400">Véhicule</TableHead>
+                                    <TableHead class="h-16 px-8 text-xs font-black uppercase tracking-widest text-slate-400">Planification</TableHead>
+                                    <TableHead class="h-16 px-8 text-xs font-black uppercase tracking-widest text-slate-400">Finances</TableHead>
+                                    <TableHead class="h-16 px-8 text-xs font-black uppercase tracking-widest text-slate-400">Statut</TableHead>
                                     <TableHead class="h-16 px-8"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                <TableRow 
-                                    v-for="res in props.reservations.data" 
+                                <TableRow
+                                    v-for="res in props.reservations.data"
                                     :key="res.id"
                                     @click="navigateToReservation(res.id)"
                                     class="group cursor-pointer border-b border-slate-50 transition-colors hover:bg-slate-50/50"
@@ -132,7 +155,7 @@ function formatStatus(status: string): string {
                                             <span class="text-base font-black text-slate-900">#{{ res.reservation_number }}</span>
                                         </div>
                                     </TableCell>
-                                    
+
                                     <TableCell class="px-8 py-6">
                                         <div v-if="res.car" class="space-y-1">
                                             <div class="text-base font-black text-slate-900 line-clamp-1">{{ res.car.make }} {{ res.car.model }}</div>
@@ -141,7 +164,7 @@ function formatStatus(status: string): string {
                                                 <span>{{ res.car.year }}</span>
                                             </div>
                                         </div>
-                                        <span v-else class="text-sm font-bold text-slate-400">Vehicle data missing</span>
+                                        <span v-else class="text-sm font-bold text-slate-400">Données du véhicule manquantes</span>
                                     </TableCell>
 
                                     <TableCell class="px-8 py-6">
@@ -160,17 +183,17 @@ function formatStatus(status: string): string {
                                     <TableCell class="px-8 py-6">
                                         <div class="space-y-1.5">
                                             <div class="text-base font-black text-slate-900">{{ res.total_price_formatted || `${currency.symbol} ${res.total_amount}` }}</div>
-                                            <Badge 
-                                                variant="outline" 
+                                            <Badge
+                                                variant="outline"
                                                 :class="['rounded-full py-0.5 px-3 text-[10px] font-black uppercase tracking-widest border-none ring-1 ring-inset shadow-none', getPaymentStatusStyle(res.payment_status)]"
                                             >
-                                                {{ res.payment_status }}
+                                                {{ formatPaymentStatus(res.payment_status) }}
                                             </Badge>
                                         </div>
                                     </TableCell>
 
                                     <TableCell class="px-8 py-6">
-                                        <Badge 
+                                        <Badge
                                             :class="['rounded-full py-1.5 px-5 text-xs font-black uppercase tracking-widest border shadow-none ring-0', getStatusStyle(res.status)]"
                                         >
                                             {{ formatStatus(res.status) }}
@@ -185,16 +208,16 @@ function formatStatus(status: string): string {
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                                
+
                                 <TableRow v-if="props.reservations.data.length === 0">
                                     <TableCell colspan="6" class="py-24 text-center">
                                         <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-[3rem] bg-slate-50 text-slate-200">
                                             <Car class="size-12" />
                                         </div>
-                                        <h3 class="mt-8 text-xl font-black text-slate-900 tracking-tight">No reservations found</h3>
-                                        <p class="mt-2 text-base font-bold text-slate-400">Ready for your first premium journey?</p>
+                                        <h3 class="mt-8 text-xl font-black text-slate-900 tracking-tight">Aucune réservation trouvée</h3>
+                                        <p class="mt-2 text-base font-bold text-slate-400">Prêt pour votre premier voyage premium?</p>
                                         <Button as-child class="mt-10 h-12 rounded-xl bg-slate-900 px-10 text-sm font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
-                                            <Link href="/fleet">Find your car</Link>
+                                            <Link href="/fleet">Trouvez votre voiture</Link>
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -224,4 +247,3 @@ function formatStatus(status: string): string {
         </div>
     </ClientLayout>
 </template>
-

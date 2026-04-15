@@ -14,10 +14,10 @@ enum ReservationStatus: string
     public static function statusColors(): array
     {
         return [
-            self::PENDING->value => '#F59E0B',    // Gray-900
+            self::PENDING->value => '#F59E0B',    // Amber-500
             self::CONFIRMED->value => '#10B981',  // Green-500
-            self::ACTIVE->value => '#3B82F6',     // Amber-500
-            self::COMPLETED->value => '#111827',  // Blue-500
+            self::ACTIVE->value => '#3B82F6',     // Blue-500
+            self::COMPLETED->value => '#111827',  // Gray-900
             self::CANCELLED->value => '#EF4444',  // Red-500
             self::NO_SHOW->value => '#6B7280',    // Gray-500
         ];

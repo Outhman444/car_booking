@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getCarColorHex } from '@/lib/colors';
+import { trans } from '@/lib/translations';
 
 interface Car {
     id: number;
@@ -75,7 +76,7 @@ const bookCar = (carId: number) => {
             <!-- Price badge -->
             <div class="absolute bottom-3 right-3">
                 <div class="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-sm font-black shadow-lg shadow-primary/20 backdrop-blur-sm">
-                    {{ currencySymbol }}{{ Number(car.price_per_day).toLocaleString() }}<span class="text-[10px] font-medium opacity-70 ml-0.5">/day</span>
+                    {{ currencySymbol }}{{ Number(car.price_per_day).toLocaleString() }}<span class="text-[10px] font-medium opacity-70 ml-0.5">/jour</span>
                 </div>
             </div>
         </div>
@@ -94,11 +95,11 @@ const bookCar = (carId: number) => {
             <div class="flex flex-wrap gap-1.5 mb-4">
                 <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
                     <Fuel class="size-3 text-primary/60" />
-                    {{ car.fuel_type || 'N/A' }}
+                    {{ trans('fuel', car.fuel_type) }}
                 </span>
                 <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
                     <Cog class="size-3 text-primary/60" />
-                    {{ car.transmission || 'Auto' }}
+                    {{ trans('transmission', car.transmission) }}
                 </span>
                 <span class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
                     <Users class="size-3 text-primary/60" />
@@ -110,7 +111,7 @@ const bookCar = (carId: number) => {
                 </span>
                 <span v-if="car.color" class="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
                     <span class="size-2.5 rounded-full border border-border/50 shadow-sm" :style="{ backgroundColor: getCarColorHex(car.color) }"></span>
-                    <span class="capitalize">{{ car.color }}</span>
+                    <span class="capitalize">{{ trans('color', car.color) }}</span>
                 </span>
             </div>
 
@@ -121,7 +122,7 @@ const bookCar = (carId: number) => {
                     class="w-full h-9 justify-between px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/5 group/btn"
                     @click.stop="bookCar(car.id)"
                 >
-                    View Details
+                    Voir Détails
                     <ArrowRight class="size-3.5 transition-transform group-hover/btn:translate-x-1" />
                 </Button>
             </div>

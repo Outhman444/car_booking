@@ -150,7 +150,7 @@ function doQuickUpdate(id: number, status: string) {
                               @keyup.enter="doSearch"
                             />
                         </div>
-                        <Button @click="doSearch" class="h-14 px-8 rounded-2xl bg-slate-900 text-sm font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all border-none">Search</Button>
+                        <Button @click="doSearch" class="h-14 px-8 rounded-2xl bg-slate-900 text-sm font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all border-none">Rechercher</Button>
                     </div>
                     
                     <!-- Status Filter -->
@@ -263,35 +263,35 @@ function doQuickUpdate(id: number, status: string) {
                                     </TableCell>
                                     <TableCell>
                                         <div class="flex flex-wrap gap-1.5">
-                                            <Button 
+                                            <Button
                                                 v-if="car.status === 'maintenance' || car.status === 'out_of_service'"
                                                 @click="doQuickUpdate(car.id, 'available')"
                                                 variant="ghost"
                                                 size="sm"
                                                 class="h-7 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all border-none"
                                             >
-                                                Ready
+                                                Disponible
                                             </Button>
-                                            <Button 
+                                            <Button
                                                 v-if="car.status === 'available'"
                                                 @click="doQuickUpdate(car.id, 'maintenance')"
                                                 variant="ghost"
                                                 size="sm"
                                                 class="h-7 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all border-none"
                                             >
-                                                Maint
+                                                Maintenance
                                             </Button>
-                                            <Button 
+                                            <Button
                                                 v-if="car.status === 'available'"
                                                 @click="doQuickUpdate(car.id, 'out_of_service')"
                                                 variant="ghost"
                                                 size="sm"
                                                 class="h-7 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all border-none"
                                             >
-                                                Disable
+                                                Désactiver
                                             </Button>
                                             <span v-if="['rented', 'reserved', 'pending'].includes(car.status)" class="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1 bg-slate-50 rounded-lg ring-1 ring-slate-100">
-                                                In Use
+                                                En cours
                                             </span>
                                         </div>
                                     </TableCell>
@@ -314,8 +314,8 @@ function doQuickUpdate(id: number, status: string) {
                                             <div class="p-6 rounded-full bg-slate-50 ring-1 ring-slate-100">
                                                 <Search class="size-8 text-slate-300" />
                                             </div>
-                                            <div class="text-lg font-black text-slate-900">No Vehicles Found</div>
-                                            <p class="text-sm font-bold text-slate-400">Try adjusting your search or filters.</p>
+                                            <div class="text-lg font-black text-slate-900">Aucun véhicule trouvé</div>
+                                            <p class="text-sm font-bold text-slate-400">Essayez d'ajuster votre recherche ou vos filtres.</p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -338,27 +338,27 @@ function doQuickUpdate(id: number, status: string) {
                  <div class="p-2 rounded-xl bg-rose-50 text-rose-600">
                     <AlertCircle class="h-6 w-6" />
                  </div>
-                Delete Vehicle
+                Supprimer le véhicule
               </DialogTitle>
               <DialogDescription class="pt-4 text-sm font-bold text-slate-500 leading-relaxed">
-                Are you sure you want to delete this vehicle? This action is permanent and will remove all associated booking history.
+                Êtes-vous sûr de vouloir supprimer ce véhicule ? Cette action est permanente et supprimera tout l'historique de réservation associé.
               </DialogDescription>
             </DialogHeader>
             
             <DialogFooter class="mt-10 flex gap-3">
               <DialogClose as-child>
                 <Button variant="ghost" class="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all">
-                    Cancel
+                    Annuler
                 </Button>
               </DialogClose>
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 variant="destructive"
                 @click="destroyCar"
                 :disabled="!carToDelete"
                 class="flex-1 h-14 rounded-2xl bg-rose-600 text-sm font-black uppercase tracking-widest text-white hover:bg-rose-500 shadow-xl shadow-rose-200 transition-all border-none"
               >
-                Confirm Delete
+                Confirmer la suppression
               </Button>
             </DialogFooter>
           </DialogContent>

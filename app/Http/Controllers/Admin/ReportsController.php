@@ -155,12 +155,10 @@ class ReportsController extends Controller
         $availableCars = Car::where('status', CarStatus::AVAILABLE)->count();
         $rentedCars = Car::whereIn('status', [CarStatus::RENTED, CarStatus::RESERVED])->count();
 
-        // Unavailable cars (maintenance, cleaning, unavailable, retired)
+        // Unavailable cars (maintenance, out of service)
         $unavailableCars = Car::whereIn('status', [
             CarStatus::MAINTENANCE,
-            CarStatus::CLEANING,
-            CarStatus::UNAVAILABLE,
-            CarStatus::RETIRED
+            CarStatus::OUT_OF_SERVICE,
         ])->count();
 
         return [

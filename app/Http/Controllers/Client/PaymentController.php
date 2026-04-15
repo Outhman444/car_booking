@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\PaymentMethodSetting;
 use App\Models\Reservation;
+use App\Services\ReservationStateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
@@ -18,6 +19,7 @@ use Stripe\Webhook;
 use Stripe\Exception\SignatureVerificationException;
 use App\Enums\ReservationStatus;
 use App\Enums\CarStatus;
+use App\Models\Setting;
 
 class PaymentController extends Controller
 {
@@ -57,6 +59,11 @@ class PaymentController extends Controller
                 'symbol' => config('app.currency_symbol'),
                 'code' => config('app.currency_code'),
             ],
+            'settings' => [
+                'booking_deposit_percentage' => Setting::getValue('booking_deposit_percentage', 20),
+                'security_deposit_amount' => Setting::getValue('security_deposit_amount', 0),
+                'rental_terms' => Setting::getValue('rental_terms', ''),
+            ],
         ]);
     }
 
@@ -71,8 +78,9 @@ class PaymentController extends Controller
         }
 
         // Verify car is still available
-        if (!$reservation->car->isAvailable($reservation->start_date, $reservation->end_date, $reservation->id)) {
-            $reservation->update(['status' => \App\Enums\ReservationStatus::CANCELLED, 'cancellation_reason' => 'Car was booked by another user during payment process.']);
+        $stateService = app(ReservationStateService::class);
+        if (!$stateService->isCarAvailableForBooking($reservation->car, $reservation->start_date->toDateString(), $reservation->end_date->toDateString(), $reservation->id)) {
+            $stateService->transition($reservation, ReservationStatus::CANCELLED, 'Car was booked by another user during payment process.');
             return response()->json(['error' => 'Sorry, the car was just booked by someone else for these dates.'], 400);
         }
 
@@ -80,11 +88,20 @@ class PaymentController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        // Check if already paid
+        $existingPayment = Payment::where('reservation_id', $reservation->id)
+            ->where('status', PaymentStatus::COMPLETED)
+            ->first();
+
+        if ($existingPayment) {
+            return response()->json(['error' => 'This reservation has already been paid.'], 400);
+        }
+
         try {
             Stripe::setApiKey(config('services.stripe.secret'));
 
             $paymentIntent = PaymentIntent::create([
-                'amount' => (int) ($reservation->total_amount * 100),
+                'amount' => (int) ($reservation->deposit_amount * 100),
                 'currency' => config('app.currency_code', 'USD'),
                 'payment_method_types' => ['card'],
                 'metadata' => [
@@ -115,11 +132,17 @@ class PaymentController extends Controller
             $paymentIntent = PaymentIntent::retrieve($request->payment_intent_id);
 
             if ($paymentIntent->status === 'succeeded') {
+                // Double check if already paid by another transaction
+                if ($reservation->getIsPaidAttribute()) {
+                    return redirect()->route('client.reservations.show', $reservation->id)
+                        ->with('info', 'This reservation is already paid.');
+                }
+
                 if (!Payment::where('transaction_id', $paymentIntent->id)->exists()) {
                     Payment::create([
                         'reservation_id' => $reservation->id,
                         'user_id' => auth()->id(),
-                        'amount' => $reservation->total_amount,
+                        'amount' => $reservation->deposit_amount,
                         'currency' => config('app.currency_code', 'USD'),
                         'payment_method' => PaymentMethod::STRIPE,
                         'status' => PaymentStatus::COMPLETED,
@@ -129,12 +152,9 @@ class PaymentController extends Controller
                         'processed_at' => now(),
                     ]);
 
-                    $reservation->update(['status' => \App\Enums\ReservationStatus::CONFIRMED]);
-                    // Only update car if it's not in an admin-controlled state
-                    if (!in_array($reservation->car->status, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
-                        $reservation->car->update(['status' => CarStatus::RESERVED]);
+                    $stateService = app(ReservationStateService::class);
+                        $stateService->transition($reservation, ReservationStatus::CONFIRMED, 'Payment completed via Stripe.');
                     }
-                }
 
                 return redirect()->route('client.reservations.show', $reservation->id)
                     ->with('success', 'Payment completed successfully! Please print your reservation invoice and present it at the agency to pick up your car.');
@@ -193,8 +213,9 @@ class PaymentController extends Controller
         }
 
         // Verify car is still available
-        if (!$reservation->car->isAvailable($reservation->start_date, $reservation->end_date, $reservation->id)) {
-            $reservation->update(['status' => \App\Enums\ReservationStatus::CANCELLED, 'cancellation_reason' => 'Car was booked by another user during payment process.']);
+        $stateService = app(ReservationStateService::class);
+        if (!$stateService->isCarAvailableForBooking($reservation->car, $reservation->start_date->toDateString(), $reservation->end_date->toDateString(), $reservation->id)) {
+            $stateService->transition($reservation, ReservationStatus::CANCELLED, 'Car was booked by another user during payment process.');
             return response()->json(['error' => 'Sorry, the car was just booked by someone else for these dates.'], 400);
         }
 
@@ -216,9 +237,9 @@ class PaymentController extends Controller
                 'purchase_units' => [[
                     'amount' => [
                         'currency_code' => config('app.currency_code', 'USD'),
-                        'value' => number_format($reservation->total_amount, 2, '.', ''),
+                        'value' => number_format($reservation->deposit_amount, 2, '.', ''),
                     ],
-                    'description' => 'Car Rental - ' . $reservation->reservation_number,
+                    'description' => 'Car Rental Deposit - ' . $reservation->reservation_number,
                     'custom_id' => (string) $reservation->id,
                 ]],
                 'payment_source' => [
@@ -307,11 +328,17 @@ class PaymentController extends Controller
             $captureResult = $captureResponse->json();
 
             if ($captureResult['status'] === 'COMPLETED') {
+                // Double check if already paid
+                if ($reservation->getIsPaidAttribute()) {
+                    return redirect()->route('client.reservations.show', $reservation->id)
+                        ->with('info', 'This reservation is already paid.');
+                }
+
                 // Create payment record
                 $payment = Payment::create([
                     'reservation_id' => $reservation->id,
                     'user_id' => auth()->id(),
-                    'amount' => $reservation->total_amount,
+                    'amount' => $reservation->deposit_amount,
                     'currency' => config('app.currency_code', 'USD'),
                     'payment_method' => PaymentMethod::PAYPAL,
                     'status' => PaymentStatus::COMPLETED,
@@ -323,12 +350,9 @@ class PaymentController extends Controller
 
                 session()->forget('paypal_order_id');
 
-                // Update reservation status and reserve car
-                $reservation->update(['status' => \App\Enums\ReservationStatus::CONFIRMED]);
-                // Only update car if it's not in an admin-controlled state
-                if (!in_array($reservation->car->status, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
-                    $reservation->car->update(['status' => CarStatus::RESERVED]);
-                }
+                // Update reservation status and reserve car via state service
+                $stateService = app(ReservationStateService::class);
+                $stateService->transition($reservation, ReservationStatus::CONFIRMED, 'Payment completed via PayPal.');
 
                 return redirect()->route('client.reservations.show', $reservation->id)
                     ->with('success', 'Payment completed successfully! Please print your reservation invoice and present it at the agency to pick up your car.');
@@ -406,50 +430,11 @@ class PaymentController extends Controller
     }
 
     /**
-     * Process payment selection for "Pay at Agency".
-     */
-    public function processAgency(Request $request, Reservation $reservation)
-    {
-        // Check if Agency payment is enabled
-        if (!PaymentMethodSetting::isEnabled('agency')) {
-            return response()->json(['error' => 'Pay at agency is not available.'], 400);
-        }
-
-        // Verify car is still available
-        if (!$reservation->car->isAvailable($reservation->start_date, $reservation->end_date, $reservation->id)) {
-            $reservation->update(['status' => \App\Enums\ReservationStatus::CANCELLED, 'cancellation_reason' => 'Car was booked by another user during payment process.']);
-            return response()->json(['error' => 'Sorry, the car was just booked by someone else for these dates.'], 400);
-        }
-
-        // Ensure user owns this reservation
-        if ($reservation->user_id !== auth()->id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        $reservation->update([
-            'status' => ReservationStatus::PENDING,
-            'notes' => 'Chosen Payment Method: Pay at Agency (Cash). Payment is still pending.'
-        ]);
-        // Only update car if it's not in an admin-controlled state
-        if (!in_array($reservation->car->status, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
-            $reservation->car->update(['status' => CarStatus::PENDING]);
-        }
-
-        $timeout = \App\Models\Setting::getValue('cash_reservation_timeout', 24);
-        
-        session()->flash('success', "Your reservation request is submitted! You must attend the agency to pay the total amount in cash within {$timeout} hours, otherwise your reservation will be automatically cancelled.");
-
-        return response()->json([
-            'success' => true,
-            'redirect_url' => route('client.reservations.show', $reservation->id),
-        ]);
-    }
-
-    /**
      * Process completing a payment idempotently (Webhooks)
      */
     private function processWebhookPayment($transactionId, $gatewayData, $method)
     {
+        // 1. Check if this specific transaction already processed
         if (Payment::where('transaction_id', $transactionId)->exists()) {
             return;
         }
@@ -472,10 +457,16 @@ class PaymentController extends Controller
         $reservation = Reservation::find($reservationId);
         if (!$reservation) return;
 
+        // 2. Double check if reservation already has a completed payment
+        if ($reservation->getIsPaidAttribute()) {
+            \Log::info('Webhook ignored for already paid reservation: ' . $reservation->id);
+            return;
+        }
+
         Payment::create([
             'reservation_id' => $reservation->id,
             'user_id' => $reservation->user_id,
-            'amount' => $reservation->total_amount,
+            'amount' => $reservation->deposit_amount,
             'currency' => config('app.currency_code', 'USD'),
             'payment_method' => $method,
             'status' => PaymentStatus::COMPLETED,
@@ -485,10 +476,7 @@ class PaymentController extends Controller
             'processed_at' => now(),
         ]);
 
-        $reservation->update(['status' => ReservationStatus::CONFIRMED]);
-        // Only update car if it's not in an admin-controlled state
-        if (!in_array($reservation->car->status, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
-            $reservation->car->update(['status' => CarStatus::RESERVED]);
-        }
+        $stateService = app(ReservationStateService::class);
+        $stateService->transition($reservation, ReservationStatus::CONFIRMED, 'Payment completed via ' . $method->label() . '.');
     }
 }

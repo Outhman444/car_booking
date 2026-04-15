@@ -29,7 +29,7 @@ import Heading from '@/components/Heading.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { index, edit, print, markAsPaid as markAsPaidRoute } from '@/routes/admin/reservations';
+import { index, edit, print } from '@/routes/admin/reservations';
 
 const props = defineProps<{
   reservation: any
@@ -74,12 +74,6 @@ function fmtMoney(n?: number | string) {
   return `${props.currency.symbol}${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function markAsPaid() {
-  if (confirm('Are you sure you want to record a manual cash payment for this reservation?')) {
-    router.post(markAsPaidRoute(props.reservation.id).url);
-  }
-}
-
 const isAlreadyPaid = computed(() => {
   return props.reservation.payments?.some((p: any) => p.status === 'completed');
 });
@@ -94,16 +88,16 @@ const isAlreadyPaid = computed(() => {
         <div class="space-y-4">
             <Link :href="index().url" class="group inline-flex items-center text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-all">
                 <ArrowLeft class="size-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                Back to Reservations
+                Retour aux réservations
             </Link>
             <div class="flex items-center gap-6">
                 <div class="p-4 rounded-3xl bg-blue-50 text-blue-600 shadow-sm shadow-blue-100">
                     <FileText class="size-8" />
                 </div>
                 <div>
-                    <Heading 
-                        :title="`Booking #${reservation?.reservation_number}`" 
-                        description="Comprehensive audit of the rental agreement, payment history, and schedule."
+                    <Heading
+                        :title="`Réservation #${reservation?.reservation_number}`"
+                        description="Audit complet de l'accord de location, de l'historique des paiements et du calendrier."
                         size="lg"
                     />
                 </div>
@@ -112,12 +106,12 @@ const isAlreadyPaid = computed(() => {
         <div class="flex items-center gap-4">
             <Link :href="edit(reservation.id).url">
                 <Button variant="ghost" class="h-14 px-8 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all border border-slate-100 shadow-sm">
-                    <Pencil class="size-4 mr-3" /> Edit Agreement
+                    <Pencil class="size-4 mr-3" /> Modifier
                 </Button>
             </Link>
             <a :href="print(reservation.id).url" target="_blank" rel="noopener">
                 <Button class="h-14 px-10 rounded-2xl bg-slate-900 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all border-none">
-                    <Printer class="size-5 mr-3" /> Print Contract
+                    <Printer class="size-5 mr-3" /> Imprimer
                 </Button>
             </a>
         </div>
@@ -127,7 +121,7 @@ const isAlreadyPaid = computed(() => {
       <div class="bg-white rounded-[2.5rem] ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 p-10 flex flex-wrap items-center justify-between gap-12">
         <div class="flex flex-wrap items-center gap-16">
             <div class="space-y-3">
-                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Current Status</div>
+                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Statut actuel</div>
                 <StatusBadge
                     :status="reservation.status"
                     :label="getStatusStyle(reservation.status).label"
@@ -135,22 +129,22 @@ const isAlreadyPaid = computed(() => {
                 />
             </div>
             <div class="space-y-3">
-                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Financial Value</div>
+                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Valeur financière</div>
                 <div class="text-3xl font-black text-slate-900 tracking-tight">{{ fmtMoney(reservation.total_amount) }}</div>
             </div>
             <div class="space-y-3">
-                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Rental Duration</div>
-                <div class="text-3xl font-black text-slate-900 tracking-tight">{{ reservation.total_days }} <span class="text-lg text-slate-400 font-bold uppercase tracking-widest ml-1">Days</span></div>
+                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Durée de location</div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight">{{ reservation.total_days }} <span class="text-lg text-slate-400 font-bold uppercase tracking-widest ml-1">Jours</span></div>
             </div>
         </div>
         
         <div class="flex items-center gap-12 lg:text-right border-l lg:border-l-slate-100 pl-12">
             <div class="space-y-3">
-                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Payment Status</div>
-                <div class="text-base font-black uppercase tracking-widest" :class="isAlreadyPaid ? 'text-emerald-600' : 'text-amber-600'">{{ isAlreadyPaid ? 'Paid' : 'Unpaid' }}</div>
+                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Statut du paiement</div>
+                <div class="text-base font-black uppercase tracking-widest" :class="isAlreadyPaid ? 'text-emerald-600' : 'text-amber-600'">{{ isAlreadyPaid ? 'Payé' : 'Impayé' }}</div>
             </div>
             <div class="space-y-3">
-                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Timestamp</div>
+                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Horodatage</div>
                 <div class="text-base font-black text-slate-900 uppercase tracking-widest">{{ fmtDate(reservation.created_at) }}</div>
             </div>
         </div>
@@ -242,13 +236,6 @@ const isAlreadyPaid = computed(() => {
                         </CardTitle>
                         <CardDescription class="text-xs font-bold uppercase tracking-widest text-slate-400 mt-2">Audit trail of all processed payments.</CardDescription>
                     </div>
-                    <Button
-                        v-if="!isAlreadyPaid && ['pending', 'confirmed', 'active'].includes(reservation.status)"
-                        class="h-12 px-8 rounded-2xl bg-emerald-600 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all border-none"
-                        @click="markAsPaid"
-                    >
-                        <DollarSign class="size-4 mr-2" /> Manual Cash Capture
-                    </Button>
                 </CardHeader>
                 <CardContent class="p-0">
                     <Table>

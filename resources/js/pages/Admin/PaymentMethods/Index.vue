@@ -47,7 +47,6 @@ initForms();
 
 const getMethodIcon = (method: string) => {
     if (method === 'paypal') return Wallet;
-    if (method === 'agency') return Banknote;
     return CreditCard;
 };
 
@@ -118,22 +117,22 @@ const saveMethod = (method: string) => {
                                         <component :is="getMethodIcon(m.method)" class="h-8 w-8" />
                                     </div>
                                     <div>
-                                        <CardTitle class="text-xl font-black text-slate-900">{{ m.display_name || (m.method === 'paypal' ? 'PayPal' : m.method === 'agency' ? 'Pay at the Agency' : 'Credit/Debit Card') }}</CardTitle>
+                                        <CardTitle class="text-xl font-black text-slate-900">{{ m.display_name || (m.method === 'paypal' ? 'PayPal' : 'Credit/Debit Card') }}</CardTitle>
                                         <CardDescription class="font-bold text-slate-400 mt-1">
-                                            {{ m.method === 'paypal' ? 'Pay with PayPal account' : m.method === 'agency' ? 'Manual cash collection at pickup' : 'Integrated via Stripe' }}
+                                            {{ m.method === 'paypal' ? 'Pay with PayPal account' : 'Integrated via Stripe' }}
                                         </CardDescription>
                                     </div>
                                 </div>
                                 <div class="flex flex-col gap-2 items-end">
-                                    <Badge v-if="m.is_sandbox && m.method !== 'agency'" variant="outline" class="bg-amber-50 text-amber-600 border-none ring-1 ring-amber-200 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                                    <Badge v-if="m.is_sandbox" variant="outline" class="bg-amber-50 text-amber-600 border-none ring-1 ring-amber-200 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
                                         Sandbox
                                     </Badge>
-                                    <Badge v-else-if="m.is_enabled && m.method !== 'agency'" variant="outline" class="bg-indigo-50 text-indigo-600 border-none ring-1 ring-indigo-200 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                                    <Badge v-else-if="m.is_enabled" variant="outline" class="bg-indigo-50 text-indigo-600 border-none ring-1 ring-indigo-200 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
                                         Live
                                     </Badge>
-                                    
+
                                     <Badge v-if="m.is_enabled" variant="outline" class="bg-emerald-50 text-emerald-600 border-none ring-1 ring-emerald-200 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
-                                        <CheckCircle class="h-3 w-3 mr-1.5" /> {{ m.method === 'agency' ? 'Manual' : 'Online' }}
+                                        <CheckCircle class="h-3 w-3 mr-1.5" /> Online
                                     </Badge>
                                     <Badge v-else variant="outline" class="bg-slate-50 text-slate-400 border-none ring-1 ring-slate-200 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
                                         <XCircle class="h-3 w-3 mr-1.5" /> Offline
@@ -144,7 +143,7 @@ const saveMethod = (method: string) => {
 
                         <CardContent v-if="forms[m.method]" class="p-8 pt-0 space-y-6">
                             <!-- Configuration Status -->
-                            <div v-if="!m.is_configured && m.method !== 'agency'" class="p-4 rounded-2xl bg-rose-50 ring-1 ring-rose-100 flex items-start gap-3">
+                            <div v-if="!m.is_configured" class="p-4 rounded-2xl bg-rose-50 ring-1 ring-rose-100 flex items-start gap-3">
                                 <AlertCircle class="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
                                 <div>
                                     <div class="text-sm font-black text-rose-900">Environment Credentials Missing</div>
@@ -166,7 +165,7 @@ const saveMethod = (method: string) => {
                                         <Switch
                                             :model-value="Boolean(forms[m.method].is_enabled)"
                                             @update:model-value="(val) => {
-                                                if (val && !m.is_configured && m.method !== 'agency') {
+                                                if (val && !m.is_configured) {
                                                     alert('❌ Cannot enable gateway! Please add API keys to your .env file first (see the configuration guide below).');
                                                     return;
                                                 }
@@ -176,8 +175,8 @@ const saveMethod = (method: string) => {
                                         />
                                     </div>
 
-                                    <!-- Sandbox Mode Toggle (only for online gateways) -->
-                                    <div v-if="m.method !== 'agency'" class="flex items-center justify-between p-5 rounded-2xl bg-slate-50 ring-1 ring-slate-100">
+                                    <!-- Sandbox Mode Toggle -->
+                                    <div class="flex items-center justify-between p-5 rounded-2xl bg-slate-50 ring-1 ring-slate-100">
                                         <div class="space-y-0.5">
                                             <Label class="text-sm font-black text-slate-900">Sandbox Environment</Label>
                                             <p class="text-[11px] font-bold text-slate-400">Use test mode for processing transactions.</p>
@@ -214,17 +213,16 @@ const saveMethod = (method: string) => {
                                     @click="saveMethod(m.method)"
                                     class="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest text-white shadow-xl transition-all border-none active:scale-[0.98]"
                                     :class="
-                                        (!m.is_configured && m.method !== 'agency')
+                                        !m.is_configured
                                             ? 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20 cursor-not-allowed opacity-80'
                                             : 'bg-primary hover:bg-primary/90 shadow-primary/20'
                                     "
-                                    :disabled="savingMethod === m.method || (!m.is_configured && m.method !== 'agency')"
+                                    :disabled="savingMethod === m.method || !m.is_configured"
                                 >
                                     <Loader2 v-if="savingMethod === m.method" class="size-4 mr-2 animate-spin" />
-                                    <Settings v-else-if="m.is_configured || m.method === 'agency'" class="size-4 mr-2" />
-                                    <AlertCircle v-else class="size-4 mr-2" />
+                                    <Settings v-else class="size-4 mr-2" />
                                     <template v-if="savingMethod === m.method">Saving...</template>
-                                    <template v-else-if="!m.is_configured && m.method !== 'agency'">Keys Missing (Save Disabled)</template>
+                                    <template v-else-if="!m.is_configured">Keys Missing (Save Disabled)</template>
                                     <template v-else>Update Gateway</template>
                                 </Button>
                             </div>

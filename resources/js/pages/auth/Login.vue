@@ -77,8 +77,8 @@ const isDemoOpen = ref(false);
                             <!-- Email Field -->
                             <div class="space-y-3">
                                 <Label for="email" class="text-xs font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
-                                    Email Address
-                                    <HelpTooltip content="Use the email associated with your account or the one you used during your first booking." />
+                                    Adresse e-mail
+                                    <HelpTooltip content="Utilisez l'adresse e-mail associée à votre compte ou celle utilisée lors de votre première réservation." />
                                 </Label>
                                 <div class="relative group">
                                     <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors">
@@ -103,8 +103,8 @@ const isDemoOpen = ref(false);
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between ml-1">
                                     <Label for="password" class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                                        Password
-                                        <HelpTooltip content="Your secure access key. If you've forgotten it, use the reset link." />
+                                        Mot de passe
+                                        <HelpTooltip content="Votre clé d'accès sécurisée. Si vous l'avez oublié, utilisez le lien de réinitialisation." />
                                     </Label>
                                     <TextLink
                                         v-if="canResetPassword"
@@ -112,7 +112,7 @@ const isDemoOpen = ref(false);
                                         class="text-xs font-black uppercase tracking-widest text-slate-900 hover:text-slate-600 transition-colors"
                                         :tabindex="5"
                                     >
-                                        Forgot?
+                                        Mot de passe oublié ?
                                     </TextLink>
                                 </div>
                                 <div class="relative group">
@@ -142,7 +142,7 @@ const isDemoOpen = ref(false);
                                         :tabindex="3"
                                         class="size-5 rounded-lg border-slate-200 text-slate-900 focus:ring-slate-900 shadow-none ring-0 data-[state=checked]:bg-slate-900 data-[state=checked]:border-slate-900"
                                     />
-                                    <span class="text-sm font-bold text-slate-500">Keep me logged in</span>
+                                    <span class="text-sm font-bold text-slate-500">Rester connecté</span>
                                 </Label>
                             </div>
 
@@ -155,20 +155,20 @@ const isDemoOpen = ref(false);
                             >
                                 <LoaderCircle v-if="processing" class="mr-2 size-5 animate-spin" />
                                 <span v-else class="flex items-center gap-3">
-                                    Sign In <ArrowRight class="size-5" />
+                                    Se connecter <ArrowRight class="size-5" />
                                 </span>
                             </Button>
 
                             <!-- Sign Up Link -->
                             <div class="pt-2 text-center">
                                 <p class="text-sm font-bold text-slate-400">
-                                    No account yet?
+                                    Pas encore de compte ?
                                     <TextLink
                                         :href="register()"
                                         :tabindex="5"
                                         class="ml-2 font-black text-slate-900 hover:text-slate-600 border-b-2 border-slate-900/10 hover:border-slate-900 transition-all"
                                     >
-                                        Create Account
+                                        Créer un compte
                                     </TextLink>
                                 </p>
                             </div>
@@ -188,8 +188,8 @@ const isDemoOpen = ref(false);
                                 <Info class="size-5 text-slate-500" />
                             </div>
                             <div class="text-left">
-                                <span class="block text-sm font-black uppercase tracking-widest text-slate-900">Demo Credentials</span>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Test access information</span>
+                                <span class="block text-sm font-black uppercase tracking-widest text-slate-900">Identifiants de démonstration</span>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Informations d'accès test</span>
                             </div>
                         </div>
                         <ChevronDown
@@ -207,16 +207,16 @@ const isDemoOpen = ref(false);
                             <!-- Client Demo -->
                             <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
                                 <div class="mb-4 flex items-center justify-between">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Client Access</span>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Accès Client</span>
                                     <User class="size-4 text-slate-300" />
                                 </div>
                                 <div class="space-y-4">
                                     <div>
-                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Email</p>
+                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">E-mail</p>
                                         <p class="text-xs font-bold text-slate-900 select-all">client@example.com</p>
                                     </div>
                                     <div>
-                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Password</p>
+                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Mot de passe</p>
                                         <code class="text-xs font-bold text-slate-900 select-all">00000000</code>
                                     </div>
                                 </div>
@@ -225,23 +225,23 @@ const isDemoOpen = ref(false);
                             <!-- Admin Demo -->
                             <div class="rounded-2xl bg-slate-900 p-5 shadow-2xl shadow-slate-200">
                                 <div class="mb-4 flex items-center justify-between">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Admin Portal</span>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Portail Admin</span>
                                     <Shield class="size-4 text-slate-500" />
                                 </div>
                                 <div class="space-y-4">
                                     <div>
-                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1">Email</p>
+                                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1">E-mail</p>
                                         <p class="text-xs font-bold text-white select-all">admin@example.com</p>
                                     </div>
                                     <div class="flex items-end justify-between gap-4">
                                         <div>
-                                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1">Password</p>
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1">Mot de passe</p>
                                             <code class="text-xs font-bold text-white select-all">00000000</code>
                                         </div>
                                         <a
                                             href="/admin-secret-url"
                                             class="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition-all shadow-lg"
-                                            title="Go to Admin Panel"
+                                            title="Accéder au panneau d'administration"
                                         >
                                             <ArrowRight class="size-4" />
                                         </a>

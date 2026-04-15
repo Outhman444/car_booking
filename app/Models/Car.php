@@ -7,13 +7,16 @@ use App\Enums\CarStatus;
 use App\Enums\FuelType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 use MohamedGaldi\ViltFilepond\Traits\HasFiles;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Enums\ReservationStatus;
+use App\Services\ReservationStateService;
 
 class Car extends Model
 {
+    use HasFactory;
     use SoftDeletes;
     use HasFiles;
 
@@ -128,6 +131,7 @@ class Car extends Model
 
     /**
      * Check if car is available for given date range.
+     * Delegates to ReservationStateService for consistent logic.
      *
      * @param string $startDate
      * @param string $endDate
@@ -136,25 +140,28 @@ class Car extends Model
      */
     public function isAvailable(string $startDate, string $endDate, ?int $excludeReservationId = null): bool
     {
-        $query = $this->reservations()
-            ->where(function ($query) {
-                // Block the car if fully confirmed or active
-                $query->whereIn('status', [
-                    ReservationStatus::CONFIRMED,
-                    ReservationStatus::ACTIVE
-                ])
-                // Or if it's PENDING but explicitly finalized as a Cash/Agency payment
-                ->orWhere(function ($q) {
-                    $q->where('status', ReservationStatus::PENDING)
-                      ->where('notes', 'like', '%Pay at Agency%');
-                });
-            })
-            ->betweenDates($startDate, $endDate);
+        return app(ReservationStateService::class)
+            ->isCarAvailableForBooking($this, $startDate, $endDate, $excludeReservationId);
+    }
 
-        if ($excludeReservationId) {
-            $query->where('id', '!=', $excludeReservationId);
-        }
+    /**
+     * Compute the car's status from its active reservations (Single Source of Truth).
+     *
+     * @return CarStatus
+     */
+    public function computedStatus(): CarStatus
+    {
+        return app(ReservationStateService::class)
+            ->computeCarStatusFromReservations($this);
+    }
 
-        return $query->count() === 0;
+    /**
+     * Check if the car is in an admin-controlled state.
+     *
+     * @return bool
+     */
+    public function isAdminControlled(): bool
+    {
+        return in_array($this->status, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE]);
     }
 }

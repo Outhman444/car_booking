@@ -4,101 +4,86 @@ import { Check, CalendarCheck, ClipboardList, CreditCard, ShieldCheck } from 'lu
 
 const props = defineProps<{
     currentStep: 1 | 2 | 3 | 4;
+    isPaid?: boolean;
+    status?: string;
 }>();
 
 const steps = [
-    {
-        id: 1,
-        title: 'Configure',
-        description: 'Trip Details',
-        icon: CalendarCheck
-    },
-    {
-        id: 2,
-        title: 'Review',
-        description: 'Verification',
-        icon: ClipboardList
-    },
-    {
-        id: 3,
-        title: 'Payment',
-        description: 'Secure Checkout',
-        icon: CreditCard
-    },
-    {
-        id: 4,
-        title: 'Complete',
-        description: 'Secured',
-        icon: ShieldCheck
-    }
+    { id: 1, title: 'Configure', desc: 'Trip Details', icon: CalendarCheck },
+    { id: 2, title: 'Review', desc: 'Verification', icon: ClipboardList },
+    { id: 3, title: 'Payment', desc: 'Checkout', icon: CreditCard },
+    { id: 4, title: 'Complete', desc: 'Secured', icon: ShieldCheck }
 ];
 
-const progressWidth = computed(() => {
-    if (props.currentStep === 1) return '0%';
-    if (props.currentStep === 2) return '33.33%';
-    if (props.currentStep === 3) return '66.66%';
-    return '100%';
-});
+const isStepCompleted = (id: number) => {
+    if (props.status === 'active' || props.status === 'completed') return id <= 4;
+    if (props.status === 'confirmed' || props.isPaid) return id <= 3;
+    if (props.status === 'pending') return id < 2;
+    return id < props.currentStep;
+};
+
+const isStepActive = (id: number) => {
+    if (props.status === 'active' || props.status === 'completed') return id === 4;
+    if (props.status === 'confirmed' || props.isPaid) return false;
+    if (props.status === 'pending') return id === 2;
+    return id === props.currentStep;
+};
 </script>
 
 <template>
-    <div class="mx-auto max-w-4xl px-4 py-8">
-        <div class="relative">
-            <!-- Background Line -->
-            <div class="absolute top-7 left-0 h-1 w-full rounded-full bg-slate-100"></div>
-            
-            <!-- Progress Line -->
-            <div 
-                class="absolute top-7 left-0 h-1 rounded-full bg-primary transition-all duration-1000 ease-[cubic-bezier(0.65,0,0.35,1)]" 
-                :style="{ width: progressWidth }"
-            ></div>
+    <div class="w-full py-6 md:py-10">
+        <div class="relative flex items-start justify-between">
+            <!-- Progress Line Container -->
+            <div class="absolute left-0 top-6 md:top-7 flex w-full translate-y-[-50%] items-center px-[12%] md:px-[8%]">
+                <div v-for="i in 3" :key="i" class="relative h-[3px] flex-1 mx-1 md:mx-2">
+                    <div class="absolute inset-0 bg-slate-200/60 rounded-full ring-1 ring-slate-100/50"></div>
+                    <div 
+                        class="absolute inset-0 bg-primary rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]"
+                        :class="{ 'opacity-100': isStepCompleted(i + 1) || isStepActive(i + 1), 'opacity-0': !isStepCompleted(i + 1) && !isStepActive(i + 1) }"
+                        :style="{ width: isStepCompleted(i + 1) ? '100%' : isStepActive(i + 1) ? '50%' : '0%' }"
+                    ></div>
+                </div>
+            </div>
 
             <!-- Steps -->
-            <div class="relative flex justify-between">
+            <div v-for="step in steps" :key="step.id" class="relative z-10 flex flex-col items-center flex-1">
+                <!-- Icon Container -->
                 <div 
-                    v-for="step in steps" 
-                    :key="step.id" 
-                    class="flex flex-col items-center group w-24 sm:w-32"
+                    class="relative flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl md:rounded-3xl transition-all duration-500 border-4 border-white shadow-sm"
+                    :class="[
+                        isStepCompleted(step.id) 
+                            ? 'bg-primary text-white shadow-primary/20' 
+                            : isStepActive(step.id)
+                                ? 'bg-slate-900 text-white shadow-xl shadow-slate-200 scale-110' 
+                                : 'bg-white text-slate-300 border-slate-50'
+                    ]"
                 >
-                    <!-- Icon Circle -->
+                    <transition name="scale" mode="out-in">
+                        <Check v-if="isStepCompleted(step.id)" class="size-5 md:size-6 stroke-[3]" />
+                        <component v-else :is="step.icon" class="size-5 md:size-6" :class="{ 'animate-pulse': isStepActive(step.id) }" />
+                    </transition>
+
+                    <!-- Active Indicator Circle -->
                     <div 
-                        class="relative flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-700 ease-[cubic-bezier(0.65,0,0.35,1)] ring-4 ring-white"
-                        :class="[
-                            currentStep > step.id 
-                                ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-100' 
-                                : currentStep === step.id 
-                                    ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/40 scale-110 -translate-y-1' 
-                                    : 'bg-white text-slate-300 ring-1 ring-slate-200 scale-95'
-                        ]"
+                        v-if="isStepActive(step.id)" 
+                        class="absolute -inset-2 rounded-[1.5rem] md:rounded-[2rem] border-2 border-slate-900/5 animate-[ping_3s_infinite]"
+                    ></div>
+                </div>
+
+                <!-- Labels -->
+                <div class="mt-4 text-center px-1 max-w-[80px] md:max-w-none">
+                    <p 
+                        class="text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
+                        :class="isStepActive(step.id) ? 'text-slate-900' : isStepCompleted(step.id) ? 'text-primary' : 'text-slate-400'"
                     >
-                        <transition name="fade" mode="out-in">
-                            <Check v-if="currentStep > step.id" class="size-6 font-black" />
-                            <component v-else :is="step.icon" class="size-6" />
-                        </transition>
-
-                        <!-- Active indicator pulse -->
-                        <div 
-                            v-if="currentStep === step.id" 
-                            class="absolute -inset-2 rounded-3xl border-2 border-slate-900/20 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] -z-10"
-                        ></div>
-                    </div>
-
-                    <!-- Labels -->
-                    <div class="mt-6 text-center transform transition-all duration-500"
-                         :class="currentStep === step.id ? 'scale-105' : 'scale-100 opacity-70'">
-                        <span 
-                            class="block text-[11px] font-black uppercase tracking-widest transition-colors duration-300"
-                            :class="currentStep === step.id ? 'text-slate-900' : 'text-slate-400'"
-                        >
-                            {{ step.title }}
-                        </span>
-                        <span 
-                            class="hidden sm:block text-[10px] font-bold uppercase tracking-[0.2em] mt-1.5 transition-colors duration-300"
-                            :class="currentStep === step.id ? 'text-primary' : 'text-slate-300'"
-                        >
-                            {{ step.description }}
-                        </span>
-                    </div>
+                        {{ step.title }}
+                    </p>
+                    <p 
+                        class="hidden md:block mt-1 text-[8.5px] font-bold uppercase tracking-widest text-slate-300 opacity-0 transition-opacity duration-500"
+                        :class="{ 'opacity-100': isStepActive(step.id) || isStepCompleted(step.id) }"
+                    >
+                        {{ step.desc }}
+                    </p>
                 </div>
             </div>
         </div>
@@ -106,14 +91,22 @@ const progressWidth = computed(() => {
 </template>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+.scale-enter-active,
+.scale-leave-active {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.fade-enter-from,
-.fade-leave-to {
+.scale-enter-from {
   opacity: 0;
-  transform: scale(0.8);
+  transform: scale(0.5);
+}
+
+.scale-leave-to {
+  opacity: 0;
+  transform: scale(1.5);
+}
+
+:root {
+  --primary-rgb: 245, 97, 0;
 }
 </style>

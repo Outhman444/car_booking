@@ -6,6 +6,7 @@ use App\Enums\CarStatus;
 use App\Models\Car;
 use App\Models\Reservation;
 use App\Models\Ticket;
+use App\Services\ReservationStateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\ReservationStatus;
@@ -14,7 +15,7 @@ class HomePagesController extends Controller
 {
     public function index()
     {
-        $this->cleanupExpiredCashReservations();
+        app(ReservationStateService::class)->expirePendingReservations();
 
         $homeCars = Car::where('status', CarStatus::AVAILABLE)
             ->select('id', 'make', 'model', 'year', 'price_per_day', 'description', 'fuel_type')
@@ -42,7 +43,7 @@ class HomePagesController extends Controller
 
     public function fleet(Request $request)
     {
-        $this->cleanupExpiredCashReservations();
+        app(ReservationStateService::class)->expirePendingReservations();
 
         $query = Car::where('status', CarStatus::AVAILABLE)
             ->select('id', 'make', 'model', 'year', 'price_per_day', 'description', 'fuel_type', 'transmission', 'seats', 'color', 'mileage');
@@ -98,13 +99,11 @@ class HomePagesController extends Controller
             $endDate = $request->end_date;
 
             $query->whereDoesntHave('reservations', function ($query) use ($startDate, $endDate) {
-                $query->where(function ($q) {
-                    $q->whereIn('status', [ReservationStatus::CONFIRMED, ReservationStatus::ACTIVE])
-                      ->orWhere(function ($q2) {
-                          $q2->where('status', ReservationStatus::PENDING)
-                             ->where('notes', 'like', '%Pay at Agency%');
-                      });
-                })->betweenDates($startDate, $endDate);
+                $query->whereIn('status', [
+                    ReservationStatus::PENDING,
+                    ReservationStatus::CONFIRMED,
+                    ReservationStatus::ACTIVE,
+                ])->betweenDates($startDate, $endDate);
             });
         }
 
@@ -181,30 +180,4 @@ class HomePagesController extends Controller
         return redirect()->route('contact')->with('success', 'Message sent successfully!');
     }
 
-    /**
-     * Lazy execution to clean up expired Cash reservations
-     * without needing a cron job or schedule.
-     */
-    private function cleanupExpiredCashReservations(): void
-    {
-        $timeoutHours = (int) \App\Models\Setting::getValue('cash_reservation_timeout', 24);
-        
-        $expiredReservations = Reservation::where('status', ReservationStatus::PENDING)
-            ->where('notes', 'like', '%Pay at Agency%')
-            ->where('updated_at', '<', now()->subHours($timeoutHours))
-            ->with('car')
-            ->get();
-
-        foreach ($expiredReservations as $reservation) {
-            $reservation->update([
-                'status' => ReservationStatus::CANCELLED,
-                'cancellation_reason' => "Auto-cancelled: Customer did not pay cash within {$timeoutHours} hours.",
-                'cancelled_at' => now(),
-            ]);
-
-            if ($reservation->car && $reservation->car->status === CarStatus::PENDING) {
-                $reservation->car->update(['status' => CarStatus::AVAILABLE]);
-            }
-        }
-    }
 }

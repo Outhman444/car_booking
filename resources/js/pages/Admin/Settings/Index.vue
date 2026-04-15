@@ -49,7 +49,7 @@ const groupMap = {
     general: { label: 'General', icon: Globe, color: 'text-blue-500', bg: 'bg-blue-50' },
     contact: { label: 'Contact', icon: Mail, color: 'text-emerald-500', bg: 'bg-emerald-50' },
     booking: { label: 'Booking Rules', icon: Calendar, color: 'text-amber-500', bg: 'bg-amber-50' },
-    appearance: { label: 'Appearance', icon: LayoutDashboard, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    social: { label: 'Social Media', icon: LinkIcon, color: 'text-purple-500', bg: 'bg-purple-50' },
 };
 
 const getGroupInfo = (group: string) => {

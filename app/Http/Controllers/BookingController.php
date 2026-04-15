@@ -8,6 +8,7 @@ use App\Models\Car;
 use App\Models\Reservation;
 use App\Models\Setting;
 use App\Models\Location;
+use App\Services\ReservationStateService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,8 +17,10 @@ class BookingController extends Controller
 {
     public function show(Car $car)
     {
-        // Check if car is available for booking
-        if ($car->status !== CarStatus::AVAILABLE) {
+        // Check if car is available for booking using the service
+        $stateService = app(ReservationStateService::class);
+
+        if ($car->isAdminControlled() || !$stateService->isCarAvailableForBooking($car, now()->toDateString(), now()->addYear()->toDateString())) {
             return redirect()->route('fleet')->with('error', 'This car is not available for booking.');
         }
 
@@ -25,13 +28,19 @@ class BookingController extends Controller
             'car' => $car,
             'locations' => Location::where('is_active', true)->get(),
             'taxRate' => ((float) Setting::getValue('tax_rate', config('app.tax_rate', 7))) / 100,
+            'settings' => [
+                'booking_deposit_percentage' => (int) Setting::getValue('booking_deposit_percentage', 20),
+                'security_deposit_amount' => (float) Setting::getValue('security_deposit_amount', 0),
+            ],
         ]);
     }
 
     public function book(Car $car, Request $request)
     {
-        // check car is available for booking
-        if ($car->status !== CarStatus::AVAILABLE) {
+        // Check car is available for booking using the service
+        $stateService = app(ReservationStateService::class);
+
+        if ($car->isAdminControlled()) {
             return redirect()->route('fleet')->with('error', 'This car is not available for booking.');
         }
 
@@ -53,6 +62,12 @@ class BookingController extends Controller
         if ($hasActiveBooking) {
             return redirect()->route('fleet')
                 ->with('error', 'You already have an active booking for this car.');
+        }
+
+        // Check global availability (any user's active booking blocks this car)
+        if (!$stateService->isCarAvailableForBooking($car, $request->start_date ?? now()->toDateString(), $request->end_date ?? now()->addDay()->toDateString())) {
+            return redirect()->route('fleet')
+                ->with('error', 'This car is not available for booking.');
         }
 
         // form validation
@@ -100,12 +115,12 @@ class BookingController extends Controller
         // Atomic transaction with pessimistic locking to prevent race conditions.
         // lockForUpdate() ensures that if two users try to book the same car at the exact
         // same millisecond, only one will succeed — the other waits and then fails gracefully.
-        $reservation = \Illuminate\Support\Facades\DB::transaction(function () use ($car, $startDate, $endDate, $request, $days, $dailyRate, $subtotal, $taxAmount, $discount, $total) {
+        $reservation = \Illuminate\Support\Facades\DB::transaction(function () use ($car, $startDate, $endDate, $request, $days, $dailyRate, $subtotal, $taxAmount, $discount, $total, $stateService) {
             // Lock the car row so no other transaction can read/write it simultaneously
             $lockedCar = Car::lockForUpdate()->find($car->id);
 
             // Re-verify availability INSIDE the lock (the authoritative check)
-            if ($lockedCar->status !== CarStatus::AVAILABLE || !$lockedCar->isAvailable($request->start_date, $request->end_date)) {
+            if ($lockedCar->isAdminControlled() || !$stateService->isCarAvailableForBooking($lockedCar, $request->start_date, $request->end_date)) {
                 return null; // Will be caught below
             }
 
@@ -123,11 +138,15 @@ class BookingController extends Controller
                 'tax_amount'      => $taxAmount,
                 'discount_amount' => $discount,
                 'total_amount'    => $total,
+                'status'          => ReservationStatus::PENDING,
             ]);
 
-            // Do NOT sync the car status here!
-            // We wait until they actually complete checkout (Stripe or Cash)
-            // so abandoned checkouts do not falsely lock the car or show it as Pending.
+            $reservation->refresh();
+
+            // Sync car status to Pending (Payment) — this is the correct state sync.
+            // If the user abandons checkout, the expiration logic will auto-cancel
+            // the reservation and release the car.
+            $stateService->syncCarStatus($reservation);
 
             return $reservation;
         });
@@ -150,6 +169,10 @@ class BookingController extends Controller
 
         return inertia('BookingConfirmation', [
             'reservation' => $reservation->load(['car', 'user']),
+            'settings' => [
+                'booking_deposit_percentage' => Setting::getValue('booking_deposit_percentage', 20),
+                'security_deposit_amount' => Setting::getValue('security_deposit_amount', 0),
+            ],
         ]);
     }
 }

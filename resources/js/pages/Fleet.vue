@@ -172,7 +172,7 @@ const hasActiveFilters = computed(() => {
                     class="flex items-center space-x-4 rounded-xl border bg-card text-card-foreground p-6 shadow-xl"
                 >
                     <Loader2 class="h-6 w-6 animate-spin text-primary" />
-                    <span class="text-sm font-medium">Refreshing fleet...</span>
+                    <span class="text-sm font-medium">Actualisation de la flotte...</span>
                 </div>
             </div>
 
@@ -181,9 +181,9 @@ const hasActiveFilters = computed(() => {
                 <div class="mb-10 flex flex-col md:flex-row items-center justify-between gap-6 border-b pb-8">
                     <div class="w-full md:w-auto space-y-2">
                         <h1 class="text-3xl font-extrabold tracking-tight lg:text-4xl">
-                            Elite <span class="text-primary">Fleet</span>
+                            Flotte <span class="text-primary">d'Élite</span>
                         </h1>
-                        <p class="text-sm text-muted-foreground">Discover your perfect journey from our high-performance collection.</p>
+                        <p class="text-sm text-muted-foreground">Découvrez votre voyage parfait parmi notre collection haute performance.</p>
                     </div>
 
                     <!-- Mobile Filter Trigger and Search -->
@@ -203,29 +203,29 @@ const hasActiveFilters = computed(() => {
                                     <div class="flex h-full flex-col">
                                         <SheetHeader class="text-left pb-4 border-b">
                                             <SheetTitle class="font-bold flex items-center gap-2">
-                                                <Settings2 class="size-5" /> Filters
+                                                <Settings2 class="size-5" /> Filtres
                                             </SheetTitle>
-                                            <SheetDescription>Refine your results</SheetDescription>
+                                            <SheetDescription>Affinez vos résultats</SheetDescription>
                                         </SheetHeader>
                                         <ScrollArea class="flex-1 -mx-4 px-4 py-6">
                                             <!-- Filter Content (Mobile) -->
                                             <!-- (Omitted repetitive filter form logic for brevity, matches desktop below) -->
                                              <div class="space-y-6">
                                                 <div class="space-y-3">
-                                                    <Label>Search</Label>
+                                                    <Label>Recherche</Label>
                                                     <div class="relative">
                                                         <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                        <Input v-model="searchQuery" placeholder="Search..." class="pl-9" />
+                                                        <Input v-model="searchQuery" placeholder="Rechercher..." class="pl-9" />
                                                     </div>
                                                 </div>
                                                 <div class="space-y-3">
-                                                    <Label>Make</Label>
+                                                    <Label>Marque</Label>
                                                     <Select v-model="selectedMake">
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="All" />
+                                                            <SelectValue placeholder="Tous" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value=" ">All</SelectItem>
+                                                            <SelectItem value=" ">Tous</SelectItem>
                                                             <SelectItem v-for="make in makes" :key="make" :value="make">{{ make }}</SelectItem>
                                                         </SelectContent>
                                                     </Select>
@@ -234,29 +234,29 @@ const hasActiveFilters = computed(() => {
                                                     <Label>Transmission</Label>
                                                     <Select v-model="selectedTransmission">
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="All" />
+                                                            <SelectValue placeholder="Tous" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value=" ">All</SelectItem>
+                                                            <SelectItem value=" ">Tous</SelectItem>
                                                             <SelectItem v-for="t in transmissions" :key="t" :value="t">{{ t }}</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </div>
                                                 <div class="space-y-3">
-                                                    <Label>Min. Seats</Label>
+                                                    <Label>Sièges Min.</Label>
                                                     <Select v-model="selectedSeats">
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Any" />
+                                                            <SelectValue placeholder="Importe" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value=" ">Any</SelectItem>
-                                                            <SelectItem v-for="s in seats" :key="s" :value="s.toString()">{{ s }}+ Seats</SelectItem>
+                                                            <SelectItem value=" ">Importe</SelectItem>
+                                                            <SelectItem v-for="s in seats" :key="s" :value="s.toString()">{{ s }}+ Sièges</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </div>
                                                 
-                                                <Button size="lg" class="w-full mt-4" @click="applyFilters">Apply</Button>
-                                                <Button variant="ghost" class="w-full" @click="clearFilters">Reset</Button>
+                                                <Button size="lg" class="w-full mt-4" @click="applyFilters">Appliquer</Button>
+                                                <Button variant="ghost" class="w-full" @click="clearFilters">Réinitialiser</Button>
                                              </div>
                                         </ScrollArea>
                                     </div>
@@ -268,7 +268,7 @@ const hasActiveFilters = computed(() => {
                             <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
                             <Input 
                                 v-model="searchQuery" 
-                                placeholder="Search vehicles..." 
+                                placeholder="Rechercher des véhicules..." 
                                 class="pl-9 pr-4 bg-muted/50 border-none transition-all group-focus-within:bg-background h-10 w-full rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-ring"
                             />
                         </form>
@@ -281,21 +281,21 @@ const hasActiveFilters = computed(() => {
                         <div class="sticky top-24 rounded-xl border bg-card text-card-foreground shadow-sm">
                             <div class="p-6 space-y-6">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="font-semibold tracking-tight">Filters</h3>
+                                    <h3 class="font-semibold tracking-tight">Filtres</h3>
                                     <Button v-if="hasActiveFilters" variant="ghost" size="sm" @click="clearFilters" class="h-8 px-2 text-xs">
-                                        Reset
+                                        Réinitialiser
                                     </Button>
                                 </div>
                                 
                                 <div class="space-y-4">
                                     <div class="space-y-2">
-                                        <Label class="text-xs text-muted-foreground uppercase tracking-wider">Make</Label>
+                                        <Label class="text-xs text-muted-foreground uppercase tracking-wider">Marque</Label>
                                         <Select v-model="selectedMake">
                                             <SelectTrigger>
-                                                <SelectValue placeholder="All" />
+                                                <SelectValue placeholder="Tous" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value=" ">All</SelectItem>
+                                                <SelectItem value=" ">Tous</SelectItem>
                                                 <SelectItem v-for="make in makes" :key="make" :value="make">{{ make }}</SelectItem>
                                             </SelectContent>
                                         </Select>
@@ -305,30 +305,30 @@ const hasActiveFilters = computed(() => {
                                         <Label class="text-xs text-muted-foreground uppercase tracking-wider">Transmission</Label>
                                         <Select v-model="selectedTransmission">
                                             <SelectTrigger>
-                                                <SelectValue placeholder="All" />
+                                                <SelectValue placeholder="Tous" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value=" ">All</SelectItem>
+                                                <SelectItem value=" ">Tous</SelectItem>
                                                 <SelectItem v-for="t in transmissions" :key="t" :value="t">{{ t }}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
 
                                     <div class="space-y-2">
-                                        <Label class="text-xs text-muted-foreground uppercase tracking-wider">Seats</Label>
+                                        <Label class="text-xs text-muted-foreground uppercase tracking-wider">Sièges</Label>
                                         <Select v-model="selectedSeats">
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Any" />
+                                                <SelectValue placeholder="Importe" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value=" ">Any</SelectItem>
-                                                <SelectItem v-for="s in seats" :key="s" :value="s.toString()">{{ s }}+ Seats</SelectItem>
+                                                <SelectItem value=" ">Importe</SelectItem>
+                                                <SelectItem v-for="s in seats" :key="s" :value="s.toString()">{{ s }}+ Sièges</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
 
                                     <div class="space-y-2">
-                                        <Label class="text-xs text-muted-foreground uppercase tracking-wider">Price Range</Label>
+                                        <Label class="text-xs text-muted-foreground uppercase tracking-wider">Gamme de Prix</Label>
                                         <div class="flex items-center gap-2">
                                             <Input v-model="minPrice" placeholder="Min" type="number" class="h-9 px-2 text-sm" />
                                             <span class="text-muted-foreground">-</span>
@@ -337,7 +337,7 @@ const hasActiveFilters = computed(() => {
                                     </div>
                                 </div>
 
-                                <Button class="w-full" @click="applyFilters">Apply Filters</Button>
+                                <Button class="w-full" @click="applyFilters">Appliquer les Filtres</Button>
                             </div>
                         </div>
                     </div>
@@ -347,19 +347,19 @@ const hasActiveFilters = computed(() => {
                         <!-- Top Bar for List -->
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                                <span class="font-semibold text-foreground">{{ cars.total }}</span> vehicles found
+                                <span class="font-semibold text-foreground">{{ cars.total }}</span> véhicules trouvés
                             </div>
                             <div class="flex items-center gap-2 ml-auto w-full sm:w-auto">
-                                <Label class="text-sm shrink-0">Sort by:</Label>
+                                <Label class="text-sm shrink-0">Trier par :</Label>
                                 <Select v-model="sortBy">
                                     <SelectTrigger class="w-full sm:w-[180px] h-9">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="make_asc">Make (A-Z)</SelectItem>
-                                        <SelectItem value="price_asc">Price (Low to High)</SelectItem>
-                                        <SelectItem value="price_desc">Price (High to Low)</SelectItem>
-                                        <SelectItem value="year_desc">Newest First</SelectItem>
+                                        <SelectItem value="make_asc">Marque (A-Z)</SelectItem>
+                                        <SelectItem value="price_asc">Prix (Croissant)</SelectItem>
+                                        <SelectItem value="price_desc">Prix (Décroissant)</SelectItem>
+                                        <SelectItem value="year_desc">Plus Récents</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -377,15 +377,15 @@ const hasActiveFilters = computed(() => {
                         <!-- No Results State -->
                         <div v-else class="flex flex-col items-center justify-center p-12 text-center rounded-xl border border-dashed text-muted-foreground bg-muted/20">
                             <AlertCircle class="h-10 w-10 mb-4 opacity-50" />
-                            <h3 class="text-lg font-semibold text-foreground mb-1">No vehicles found</h3>
-                            <p class="text-sm max-w-sm mb-6">We couldn't find any vehicles matching your criteria. Try adjusting your filters.</p>
-                            <Button variant="outline" @click="clearFilters">Clear All Filters</Button>
+                            <h3 class="text-lg font-semibold text-foreground mb-1">Aucun véhicule trouvé</h3>
+                            <p class="text-sm max-w-sm mb-6">Nous n'avons trouvé aucun véhicule correspondant à vos critères. Essayez d'ajuster vos filtres.</p>
+                            <Button variant="outline" @click="clearFilters">Effacer tous les filtres</Button>
                         </div>
 
                         <!-- Pagination -->
                         <div v-if="cars.last_page > 1" class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-6 border-t">
                             <span class="text-sm text-muted-foreground whitespace-nowrap">
-                                Page {{ cars.current_page }} of {{ cars.last_page }}
+                                Page {{ cars.current_page }} sur {{ cars.last_page }}
                             </span>
                             <div class="flex items-center space-x-1">
                                 <Button 

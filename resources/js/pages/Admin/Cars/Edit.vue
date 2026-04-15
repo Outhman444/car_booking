@@ -111,25 +111,25 @@ function submit() {
                 <div class="space-y-4">
                     <Link :href="index()" class="group inline-flex items-center text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-all">
                         <ArrowLeft class="size-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                        Back to Inventory
+                        Retour à l'inventaire
                     </Link>
-                    <Heading 
-                        :title="isEdit ? `Edit Vehicle` : 'Add New Vehicle'" 
-                        :description="isEdit ? `Updating ${car.year} ${car.make} ${car.model}` : 'Add a new vehicle to your premium fleet inventory.'"
+                    <Heading
+                        :title="isEdit ? `Modifier le véhicule` : 'Ajouter un véhicule'"
+                        :description="isEdit ? `Modification de ${car.year} ${car.make} ${car.model}` : 'Ajoutez un nouveau véhicule à votre flotte premium.'"
                         size="lg"
                     />
                 </div>
                 <div class="flex items-center gap-4">
                     <Link :href="index()">
-                        <Button variant="ghost" class="h-14 px-8 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">Cancel</Button>
+                        <Button variant="ghost" class="h-14 px-8 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">Annuler</Button>
                     </Link>
-                    <Button 
-                        @click="submit" 
+                    <Button
+                        @click="submit"
                         :disabled="form.processing"
                         class="h-14 px-10 rounded-2xl bg-primary text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all border-none active:scale-[0.98]"
                     >
                         <Save class="size-5 mr-3" />
-                        {{ isEdit ? 'Update Vehicle' : 'Save Vehicle' }}
+                        {{ isEdit ? 'Mettre à jour' : 'Enregistrer' }}
                     </Button>
                 </div>
             </div>
@@ -144,9 +144,9 @@ function submit() {
                                 <div class="p-2 rounded-xl bg-blue-50 text-blue-600">
                                     <ImageIcon class="size-5" />
                                 </div>
-                                Vehicle Media
+                                Médias du véhicule
                             </CardTitle>
-                            <CardDescription class="text-xs font-bold uppercase tracking-widest text-slate-400 pt-2">Upload high-resolution photography.</CardDescription>
+                            <CardDescription class="text-xs font-bold uppercase tracking-widest text-slate-400 pt-2">Téléchargez des photos haute résolution.</CardDescription>
                         </CardHeader>
                         <CardContent class="p-8 pt-4">
                             <div class="space-y-6">
@@ -164,7 +164,7 @@ function submit() {
                                     />
                                 </div>
                                 <p class="text-[10px] text-center font-bold text-slate-400 uppercase tracking-widest">
-                                    Recommended: PNG or JPG (Min 1200x800px)
+                                    Recommandé : PNG ou JPG (Min 1200x800px)
                                 </p>
                             </div>
                         </CardContent>
@@ -177,22 +177,22 @@ function submit() {
                                 <div class="p-2 rounded-xl bg-amber-50 text-amber-600">
                                     <Tag class="size-5" />
                                 </div>
-                                Status & Pricing
+                                Statut et tarifs
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="p-8 space-y-8 pt-6">
                             <!-- Status -->
                             <div class="space-y-4">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Current Availability</label>
-                                    <HelpTooltip 
-                                        content="Set current availability. Use 'Maintenance' or 'Cleaning' for non-rentable states." 
+                                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Disponibilité actuelle</label>
+                                    <HelpTooltip
+                                        content="Définissez la disponibilité actuelle. Utilisez 'Maintenance' ou 'Nettoyage' pour les états non louables."
                                     />
                                 </div>
                                 <!-- System-controlled status warning -->
                                 <div v-if="isEdit && ['rented', 'reserved', 'pending'].includes(car?.status)" class="rounded-2xl bg-violet-50 p-4 ring-1 ring-violet-200 space-y-2">
-                                    <p class="text-[10px] font-black uppercase tracking-widest text-violet-600">System Controlled</p>
-                                    <p class="text-xs font-bold text-violet-500">This vehicle's status is managed by an active reservation. Complete or cancel the reservation to change availability.</p>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-violet-600">Contrôlé par le système</p>
+                                    <p class="text-xs font-bold text-violet-500">Le statut de ce véhicule est géré par une réservation active. Complétez ou annulez la réservation pour modifier la disponibilité.</p>
                                 </div>
                                 <Select v-model="form.status" :disabled="isEdit && ['rented', 'reserved', 'pending'].includes(car?.status)">
                                     <SelectTrigger id="status" class="h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all disabled:opacity-60 disabled:cursor-not-allowed">
@@ -215,9 +215,9 @@ function submit() {
                             <!-- Price -->
                             <div class="space-y-4">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Daily Rental Rate</label>
-                                    <HelpTooltip 
-                                        content="Set the daily rental cost. This amount will be used for auto-calculations." 
+                                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Tarif journalier</label>
+                                    <HelpTooltip
+                                        content="Définissez le coût de location journalier. Ce montant sera utilisé pour les calculs automatiques."
                                     />
                                 </div>
                                 <div class="relative group">
@@ -247,33 +247,33 @@ function submit() {
                                 <div class="p-2 rounded-xl bg-slate-100 text-slate-600">
                                     <Info class="size-5" />
                                 </div>
-                                General Information
+                                Informations générales
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="p-8 space-y-8 pt-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div class="space-y-4">
                                     <div class="flex items-center gap-2">
-                                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Make / Manufacturer</label>
-                                        <HelpTooltip 
-                                            content="The brand of the car (e.g., Mercedes, Audi, BMW)." 
+                                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Marque / Fabricant</label>
+                                        <HelpTooltip
+                                            content="La marque du véhicule (ex : Mercedes, Audi, BMW)."
                                         />
                                     </div>
                                     <Input id="make" v-model="form.make" placeholder="e.g. Mercedes-Benz, Toyota..." class="h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:font-medium placeholder:text-slate-400" />
                                     <InputError :message="form.errors.make" />
                                 </div>
                                 <div class="space-y-4">
-                                        <HelpTooltip 
-                                            content="The specific model name (e.g., C-Class, A4, RAV4)." 
+                                        <HelpTooltip
+                                            content="Le nom du modèle spécifique (ex : C-Class, A4, RAV4)."
                                         />
                                     <Input id="model" v-model="form.model" placeholder="e.g. C-Class, Corolla..." class="h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:font-medium placeholder:text-slate-400" />
                                     <InputError :message="form.errors.model" />
                                 </div>
                                 <div class="space-y-4">
                                     <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                        <Calendar class="size-3" /> Production Year
-                                        <HelpTooltip 
-                                            content="The year the vehicle was manufactured." 
+                                        <Calendar class="size-3" /> Année de production
+                                        <HelpTooltip
+                                            content="L'année de fabrication du véhicule."
                                         />
                                     </label>
                                     <Input id="year" v-model="form.year" type="number" placeholder="e.g. 2024" class="h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:font-medium placeholder:text-slate-400" />
@@ -281,9 +281,9 @@ function submit() {
                                 </div>
                                 <div class="space-y-4">
                                     <div class="flex items-center gap-2">
-                                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">License Plate</label>
-                                        <HelpTooltip 
-                                            content="Unique identification plate of the vehicle." 
+                                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Plaque d'immatriculation</label>
+                                        <HelpTooltip
+                                            content="Plaque d'identification unique du véhicule."
                                         />
                                     </div>
                                     <Input id="license_plate" v-model="form.license_plate" placeholder="e.g. ABC-[1234]" class="h-14 rounded-2xl border-none bg-slate-50 font-black text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all font-mono uppercase tracking-widest placeholder:font-medium placeholder:text-slate-400" />
@@ -300,7 +300,7 @@ function submit() {
                                 <div class="p-2 rounded-xl bg-slate-100 text-slate-600">
                                     <Settings2 class="size-5" />
                                 </div>
-                                Performance & Utility
+                                Performance et utilitaires
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="p-8 space-y-10 pt-6">
@@ -308,10 +308,10 @@ function submit() {
                                 <div class="space-y-4">
                                     <div class="flex items-center gap-2">
                                         <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                            <Fuel class="size-3" /> Fuel Configuration
+                                            <Fuel class="size-3" /> Type de carburant
                                         </label>
-                                        <HelpTooltip 
-                                            content="Specify the required fuel type (Gasoline, Diesel, Electric, etc.)." 
+                                        <HelpTooltip
+                                            content="Spécifiez le type de carburant requis (Essence, Diesel, Électrique, etc.)."
                                         />
                                     </div>
                                     <Select v-model="form.fuel_type">
@@ -329,10 +329,10 @@ function submit() {
                                 <div class="space-y-4">
                                     <div class="flex items-center gap-2">
                                         <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                            <Cog class="size-3" /> Drivetrain
+                                            <Cog class="size-3" /> Transmission
                                         </label>
-                                        <HelpTooltip 
-                                            content="Choose between automatic or manual transmission systems." 
+                                        <HelpTooltip
+                                            content="Choisissez entre les systèmes de transmission automatique ou manuelle."
                                         />
                                     </div>
                                     <Select v-model="form.transmission">
@@ -340,8 +340,8 @@ function submit() {
                                             <SelectValue placeholder="Select transmission" />
                                         </SelectTrigger>
                                         <SelectContent class="rounded-2xl border-none shadow-2xl ring-1 ring-slate-100">
-                                            <SelectItem value="automatic" class="rounded-xl font-bold py-3">Automatic</SelectItem>
-                                            <SelectItem value="manual" class="rounded-xl font-bold py-3">Manual</SelectItem>
+                                            <SelectItem value="automatic" class="rounded-xl font-bold py-3">Automatique</SelectItem>
+                                            <SelectItem value="manual" class="rounded-xl font-bold py-3">Manuelle</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <InputError :message="form.errors.transmission" />
@@ -349,10 +349,10 @@ function submit() {
                                 <div class="space-y-4">
                                     <div class="flex items-center gap-2">
                                         <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                            <Gauge class="size-3" /> Current Odometer (km)
+                                            <Gauge class="size-3" /> Kilométrage actuel (km)
                                         </label>
-                                        <HelpTooltip 
-                                            content="The current total distance traveled. Important for tracking usage." 
+                                        <HelpTooltip
+                                            content="La distance totale actuelle parcourue. Important pour le suivi d'utilisation."
                                         />
                                     </div>
                                     <Input id="mileage" v-model="form.mileage" type="number" placeholder="e.g. 50000" class="h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:font-medium placeholder:text-slate-400" />
@@ -360,9 +360,9 @@ function submit() {
                                 </div>
                                 <div class="space-y-4">
                                     <div class="flex items-center gap-2">
-                                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Seating Capacity</label>
-                                        <HelpTooltip 
-                                            content="Total passenger seats (including driver)." 
+                                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Capacité d'assise</label>
+                                        <HelpTooltip
+                                            content="Nombre total de places passagers (y compris le conducteur)."
                                         />
                                     </div>
                                     <Input id="seats" v-model="form.seats" type="number" placeholder="e.g. 4 or 5" class="h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:font-medium placeholder:text-slate-400" />
@@ -372,9 +372,9 @@ function submit() {
 
                             <div class="space-y-6">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Exterior Aesthetic</label>
-                                    <HelpTooltip 
-                                        content="Select the primary exterior color." 
+                                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Couleur extérieure</label>
+                                    <HelpTooltip
+                                        content="Sélectionnez la couleur extérieure principale."
                                     />
                                 </div>
                                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
@@ -403,9 +403,9 @@ function submit() {
 
                             <div class="space-y-4">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Vehicle Description</label>
-                                    <HelpTooltip 
-                                        content="Highlight premium features and condition details for clients." 
+                                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Description du véhicule</label>
+                                    <HelpTooltip
+                                        content="Mettez en avant les fonctionnalités premium et les détails de l'état du véhicule."
                                     />
                                 </div>
                                 <Textarea

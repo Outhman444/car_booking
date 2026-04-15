@@ -304,7 +304,7 @@ class ReservationsPaymentsSeeder extends Seeder
                 'payment_scenarios' => [
                     [
                         'status' => PaymentStatus::PENDING,
-                        'method' => PaymentMethod::AGENCY,
+                        'method' => PaymentMethod::STRIPE,
                     ]
                 ]
             ],
@@ -400,7 +400,7 @@ class ReservationsPaymentsSeeder extends Seeder
                 'payment_scenarios' => [
                     [
                         'status' => PaymentStatus::COMPLETED,
-                        'method' => PaymentMethod::AGENCY,
+                        'method' => PaymentMethod::STRIPE,
                         'processed_at' => $now->copy()->subDays(60),
                     ]
                 ]
@@ -502,10 +502,6 @@ class ReservationsPaymentsSeeder extends Seeder
             PaymentMethod::PAYPAL => array_merge($baseData, [
                 'paypal_transaction_id' => 'PP_' . uniqid(),
                 'payer_email' => 'customer@example.com',
-            ]),
-            PaymentMethod::AGENCY => array_merge($baseData, [
-                'receipt_number' => 'CASH_' . rand(10000, 99999),
-                'cashier_id' => rand(1, 10),
             ]),
         };
     }

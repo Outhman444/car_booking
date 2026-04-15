@@ -74,25 +74,25 @@ function submit() {
                 <div class="space-y-4">
                     <Link :href="index().url" class="group inline-flex items-center text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-all">
                         <ArrowLeft class="size-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                        Back to Reservations
+                        Retour aux réservations
                     </Link>
-                    <Heading 
-                        :title="`Edit Booking #${reservation?.reservation_number}`" 
-                        description="Modify the details of this rental agreement."
+                    <Heading
+                        :title="`Modifier la réservation #${reservation?.reservation_number}`"
+                        description="Modifiez les détails de ce contrat de location."
                         size="lg"
                     />
                 </div>
                 <div class="flex items-center gap-4">
                     <Link :href="index().url">
-                        <Button variant="ghost" class="h-14 px-8 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">Cancel</Button>
+                        <Button variant="ghost" class="h-14 px-8 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">Annuler</Button>
                     </Link>
-                    <Button 
-                        @click="submit" 
+                    <Button
+                        @click="submit"
                         :disabled="form.processing"
                         class="h-14 px-10 rounded-2xl bg-primary text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all border-none active:scale-[0.98]"
                     >
                         <Save class="size-5 mr-3" />
-                        Save Changes
+                        Enregistrer
                     </Button>
                 </div>
             </div>
@@ -145,8 +145,8 @@ function submit() {
                             <!-- Start Date -->
                             <div class="space-y-4">
                                 <label for="start_date" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                    <Calendar class="size-3"/> Pickup Date
-                                    <HelpTooltip content="The scheduled date for vehicle collection. Changes may affect total rental cost." />
+                                    <Calendar class="size-3"/> Date de prise en charge
+                                    <HelpTooltip content="La date prévue pour la prise en charge du véhicule. Les modifications peuvent affecter le coût total de la location." />
                                 </label>
                                 <Input
                                     id="start_date"
@@ -160,8 +160,8 @@ function submit() {
                             <!-- End Date -->
                             <div class="space-y-4">
                                 <label for="end_date" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                    <Calendar class="size-3"/> Drop-off Date
-                                    <HelpTooltip content="The scheduled return date. Late returns are calculated based on the 24-hour rate." />
+                                    <Calendar class="size-3"/> Date de retour
+                                    <HelpTooltip content="La date de retour prévue. Les retours tardifs sont calculés sur la base d'un tarif de 24 heures." />
                                 </label>
                                 <Input
                                     id="end_date"
@@ -175,8 +175,8 @@ function submit() {
                             <!-- Pickup Time -->
                             <div class="space-y-4">
                                 <label for="pickup_time" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                    <Clock class="size-3"/> Pickup Time
-                                    <HelpTooltip content="The specific time for vehicle collection at the chosen location." />
+                                    <Clock class="size-3"/> Heure de prise en charge
+                                    <HelpTooltip content="L'heure spécifique pour la prise en charge du véhicule à l'endroit choisi." />
                                 </label>
                                 <Input
                                     id="pickup_time"
@@ -190,8 +190,8 @@ function submit() {
                             <!-- Return Time -->
                             <div class="space-y-4">
                                 <label for="return_time" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                    <Clock class="size-3"/> Drop-off Time
-                                    <HelpTooltip content="The scheduled time for returning the vehicle to the drop-off point." />
+                                    <Clock class="size-3"/> Heure de retour
+                                    <HelpTooltip content="L'heure prévue pour le retour du véhicule au point de chute." />
                                 </label>
                                 <Input
                                     id="return_time"
@@ -204,7 +204,7 @@ function submit() {
 
                             <!-- Pickup Location -->
                             <div class="space-y-4">
-                                <label for="pickup_location" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2"><MapPin class="size-3"/> Pickup Location</label>
+                                <label for="pickup_location" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2"><MapPin class="size-3"/> Lieu de prise en charge</label>
                                 <Input
                                     id="pickup_location"
                                     v-model="form.pickup_location"
@@ -217,8 +217,8 @@ function submit() {
                             <!-- Return Location -->
                             <div class="space-y-4">
                                 <label for="return_location" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                    <MapPin class="size-3"/> Drop-off Location
-                                    <HelpTooltip content="The specified location for returning the vehicle." />
+                                    <MapPin class="size-3"/> Lieu de retour
+                                    <HelpTooltip content="L'endroit spécifié pour retourner le véhicule." />
                                 </label>
                                 <Input
                                     id="return_location"
@@ -232,8 +232,8 @@ function submit() {
                             <!-- Discount Amount -->
                             <div class="space-y-4">
                                 <label for="discount_amount" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                    <CreditCard class="size-3"/> Manual Discount
-                                    <HelpTooltip content="Apply a direct reduction to the total booking price." />
+                                    <CreditCard class="size-3"/> Discount manuel
+                                    <HelpTooltip content="Appliquez une réduction directe sur le prix total de la réservation." />
                                 </label>
                                 <div class="relative group">
                                     <span class="absolute left-5 top-1/2 -translate-y-1/2 text-lg font-black text-slate-400 group-focus-within:text-primary transition-colors">- $</span>
@@ -252,8 +252,8 @@ function submit() {
                             <!-- Status -->
                             <div class="space-y-4">
                                 <label for="status" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                    <Tag class="size-3"/> Booking Status
-                                    <HelpTooltip content="Manage the current stage of the reservation." />
+                                    <Tag class="size-3"/> Statut de la réservation
+                                    <HelpTooltip content="Gérez l'étape actuelle de la réservation." />
                                 </label>
                                 <Select v-model="form.status">
                                     <SelectTrigger id="status" class="h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all">
@@ -275,7 +275,7 @@ function submit() {
 
                             <!-- Notes -->
                             <div class="md:col-span-2 space-y-4">
-                                <label for="notes" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Internal Notes</label>
+                                <label for="notes" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Notes internes</label>
                                 <Textarea
                                     id="notes"
                                     v-model="form.notes"
@@ -291,7 +291,7 @@ function submit() {
                                 v-if="form.status === 'cancelled'"
                                 class="md:col-span-2 space-y-4 bg-rose-50/50 p-6 rounded-3xl ring-1 ring-rose-100"
                             >
-                                <label for="cancellation_reason" class="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500">Cancellation Reason</label>
+                                <label for="cancellation_reason" class="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500">Raison de l'annulation</label>
                                 <Textarea
                                     id="cancellation_reason"
                                     v-model="form.cancellation_reason"

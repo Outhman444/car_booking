@@ -6,14 +6,14 @@ enum PaymentMethod: string
 {
     case PAYPAL = 'paypal';
     case STRIPE = 'stripe';
-    case AGENCY = 'agency';
+    case CASH = 'cash';
 
     public function label(): string
     {
         return match ($this) {
             self::PAYPAL => 'PayPal',
             self::STRIPE => 'Credit/Debit Card (Stripe)',
-            self::AGENCY => 'Pay at the Agency (Cash)',
+            self::CASH => 'Cash (Pay at Agency)',
         };
     }
 
@@ -22,7 +22,7 @@ enum PaymentMethod: string
         return match ($this) {
             self::PAYPAL => 'Pay securely with your PayPal account',
             self::STRIPE => 'Pay with credit or debit card via Stripe',
-            self::AGENCY => 'Reserve now and pay in person when you pick up your car',
+            self::CASH => 'Pay in cash when you arrive to pick up your car',
         };
     }
 
@@ -31,7 +31,7 @@ enum PaymentMethod: string
         return match ($this) {
             self::PAYPAL => 'paypal',
             self::STRIPE => 'credit-card',
-            self::AGENCY => 'banknote',
+            self::CASH => 'banknotes',
         };
     }
 

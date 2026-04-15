@@ -27,7 +27,7 @@ enum CarStatus: string
     {
         return match ($this) {
             self::AVAILABLE      => 'The car is ready for booking and rental.',
-            self::PENDING        => 'The car is booked but awaiting payment confirmation (Cash/Agency).',
+            self::PENDING        => 'The car is booked but awaiting payment confirmation.',
             self::RESERVED       => 'The car is reserved for a customer and awaiting pickup.',
             self::RENTED         => 'The car is currently rented by a customer.',
             self::MAINTENANCE    => 'The car is undergoing service, repair, or cleaning.',

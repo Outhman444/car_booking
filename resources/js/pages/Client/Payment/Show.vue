@@ -1,21 +1,28 @@
 <script setup lang="ts">
 import ClientLayout from '@/layouts/ClientLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ref, onMounted } from 'vue';
-import { CreditCard, Wallet, Banknote, AlertCircle, Loader2, CheckCircle, ArrowLeft, Info } from 'lucide-vue-next';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { CreditCard, Wallet, AlertCircle, Loader2, CheckCircle, ArrowLeft, Info, Clock } from 'lucide-vue-next';
 import { loadStripe } from '@stripe/stripe-js';
 import axios from 'axios';
 import HelpTooltip from '@/components/HelpTooltip.vue';
 import BookingStepper from '@/components/BookingStepper.vue';
+import ReservationCountdown from '@/components/ReservationCountdown.vue';
+
+
+const $page = usePage<any>();
 
 const props = defineProps<{
     reservation: {
         id: number;
         reservation_number: string;
         total_amount: number;
+        deposit_amount: number;
+        remaining_amount: number;
+        security_deposit_amount: number;
         start_date: string;
         end_date: string;
         total_days: number;
@@ -26,6 +33,7 @@ const props = defineProps<{
             year: number;
             license_plate: string;
         };
+        pending_expires_at?: string;
     };
     paymentMethods: Array<{
         value: string;
@@ -47,6 +55,10 @@ let stripeInstance: any = null;
 let elements: any = null;
 let cardElement: any = null;
 
+const securityDeposit = computed(() => props.reservation.security_deposit_amount || 0);
+
+const isExpired = ref(false);
+
 onMounted(async () => {
     // Load Stripe.js if Stripe is available
     if (props.stripeKey && props.paymentMethods.some(m => m.value === 'stripe')) {
@@ -58,12 +70,16 @@ onMounted(async () => {
                     base: {
                         fontSize: '16px',
                         color: '#1f2937',
-                        '::placeholder': { color: '#9ca3af' },
+                        '::placeholder' : { color: '#9ca3af' },
                     },
                 },
             });
         }
     }
+});
+
+onUnmounted(() => {
+    if (timerInterval) clearInterval(timerInterval);
 });
 
 function fmtMoney(n?: number | string) {
@@ -94,7 +110,7 @@ async function processStripePayment() {
     try {
         // 1. Get Payment Intent from backend
         const intentResponse = await axios.post(`/client/payment/${props.reservation.id}/stripe-intent`);
-        
+
         if (intentResponse.data.error) {
             errorMessage.value = intentResponse.data.error;
             isProcessing.value = false;
@@ -127,17 +143,17 @@ async function processStripePayment() {
                         isProcessing.value = false;
                     },
                     onError: (errors: any) => {
-                        errorMessage.value = errors.error || 'Your payment was not finalized. Please try again or contact support if the issue persists.';
+                        errorMessage.value = errors.error || "Une erreur est survenue lors du traitement du paiement.";
                     },
                 }
             );
         } else {
-             errorMessage.value = 'We could not successfully authenticate your payment. Please try another card or payment method.';
+             errorMessage.value = "L'authentification a échoué.";
              isProcessing.value = false;
         }
 
     } catch (e: any) {
-        errorMessage.value = e.response?.data?.error || e.message || 'We encountered an error processing your request. Please try again.';
+        errorMessage.value = e.response?.data?.error || e.message || "Erreur lors du traitement.";
         isProcessing.value = false;
     }
 }
@@ -148,7 +164,7 @@ async function processPayPalPayment() {
 
     try {
         const response = await axios.post(`/client/payment/${props.reservation.id}/paypal`);
-        
+
         const data = response.data;
 
         if (data.error) {
@@ -160,33 +176,11 @@ async function processPayPalPayment() {
         if (data.approval_url) {
             window.location.href = data.approval_url;
         } else {
-            errorMessage.value = 'We received an invalid response from PayPal. Please try again later or contact our team.';
+            errorMessage.value = "Réponse PayPal invalide.";
             isProcessing.value = false;
         }
     } catch {
-        errorMessage.value = 'We failed to securely connect to PayPal. Please check your internet connection and try again.';
-        isProcessing.value = false;
-    }
-}
-
-async function processAgencyPayment() {
-    isProcessing.value = true;
-    errorMessage.value = null;
-
-    try {
-        const response = await axios.post(`/client/payment/${props.reservation.id}/agency`);
-        
-        if (response.data.error) {
-            errorMessage.value = response.data.error;
-            isProcessing.value = false;
-            return;
-        }
-
-        if (response.data.redirect_url) {
-            router.visit(response.data.redirect_url);
-        }
-    } catch (e: any) {
-        errorMessage.value = e.response?.data?.error || 'Failed to process payment selection.';
+        errorMessage.value = "Échec de la connexion à PayPal.";
         isProcessing.value = false;
     }
 }
@@ -198,56 +192,98 @@ async function submitPayment() {
         await processStripePayment();
     } else if (selectedMethod.value === 'paypal') {
         await processPayPalPayment();
-    } else if (selectedMethod.value === 'agency') {
-        await processAgencyPayment();
+    }
+}
+
+function getPaymentMethodName(value: string): string {
+    switch (value) {
+        case 'paypal': return 'PayPal';
+        case 'stripe': return 'Carte Bancaire';
+        default: return value;
     }
 }
 </script>
 
 <template>
-    <Head :title="`Pay Reservation ${reservation?.reservation_number || ''}`" />
+    <Head :title="`Compléter le paiement ${reservation?.reservation_number || ''}`" />
     <ClientLayout>
         <main class="flex-1 p-8 space-y-6 max-w-3xl mx-auto">
+            <!-- Expiration Countdown -->
+            <ReservationCountdown 
+                :expires-at="reservation.pending_expires_at" 
+                variant="payment"
+                :is-paid="reservation.is_paid"
+                @expired="isExpired = true"
+            />
+
             <!-- Status Stepper -->
-            <BookingStepper :current-step="3" class="mb-4" />
+            <BookingStepper :current-step="3" class="mb-6" />
 
             <!-- Header -->
-            <div class="flex items-center gap-4">
+            <div v-if="!isExpired" class="flex items-center gap-4">
                 <Link :href="`/client/reservations/${reservation.id}`">
                     <Button variant="ghost" size="icon">
                         <ArrowLeft class="h-4 w-4" />
                     </Button>
                 </Link>
                 <div>
-                    <h1 class="text-2xl font-semibold">Complete Payment</h1>
-                    <p class="text-muted-foreground">Reservation #{{ reservation.reservation_number }}</p>
+                    <h1 class="text-2xl font-semibold">Effectuer le paiement</h1>
+                    <p class="text-muted-foreground">Référence #{{ reservation.reservation_number }}</p>
                 </div>
             </div>
 
             <!-- Reservation Summary -->
-            <Card>
+            <Card v-if="!isExpired">
                 <CardHeader>
-                    <CardTitle class="text-lg">Reservation Summary</CardTitle>
+                    <CardTitle class="text-lg">Résumé de la réservation</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-muted-foreground">Car</p>
+                            <p class="text-sm text-muted-foreground">Voiture</p>
                             <p class="font-medium">
                                 {{ reservation.car ? `${reservation.car.year} ${reservation.car.make} ${reservation.car.model}` : 'N/A' }}
                             </p>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm text-muted-foreground">Duration</p>
-                            <p class="font-medium">{{ reservation.total_days }} days</p>
+                            <p class="text-sm text-muted-foreground">Durée</p>
+                            <p class="font-medium">{{ reservation.total_days }} jours</p>
                         </div>
                     </div>
-                    <div class="mt-4 pt-4 border-t flex items-center justify-between">
-                        <span class="text-lg font-semibold flex items-center gap-2">
-                            Total Amount
-                            <HelpTooltip content="This is the final price including all taxes, fees, and the daily rental rate for the full duration." />
-                        </span>
-                        <span class="text-2xl font-bold text-primary">{{ fmtMoney(reservation.total_amount) }}</span>
+                    
+                    <!-- Optimized Payment Breakdown -->
+                    <div class="mt-6 pt-6 border-t space-y-6">
+                        <!-- Hero Section for Deposit -->
+                        <div class="bg-primary/5 p-6 rounded-2xl border border-primary/10 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="space-y-1">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-primary">Paiement Immédiat (Acompte)</span>
+                                    <p class="text-4xl font-black text-primary tracking-tighter">{{ fmtMoney(props.reservation.deposit_amount) }}</p>
+                                </div>
+                                <div class="h-12 w-12 rounded-2xl bg-white flex items-center justify-center shadow-sm text-primary">
+                                    <Wallet class="size-6" />
+                                </div>
+                            </div>
+                            
+                            <div class="pt-4 border-t border-primary/10 flex items-center justify-between text-xs font-bold uppercase tracking-widest text-primary/60">
+                                <span>TOTAL</span>
+                                <span>{{ fmtMoney(props.reservation.total_amount) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Pay at Agency Info -->
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex items-start gap-4">
+                            <div class="h-10 w-10 shrink-0 rounded-xl bg-white flex items-center justify-center shadow-sm text-slate-400">
+                                <Info class="size-5" />
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Payer en agence lors de la collecte</p>
+                                <p class="text-lg font-black text-slate-900">{{ fmtMoney(props.reservation.remaining_amount) }}</p>
+                                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-tight">
+                                    Le solde restant et la caution ({{ fmtMoney(props.reservation.security_deposit_amount) }}) sont dus à l'agence.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -255,9 +291,9 @@ async function submitPayment() {
             <!-- No Payment Methods -->
             <Alert v-if="!paymentMethods || paymentMethods.length === 0" variant="destructive">
                 <AlertCircle class="h-4 w-4" />
-                <AlertTitle>Systems Are Unavailable</AlertTitle>
+                <AlertTitle>Systèmes de paiement indisponibles</AlertTitle>
                 <AlertDescription>
-                    We're currently unable to process digital payments. Please reach out to our customer support team to finish your reservation.
+                    Nous ne pouvons pas traiter les paiements pour le moment. Veuillez contacter le support.
                 </AlertDescription>
             </Alert>
 
@@ -268,8 +304,8 @@ async function submitPayment() {
                         <Info class="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 class="font-semibold text-foreground">Next Steps</h3>
-                        <p class="text-sm text-muted-foreground mt-1 leading-relaxed">After reservation is confirmed, bring your reference number to the agency to collect your car.</p>
+                        <h3 class="font-semibold text-foreground">Prochaines étapes</h3>
+                        <p class="text-sm text-muted-foreground mt-1 leading-relaxed">Une fois l'acompte payé, votre réservation sera instantanément confirmée et un reçu vous sera envoyé.</p>
                     </div>
                 </div>
 
@@ -278,8 +314,8 @@ async function submitPayment() {
                         <AlertCircle class="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 class="font-semibold text-foreground">Requirements</h3>
-                        <p class="text-sm text-muted-foreground mt-1 leading-relaxed">Bring your ID/Passport and a valid driver's license (min. {{ $page.props.settings.min_driving_experience || 2 }} years exp).</p>
+                        <h3 class="font-semibold text-foreground">Conditions requises</h3>
+                        <p class="text-sm text-muted-foreground mt-1 leading-relaxed whitespace-pre-wrap">{{ $page.props.settings.rental_terms || 'Permis de conduire valide (min. 2 ans) et pièce d\'identité requis lors de la collecte.' }}</p>
                     </div>
                 </div>
             </div>
@@ -287,8 +323,8 @@ async function submitPayment() {
             <!-- Payment Methods Selection -->
             <div v-if="paymentMethods && paymentMethods.length > 0" class="space-y-4">
                 <h2 class="text-lg font-semibold flex items-center gap-2">
-                    Select Payment Method
-                    <HelpTooltip content="Choose a secure payment channel. Digital payments are processed instantly to confirm your booking." />
+                    Sélectionner la méthode de paiement
+                    <HelpTooltip content="Choisissez un canal de paiement sécurisé. Les paiements numériques sont traités instantanément pour confirmer votre réservation." />
                 </h2>
 
                 <div class="grid gap-4">
@@ -311,7 +347,7 @@ async function submitPayment() {
                                 <p class="text-sm text-muted-foreground">{{ method.description }}</p>
                             </div>
                             <div v-if="method.is_sandbox" class="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
-                                Test Mode
+                                Mode TEST
                             </div>
                             <CheckCircle
                                 v-if="selectedMethod === method.value"
@@ -326,10 +362,10 @@ async function submitPayment() {
                     <Card>
                         <CardHeader>
                             <CardTitle class="text-base flex items-center gap-2">
-                                Card Details
-                                <HelpTooltip content="Your card data is processed directly by Stripe using bank-level encryption. We never store your card numbers." />
+                                Détails de la carte
+                                <HelpTooltip content="Vos données de carte sont traitées directement par Stripe avec un cryptage de niveau bancaire. Nous ne stockons jamais vos numéros de carte." />
                             </CardTitle>
-                            <CardDescription>Enter your card information securely</CardDescription>
+                            <CardDescription>Veuillez entrer les informations de votre carte ci-dessous</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div id="card-element" class="min-h-[40px] p-4 border rounded-lg bg-background"></div>
@@ -340,21 +376,9 @@ async function submitPayment() {
                 <!-- Error Message -->
                 <Alert v-if="errorMessage" variant="destructive">
                     <AlertCircle class="h-4 w-4" />
-                    <AlertTitle>Payment Error</AlertTitle>
+                    <AlertTitle>Erreur de paiement</AlertTitle>
                     <AlertDescription>{{ errorMessage }}</AlertDescription>
                 </Alert>
-
-                <!-- Agency Rules Promiment Warning -->
-                <div v-if="selectedMethod === 'agency'" class="mt-6 p-5 rounded-2xl border border-yellow-200 bg-yellow-50 flex items-start gap-3 shadow-inner">
-                    <AlertCircle class="h-6 w-6 text-yellow-600 shrink-0 mt-0.5" />
-                    <div>
-                        <h4 class="font-bold text-yellow-900 text-base">Time-Sensitive Requirement</h4>
-                        <p class="text-sm text-yellow-800 mt-1.5 leading-relaxed">
-                            You must attend the agency personally to pay the total amount in cash within <strong class="text-yellow-950 font-bold bg-yellow-200 px-1.5 py-0.5 rounded">{{ $page.props.settings.cash_reservation_timeout || 24 }} Hours</strong>. 
-                            If you fail to do so, your reservation will be automatically cancelled and the car will be given to another customer.
-                        </p>
-                    </div>
-                </div>
 
                 <!-- Pay Button -->
                 <Button
@@ -363,7 +387,12 @@ async function submitPayment() {
                     @click="submitPayment"
                 >
                     <Loader2 v-if="isProcessing" class="mr-2 h-5 w-5 animate-spin" />
-                    {{ isProcessing ? 'Processing... ' : (selectedMethod === 'agency' ? 'Confirm Reservation & Pay at Agency' : `Pay ${fmtMoney(reservation.total_amount)}`) }}
+                    <template v-if="isProcessing">
+                        Traitement...
+                    </template>
+                    <template v-else>
+                        Payer maintenant - {{ fmtMoney(depositAmount) }}
+                    </template>
                 </Button>
 
                 <!-- Security Note -->
@@ -372,7 +401,7 @@ async function submitPayment() {
                         <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                         </svg>
-                        Secure payment powered by {{ selectedMethod === 'paypal' ? 'PayPal' : (selectedMethod === 'agency' ? 'Our Agency' : 'Stripe') }}
+                        Paiement sécurisé via {{ getPaymentMethodName(selectedMethod || '') }}
                     </span>
                 </p>
             </div>

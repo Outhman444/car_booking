@@ -360,24 +360,48 @@
                 @endif
             </div>
 
-            <div class="summary-box">
+            <div class="summary-box" style="margin-top: 20px;">
                 <div class="summary-row">
-                    <span class="summary-label">Standard Rental ({{ $reservation->total_days }} Days)</span>
+                    <span class="summary-label">Rental Duration</span>
+                    <span class="summary-value">{{ $reservation->total_days }} Day(s)</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Daily Average Rate</span>
+                    <span class="summary-value">{{ $currency }}{{ number_format((float)$reservation->daily_rate, 2) }}</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Subtotal</span>
                     <span class="summary-value">{{ $currency }}{{ number_format((float)$reservation->subtotal, 2) }}</span>
                 </div>
                 <div class="summary-row">
-                    <span class="summary-label">Regulatory Tax (VAT)</span>
+                    <span class="summary-label">VAT & Service Charges ({{ \App\Models\Setting::getValue('tax_rate', 7) }}%)</span>
                     <span class="summary-value">{{ $currency }}{{ number_format((float)$reservation->tax_amount, 2) }}</span>
                 </div>
                 @if($reservation->discount_amount > 0)
                 <div class="summary-row" style="color: #4ade80;">
-                    <span class="summary-label">Executive Discount</span>
+                    <span class="summary-label">Promotion / Discount</span>
                     <span class="summary-value">-{{ $currency }}{{ number_format((float)$reservation->discount_amount, 2) }}</span>
                 </div>
                 @endif
-                <div class="summary-total">
-                    <span class="summary-label" style="color: #0f172a; font-size: 11px; opacity: 1;">Total Payable</span>
-                    <span class="summary-value">{{ $currency }}{{ number_format((float)$reservation->total_amount, 2) }}</span>
+                <div class="summary-total" style="border-top: 1.5px solid #e2e8f0; padding-top: 12px; margin-top: 12px;">
+                    <span class="summary-label" style="color: #0f172a; font-size: 13px; font-weight: 900;">Total Contract Value</span>
+                    <span class="summary-value" style="font-size: 16px;">{{ $currency }}{{ number_format((float)$reservation->total_amount, 2) }}</span>
+                </div>
+
+                @php
+                    $totalPaid = $reservation->payments()->where('status', \App\Enums\PaymentStatus::COMPLETED)->sum('amount');
+                    $balanceDue = max(0, $reservation->total_amount - $totalPaid);
+                @endphp
+
+                <div class="summary-row" style="margin-top: 15px; padding: 12px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span class="summary-label" style="color: #10b981; font-weight: 700; font-size: 10px; text-transform: uppercase;">Amount Paid (Deposit)</span>
+                        <span class="summary-value" style="color: #10b981; font-weight: 900; font-size: 14px;">{{ $currency }}{{ number_format((float)$totalPaid, 2) }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="summary-label" style="color: #ef4444; font-weight: 700; font-size: 10px; text-transform: uppercase;">Outstanding Balance (Pay at Agency)</span>
+                        <span class="summary-value" style="color: #ef4444; font-weight: 900; font-size: 14px;">{{ $currency }}{{ number_format((float)$balanceDue, 2) }}</span>
+                    </div>
                 </div>
             </div>
             <div class="clear"></div>

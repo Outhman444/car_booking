@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'client' => \App\Http\Middleware\ClientMiddleware::class,
             'active' => \App\Http\Middleware\CheckUserActive::class,
             'restricted' => \App\Http\Middleware\restricted::class,
+            'cancel_expired' => \App\Http\Middleware\CancelExpiredReservations::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use App\Enums\ReservationStatus;
+use App\Services\ReservationStateService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
 class Reservation extends Model
 {
+    use HasFactory;
     use SoftDeletes;
 
     /**
@@ -38,6 +41,7 @@ class Reservation extends Model
         'notes',
         'cancellation_reason',
         'cancelled_at',
+        'pending_expires_at',
     ];
 
     /**
@@ -48,6 +52,10 @@ class Reservation extends Model
     protected $appends = [
         'is_paid',
         'payment_method_label',
+        'payment_status',
+        'deposit_amount',
+        'remaining_amount',
+        'security_deposit_amount',
     ];
 
     /**
@@ -56,6 +64,55 @@ class Reservation extends Model
     public function getIsPaidAttribute(): bool
     {
         return $this->payments()->where('status', \App\Enums\PaymentStatus::COMPLETED)->exists();
+    }
+
+    /**
+     * Get the payment status label.
+     */
+    public function getPaymentStatusAttribute(): string
+    {
+        if ($this->getIsPaidAttribute()) {
+            return 'paid';
+        }
+
+        // If reservation is confirmed, active, or completed - payment is due at pickup
+        if (in_array($this->status, [
+            ReservationStatus::CONFIRMED,
+            ReservationStatus::ACTIVE,
+            ReservationStatus::COMPLETED,
+        ])) {
+            return 'pay_at_pickup';
+        }
+
+        return 'unpaid';
+    }
+
+    /**
+     * Get the deposit amount from settings (default 20%).
+     */
+    public function getDepositAmountAttribute(): float
+    {
+        $settings = \App\Models\Setting::where('key', 'booking_deposit_percentage')->first();
+        $percentage = $settings ? (float) $settings->value : 20;
+
+        return round($this->total_amount * ($percentage / 100), 2);
+    }
+
+    /**
+     * Get the remaining amount after deposit.
+     */
+    public function getRemainingAmountAttribute(): float
+    {
+        return round($this->total_amount - $this->deposit_amount, 2);
+    }
+
+    /**
+     * Get the security deposit amount from settings (informational only).
+     */
+    public function getSecurityDepositAmountAttribute(): float
+    {
+        $settings = \App\Models\Setting::where('key', 'security_deposit_amount')->first();
+        return $settings ? (float) $settings->value : 0;
     }
 
     /**
@@ -94,10 +151,23 @@ class Reservation extends Model
         'total_amount' => 'decimal:2',
         'status' => ReservationStatus::class,
         'cancelled_at' => 'datetime',
+        'pending_expires_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    /**
+     * Get the pending expiration time with fallback logic.
+     */
+    public function getPendingExpiresAtAttribute($value)
+    {
+        if ($value) return $value;
+
+        // Fallback for old reservations: created_at + hold_minutes
+        $holdMinutes = (int) \App\Models\Setting::getValue('reservation_hold_time_minutes', 60);
+        return $this->created_at ? $this->created_at->addMinutes($holdMinutes) : null;
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -118,6 +188,13 @@ class Reservation extends Model
         static::creating(function ($reservation) {
             if (empty($reservation->reservation_number)) {
                 $reservation->reservation_number = 'RES-' . strtoupper(Str::random(8));
+            }
+
+            // Set pending expiration time when creating a new pending reservation
+            $status = $reservation->status ?? ReservationStatus::PENDING;
+            if ($status === ReservationStatus::PENDING && empty($reservation->pending_expires_at)) {
+                $holdMinutes = (int) \App\Models\Setting::getValue('reservation_hold_time_minutes', 60);
+                $reservation->pending_expires_at = now()->addMinutes($holdMinutes);
             }
         });
     }
@@ -186,6 +263,50 @@ class Reservation extends Model
         return in_array($this->status, [
             ReservationStatus::PENDING,
             ReservationStatus::CONFIRMED
+        ]);
+    }
+
+    /**
+     * Check if the reservation can transition to a given status.
+     *
+     * @param ReservationStatus $newStatus
+     * @return bool
+     */
+    public function canTransitionTo(ReservationStatus $newStatus): bool
+    {
+        return app(ReservationStateService::class)->canTransition($this, $newStatus);
+    }
+
+    /**
+     * Get all allowed next statuses for this reservation.
+     *
+     * @return array
+     */
+    public function allowedTransitions(): array
+    {
+        $transitions = [
+            ReservationStatus::PENDING->value   => [ReservationStatus::CONFIRMED, ReservationStatus::CANCELLED, ReservationStatus::NO_SHOW],
+            ReservationStatus::CONFIRMED->value => [ReservationStatus::ACTIVE, ReservationStatus::CANCELLED, ReservationStatus::NO_SHOW],
+            ReservationStatus::ACTIVE->value    => [ReservationStatus::COMPLETED],
+            ReservationStatus::COMPLETED->value => [],
+            ReservationStatus::CANCELLED->value => [],
+            ReservationStatus::NO_SHOW->value   => [],
+        ];
+
+        return $transitions[$this->status->value] ?? [];
+    }
+
+    /**
+     * Check if the reservation is in a terminal (final) state.
+     *
+     * @return bool
+     */
+    public function isTerminal(): bool
+    {
+        return in_array($this->status, [
+            ReservationStatus::COMPLETED,
+            ReservationStatus::CANCELLED,
+            ReservationStatus::NO_SHOW,
         ]);
     }
 

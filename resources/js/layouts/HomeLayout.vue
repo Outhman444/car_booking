@@ -53,21 +53,21 @@ const siteNameParts = computed(() => {
                             :class="{ 'text-primary font-semibold': $page.url === home().url, 'text-muted-foreground': $page.url !== home().url }" 
                             class="text-sm transition-colors hover:text-primary"
                         >
-                            Home
+                            Accueil
                         </Link>
                         <Link 
                             :href="fleet()" 
                             :class="{ 'text-primary font-semibold': $page.url.startsWith('/fleet'), 'text-muted-foreground': !$page.url.startsWith('/fleet') }" 
                             class="text-sm transition-colors hover:text-primary"
                         >
-                            Fleet
+                            Nos Voitures
                         </Link>
                         <Link 
                             :href="about()" 
                             :class="{ 'text-primary font-semibold': $page.url === '/about', 'text-muted-foreground': $page.url !== '/about' }" 
                             class="text-sm transition-colors hover:text-primary"
                         >
-                            About
+                            À Propos
                         </Link>
                         <Link 
                             :href="contact()" 
@@ -86,7 +86,7 @@ const siteNameParts = computed(() => {
                                 class="hidden md:inline-flex"
                             >
                                 <Button variant="secondary" size="sm">
-                                    Dashboard
+                                    Tableau de bord
                                 </Button>
                             </Link>
                             
@@ -125,11 +125,11 @@ const siteNameParts = computed(() => {
                                 :href="login()"
                                 class="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
                             >
-                                Sign In
+                                Se connecter
                             </Link>
                             <Button as-child size="sm" class="font-semibold">
                                 <Link :href="register()">
-                                    Get Started
+                                    Commencer
                                 </Link>
                             </Button>
                         </template>
@@ -156,39 +156,39 @@ const siteNameParts = computed(() => {
                                 <h3 class="text-xl font-bold tracking-tight text-foreground">
                                     {{ siteNameParts.first }}<span class="text-primary">{{ siteNameParts.middle }}</span>{{ siteNameParts.last }}
                                 </h3>
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mt-0.5">Authentic Excellence</p>
+                                <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mt-0.5">Excellence Authentique</p>
                             </div>
                         </div>
                         <p class="text-sm leading-relaxed text-muted-foreground">
-                            {{ settings.footer_description || "Since 2015, we've redefined premium transportation by blending high-performance vehicles with an uncompromising commitment to client satisfaction." }}
+                            {{ settings.footer_description || "Depuis 2015, nous avons redéfini le transport haut de gamme en mêlant des véhicules performants à un engagement sans compromis envers la satisfaction du client." }}
                         </p>
                     </div>
 
                     <!-- Services -->
                     <div class="space-y-6">
-                        <h4 class="text-sm font-semibold text-foreground">Fleet Ecosystem</h4>
+                        <h4 class="text-sm font-semibold text-foreground">Écosystème de la Flotte</h4>
                         <ul class="space-y-3 text-sm text-muted-foreground">
-                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Luxury & Sport</Link></li>
-                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Executive Mobility</Link></li>
-                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Long-term Leases</Link></li>
-                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Airport Concierge</Link></li>
+                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Luxe & Sport</Link></li>
+                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Mobilité Executive</Link></li>
+                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Locations Longue Durée</Link></li>
+                            <li><Link :href="fleet.url()" class="transition-colors hover:text-primary">Conciergerie Aéroport</Link></li>
                         </ul>
                     </div>
 
                     <!-- Support -->
                     <div class="space-y-6">
-                        <h4 class="text-sm font-semibold text-foreground">Resources</h4>
+                        <h4 class="text-sm font-semibold text-foreground">Ressources</h4>
                         <ul class="space-y-3 text-sm text-muted-foreground">
-                            <li><Link :href="contact.url()" class="transition-colors hover:text-primary">Global Support</Link></li>
-                            <li><a href="#" class="transition-colors hover:text-primary">Rental Terms</a></li>
-                            <li><a href="#" class="transition-colors hover:text-primary">Privacy Protocol</a></li>
-                            <li><a href="#" class="transition-colors hover:text-primary">Safety Standards</a></li>
+                            <li><Link :href="contact.url()" class="transition-colors hover:text-primary">Support Global</Link></li>
+                            <li><a href="#" class="transition-colors hover:text-primary">Conditions de Location</a></li>
+                            <li><a href="#" class="transition-colors hover:text-primary">Protocole de Confidentialité</a></li>
+                            <li><a href="#" class="transition-colors hover:text-primary">Normes de Sécurité</a></li>
                         </ul>
                     </div>
 
                     <!-- Contact -->
                     <div class="space-y-6">
-                        <h4 class="text-sm font-semibold text-foreground">Contact Us</h4>
+                        <h4 class="text-sm font-semibold text-foreground">Contactez-nous</h4>
                         <div class="space-y-4">
                             <div class="flex items-center gap-3 text-sm text-muted-foreground">
                                 <Phone class="size-4 text-primary" />
@@ -204,7 +204,7 @@ const siteNameParts = computed(() => {
 
                 <div class="mt-12 border-t pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
                     <p class="text-xs text-muted-foreground">
-                        {{ settings.footer_text || `© ${new Date().getFullYear()} ${siteName}. All rights reserved.` }}
+                        {{ settings.footer_text || `© ${new Date().getFullYear()} ${siteName}. Tous droits réservés.` }}
                     </p>
                     <div class="flex items-center gap-6 text-xs text-muted-foreground">
                         <div class="flex items-center gap-2">
@@ -212,9 +212,9 @@ const siteNameParts = computed(() => {
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                             </span>
-                            System Operational
+                            Système Opérationnel
                         </div>
-                        <span class="hidden sm:inline-block">ISO 9001 Certified</span>
+                        <span class="hidden sm:inline-block">Certifié ISO 9001</span>
                     </div>
                 </div>
             </div>

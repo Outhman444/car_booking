@@ -6,6 +6,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\ReservationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
+use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -45,6 +46,11 @@ class ReservationsController extends Controller
                 'code' => config('app.currency_code'),
             ],
             'hasPayment' => $hasPayment,
+            'settings' => [
+                'booking_deposit_percentage' => Setting::getValue('booking_deposit_percentage', 20),
+                'security_deposit_amount' => Setting::getValue('security_deposit_amount', 0),
+                'reservation_hold_time_minutes' => Setting::getValue('reservation_hold_time_minutes', 60),
+            ],
         ]);
     }
 

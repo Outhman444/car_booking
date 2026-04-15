@@ -9,7 +9,7 @@ use App\Http\Controllers\Admin\PaymentMethodsController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\SupportController;
 
-Route::middleware(['auth', 'verified', 'active', 'admin'])
+Route::middleware(['auth', 'verified', 'active', 'admin', 'cancel_expired'])
     ->prefix('admin')
     ->as('admin.')
     ->group(function () {
@@ -23,7 +23,6 @@ Route::middleware(['auth', 'verified', 'active', 'admin'])
         // Reservations
         Route::resource('reservations', ReservationsController::class)->only(['index', 'show', 'edit', 'update']);
         Route::get('reservations/{reservation}/print', [ReservationsController::class, 'print'])->name('reservations.print');
-        Route::post('reservations/{reservation}/mark-as-paid', [ReservationsController::class, 'markAsPaid'])->name('reservations.mark-as-paid');
         Route::post('reservations/{reservation}/quick-status', [ReservationsController::class, 'quickUpdate'])->name('reservations.quick-update');
 
         // Clients

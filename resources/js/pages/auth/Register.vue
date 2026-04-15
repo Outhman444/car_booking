@@ -25,8 +25,8 @@ import HelpTooltip from '@/components/HelpTooltip.vue';
                         <UserPlus class="size-8 text-slate-900" />
                     </div>
                     <div>
-                        <h1 class="text-4xl font-black tracking-tight text-slate-900 leading-tight">Create <span class="text-slate-500">Account</span></h1>
-                        <p class="mt-3 text-base font-bold text-slate-400 uppercase tracking-widest">Join our premium car rental fleet</p>
+                        <h1 class="text-4xl font-black tracking-tight text-slate-900 leading-tight">Créer un <span class="text-slate-500">Compte</span></h1>
+                        <p class="mt-3 text-base font-bold text-slate-400 uppercase tracking-widest">Rejoignez notre flotte de location de voitures premium</p>
                     </div>
                 </div>
 
@@ -45,8 +45,8 @@ import HelpTooltip from '@/components/HelpTooltip.vue';
                             <!-- Name Field -->
                             <div class="space-y-3">
                                 <Label for="name" class="text-xs font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
-                                    Full Name
-                                    <HelpTooltip content="Enter your legal name as it appears on your identity documents for insurance verification." />
+                                    Nom Complet
+                                    <HelpTooltip content="Entrez votre nom légal tel qu'il apparaît sur vos documents d'identité pour la vérification de l'assurance." />
                                 </Label>
                                 <div class="relative group">
                                     <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors">
@@ -70,8 +70,8 @@ import HelpTooltip from '@/components/HelpTooltip.vue';
                             <!-- Email Field -->
                             <div class="space-y-3">
                                 <Label for="email" class="text-xs font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
-                                    Email Address
-                                    <HelpTooltip content="This will be used for all rental agreements and payment confirmations." />
+                                    Adresse E-mail
+                                    <HelpTooltip content="Ceci sera utilisé pour tous les contrats de location et confirmations de paiement." />
                                 </Label>
                                 <div class="relative group">
                                     <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors">
@@ -95,8 +95,8 @@ import HelpTooltip from '@/components/HelpTooltip.vue';
                                 <!-- Password Field -->
                                 <div class="space-y-3">
                                     <Label for="password" class="text-xs font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
-                                        Password
-                                        <HelpTooltip content="Use at least 8 characters. Secure your account to protect your rental history." />
+                                        Mot de passe
+                                        <HelpTooltip content="Utilisez au moins 8 caractères. Sécurisez votre compte pour protéger votre historique de location." />
                                     </Label>
                                     <div class="relative group">
                                         <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors">
@@ -119,7 +119,7 @@ import HelpTooltip from '@/components/HelpTooltip.vue';
                                 <!-- Confirm Password Field -->
                                 <div class="space-y-3">
                                     <Label for="password_confirmation" class="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">
-                                        Confirm
+                                        Confirmer
                                     </Label>
                                     <div class="relative group">
                                         <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors">
@@ -157,13 +157,13 @@ import HelpTooltip from '@/components/HelpTooltip.vue';
                             <!-- Login Link -->
                             <div class="pt-4 text-center">
                                 <p class="text-sm font-bold text-slate-400">
-                                    Already have an account?
+                                    Vous avez déjà un compte ?
                                     <TextLink
                                         :href="login()"
                                         class="ml-2 font-black text-slate-900 hover:text-slate-600 border-b-2 border-slate-900/10 hover:border-slate-900 transition-all"
                                         :tabindex="6"
                                     >
-                                        Sign In
+                                        Se Connecter
                                     </TextLink>
                                 </p>
                             </div>
@@ -174,7 +174,7 @@ import HelpTooltip from '@/components/HelpTooltip.vue';
                 <!-- Footer Info -->
                 <div class="text-center">
                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-relaxed max-w-[360px] mx-auto">
-                        By creating an account, you agree to our <a href="#" class="text-slate-900 hover:underline">Terms of Service</a> and <a href="#" class="text-slate-900 hover:underline">Privacy Policy</a>
+                        En créant un compte, vous acceptez nos <a href="#" class="text-slate-900 hover:underline">Conditions d'Utilisation</a> et notre <a href="#" class="text-slate-900 hover:underline">Politique de Confidentialité</a>
                     </p>
                 </div>
             </div>

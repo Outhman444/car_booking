@@ -34,27 +34,27 @@ defineProps<Props>();
         <DropdownMenuItem v-if="user.role === 'admin'" :as-child="true">
             <Link class="block w-full" :href="reportsIndex().url" prefetch as="button">
                 <LayoutDashboard class="mr-2 h-4 w-4" />
-                Admin Panel
+                Panneau d'Administration
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem v-else :as-child="true">
             <Link class="block w-full" :href="clientReservationsIndex().url" prefetch as="button">
                 <LayoutDashboard class="mr-2 h-4 w-4" />
-                My Dashboard
+                Mon Tableau de Bord
             </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="edit().url" prefetch as="button">
                 <UserIcon class="mr-2 h-4 w-4" />
-                Settings
+                Paramètres
             </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem v-if="user.role === 'admin'" :as-child="true">
             <Link class="block w-full" :href="home.url()" prefetch as="button">
                 <Globe class="mr-2 h-4 w-4" />
-                Visit Website
+                Visiter le Site
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
@@ -68,7 +68,7 @@ defineProps<Props>();
             data-test="logout-button"
         >
             <LogOut class="mr-2 h-4 w-4" />
-            Log out
+            Déconnexion
         </Link>
     </DropdownMenuItem>
 </template>

@@ -42,8 +42,8 @@ class Ticket extends Model
     public static function generateTicketNumber()
     {
         $lastTicket = static::orderBy('id', 'desc')->first();
-        $number = $lastTicket ? $lastTicket->id + 1 : 1;
-        return 'TICK-' . str_pad($number, 6, '0', STR_PAD_LEFT);
+        $number = $lastTicket ? (int) $lastTicket->id + 1 : 1;
+        return 'TICK-' . str_pad((string) $number, 6, '0', STR_PAD_LEFT);
     }
 
     // Relationships

@@ -9,6 +9,7 @@ use App\Enums\FuelType;
 use App\Enums\ReservationStatus;
 use App\Models\Car;
 use App\Models\Reservation;
+use App\Services\ReservationStateService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -189,11 +190,28 @@ class CarsController extends Controller
         ]);
 
         $oldStatus = $car->status;
+        $newStatus = CarStatus::from($validated['status']);
+
+        // Validate status change using the state service
+        $stateService = app(ReservationStateService::class);
+        $validation = $stateService->canAdminSetCarStatus($car, $newStatus);
+
+        if (!$validation['allowed']) {
+            return back()->with('error', $validation['error']);
+        }
+
         $car->update(collect($validated)->except(['image_temp_folders', 'image_removed_files'])->toArray());
 
-        // Sync reservations if car status changed
+        // Handle status change using the state service
         if ($oldStatus !== $car->status) {
-            $this->syncReservationsForCarStatusChange($car);
+            if (in_array($newStatus, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
+                $reason = $newStatus === CarStatus::MAINTENANCE
+                    ? 'Car was taken for maintenance by admin.'
+                    : 'Car was disabled (out of service) by admin.';
+                $stateService->adminSetCarUnavailable($car, $newStatus, $reason);
+            } elseif ($newStatus === CarStatus::AVAILABLE && in_array($oldStatus, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
+                $stateService->adminReleaseCar($car);
+            }
         }
 
         // Ensure single-image semantics: if new temp folders exist, remove any existing 'image' files
@@ -239,82 +257,36 @@ class CarsController extends Controller
         ]);
 
         $newStatus = CarStatus::from($validated['status']);
+        $stateService = app(ReservationStateService::class);
 
-        // Safety guard: prevent setting car to Available/Maintenance/Out of Service
-        // if it has an ACTIVE reservation (car is physically with a customer)
-        if ($car->status === CarStatus::RENTED && $newStatus === CarStatus::AVAILABLE) {
-            $activeReservation = $car->reservations()
-                ->where('status', ReservationStatus::ACTIVE)
-                ->first();
-            if ($activeReservation) {
-                return back()->with('error', 'Cannot set this car to Available — it has an active rental (Reservation #' . $activeReservation->reservation_number . '). Please complete or cancel the reservation first.');
-            }
+        // Validate the status change
+        $validation = $stateService->canAdminSetCarStatus($car, $newStatus);
+
+        if (!$validation['allowed']) {
+            return back()->with('error', $validation['error']);
         }
 
-        $car->update(['status' => $newStatus]);
+        // If there's a warning, we still proceed but inform the admin
+        $warning = $validation['warning'] ?? null;
 
-        // Sync reservations
-        $this->syncReservationsForCarStatusChange($car);
+        // Apply the status change
+        if (in_array($newStatus, [CarStatus::MAINTENANCE, CarStatus::OUT_OF_SERVICE])) {
+            $reason = $newStatus === CarStatus::MAINTENANCE
+                ? 'Car was taken for maintenance by admin.'
+                : 'Car was disabled (out of service) by admin.';
+            $stateService->adminSetCarUnavailable($car, $newStatus, $reason);
+        } elseif ($newStatus === CarStatus::AVAILABLE && $car->isAdminControlled()) {
+            $stateService->adminReleaseCar($car);
+        } else {
+            $car->update(['status' => $newStatus]);
+        }
 
-        return back()->with('success', 'Car status updated successfully.');
+        $message = 'Car status updated successfully.';
+        if ($warning) {
+            $message .= ' Warning: ' . $warning;
+        }
+
+        return back()->with('success', $message);
     }
 
-    /**
-     * Synchronize reservation statuses when admin changes a car's status.
-     * This ensures bidirectional consistency: Car ↔ Reservation.
-     */
-    private function syncReservationsForCarStatusChange(Car $car): void
-    {
-        $newCarStatus = $car->status;
-
-        // Determine what reservation status changes are needed
-        $activeReservations = $car->reservations()
-            ->whereIn('status', [
-                ReservationStatus::PENDING,
-                ReservationStatus::CONFIRMED,
-                ReservationStatus::ACTIVE,
-            ])
-            ->get();
-
-        if ($activeReservations->isEmpty()) {
-            return;
-        }
-
-        foreach ($activeReservations as $reservation) {
-            switch ($newCarStatus) {
-                case CarStatus::AVAILABLE:
-                    // Admin freed the car — cancel any pending cash reservations,
-                    // but leave confirmed/active reservations untouched (they paid already)
-                    if ($reservation->status === ReservationStatus::PENDING) {
-                        $reservation->update([
-                            'status' => ReservationStatus::CANCELLED,
-                            'cancellation_reason' => 'Car was manually set to Available by admin.',
-                            'cancelled_at' => now(),
-                        ]);
-                    }
-                    break;
-
-                case CarStatus::MAINTENANCE:
-                case CarStatus::OUT_OF_SERVICE:
-                    // Admin pulled car for maintenance/disabled — cancel all pending/confirmed bookings
-                    if (in_array($reservation->status, [ReservationStatus::PENDING, ReservationStatus::CONFIRMED])) {
-                        $reason = $newCarStatus === CarStatus::MAINTENANCE
-                            ? 'Car was taken for maintenance by admin.'
-                            : 'Car was disabled (out of service) by admin.';
-
-                        $reservation->update([
-                            'status' => ReservationStatus::CANCELLED,
-                            'cancellation_reason' => $reason,
-                            'cancelled_at' => now(),
-                        ]);
-                    }
-                    break;
-
-                // For PENDING, RESERVED, RENTED — these transitions should only come
-                // FROM reservations, not from manual car changes. No sync needed.
-                default:
-                    break;
-            }
-        }
-    }
 }

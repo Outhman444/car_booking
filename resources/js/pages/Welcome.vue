@@ -66,10 +66,10 @@ const infoMessage = ref($page.props.flash?.info || null);
 
 <template>
     <Head>
-        <title>Real Rent Car - Premium Car Rental Service</title>
+        <title>Real Rent Car - Service de Location de Voitures Premium</title>
         <meta
             name="description"
-            content="Real Rent Car is a premium car rental platform providing reliable transportation solutions. We offer a wide range of cars for rent, from economy to luxury, for short and long term rentals."
+            content="Real Rent Car est une plateforme de location de voitures premium offrant des solutions de transport fiables. Nous proposons une large gamme de voitures, de l'économique au luxe, pour des locations à court et à long terme."
         />
     </Head>
 
@@ -99,7 +99,7 @@ const infoMessage = ref($page.props.flash?.info || null);
                             </div>
                             <div class="flex-1 space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="text-base font-black tracking-tight text-white uppercase italic">System Success</h3>
+                                    <h3 class="text-base font-black tracking-tight text-white uppercase italic">Succès du Système</h3>
                                     <button @click="successMessage = null" class="text-white/40 hover:text-white transition-colors">
                                         <X class="size-4" />
                                     </button>
@@ -134,7 +134,7 @@ const infoMessage = ref($page.props.flash?.info || null);
                             </div>
                             <div class="flex-1 space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="text-base font-black tracking-tight text-white uppercase italic">Critical Failure</h3>
+                                    <h3 class="text-base font-black tracking-tight text-white uppercase italic">Échec Critique</h3>
                                     <button @click="errorMessage = null" class="text-white/40 hover:text-white transition-colors">
                                         <X class="size-4" />
                                     </button>
@@ -169,7 +169,7 @@ const infoMessage = ref($page.props.flash?.info || null);
                             </div>
                             <div class="flex-1 space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="text-base font-black tracking-tight text-white uppercase italic">System Broadcast</h3>
+                                    <h3 class="text-base font-black tracking-tight text-white uppercase italic">Diffusion du Système</h3>
                                     <button @click="infoMessage = null" class="text-white/40 hover:text-white transition-colors">
                                         <X class="size-4" />
                                     </button>
@@ -197,28 +197,28 @@ const infoMessage = ref($page.props.flash?.info || null);
                                     </Badge>
                                     <Badge variant="outline" class="px-3 py-1 font-medium gap-1 text-primary bg-primary/5">
                                         <Zap class="size-3.5" />
-                                        {{ $page.props.settings.hero_badge || 'Premium Service' }}
+                                        {{ $page.props.settings.hero_badge || 'Service Premium' }}
                                     </Badge>
                                 </div>
 
                                 <h1 class="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-7xl">
-                                    {{ $page.props.settings.hero_title || 'Experience Premium Mobility' }}
+                                    {{ $page.props.settings.hero_title || 'Vivez la Mobilité Premium' }}
                                 </h1>
 
                                 <p class="max-w-xl text-lg text-muted-foreground leading-relaxed">
-                                    {{ $page.props.settings.hero_subtitle || 'Elevate your journey with our exclusive collection of luxury and performance vehicles. Exceptional service, unconditionally guaranteed.' }}
+                                    {{ $page.props.settings.hero_subtitle || 'Élevez votre voyage avec notre collection exclusive de véhicules de luxe et de performance. Un service exceptionnel, garanti sans condition.' }}
                                 </p>
                             </div>
 
                             <div class="flex flex-col sm:flex-row gap-4 pt-4">
                                 <Button as-child size="lg" class="h-14 px-8 text-base font-semibold group w-full sm:w-auto">
                                     <a :href="fleet.url()">
-                                        Browse Fleet
+                                        Parcourir la Flotte
                                         <ArrowRight class="ml-2 size-5 transition-transform group-hover:translate-x-1" />
                                     </a>
                                 </Button>
                                 <Button as-child variant="outline" size="lg" class="h-14 px-8 text-base font-semibold w-full sm:w-auto hover:bg-muted">
-                                    <a :href="about.url()">Our Story</a>
+                                    <a :href="about.url()">Notre Histoire</a>
                                 </Button>
                             </div>
 
@@ -226,11 +226,11 @@ const infoMessage = ref($page.props.flash?.info || null);
                             <div class="grid grid-cols-3 gap-8 pt-8 mt-8 border-t border-border/60">
                                 <div>
                                     <div class="text-3xl font-bold tracking-tight text-primary">1000+</div>
-                                    <div class="mt-1 text-sm font-medium text-muted-foreground">Happy Clients</div>
+                                    <div class="mt-1 text-sm font-medium text-muted-foreground">Clients Satisfaits</div>
                                 </div>
                                 <div>
                                     <div class="text-3xl font-bold tracking-tight text-primary">150+</div>
-                                    <div class="mt-1 text-sm font-medium text-muted-foreground">Premium Cars</div>
+                                    <div class="mt-1 text-sm font-medium text-muted-foreground">Voitures Premium</div>
                                 </div>
                                 <div>
                                     <div class="text-3xl font-bold tracking-tight text-primary">24/7</div>
@@ -244,7 +244,7 @@ const infoMessage = ref($page.props.flash?.info || null);
                             <div class="absolute inset-0 bg-primary/5 rounded-full blur-3xl w-[120%] h-[120%] -ml-[10%] -mt-[10%] -z-10"></div>
                             <img
                                 src="/images/hero_image.png"
-                                alt="Premium Car Garage"
+                                alt="Garage de Voitures Premium"
                                 class="w-full max-w-xl drop-shadow-2xl hover:-translate-y-2 transition-transform duration-700 ease-out"
                             />
                         </div>
@@ -257,13 +257,13 @@ const infoMessage = ref($page.props.flash?.info || null);
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="mb-16 text-center space-y-4">
                         <Badge variant="outline" class="bg-background text-primary font-medium tracking-wide">
-                            Our Collection
+                            Notre Collection
                         </Badge>
                         <h2 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                            Discover Our Elite Fleet
+                            Découvrez Notre Flotte d'Élite
                         </h2>
                         <p class="mx-auto max-w-2xl text-lg text-muted-foreground">
-                            Each vehicle in our collection is meticulously maintained and equipped with premium features to ensure your journey is exceptional.
+                            Chaque véhicule de notre collection est méticuleusement entretenu et équipé de fonctionnalités premium pour garantir que votre voyage soit exceptionnel.
                         </p>
                     </div>
 
@@ -279,7 +279,7 @@ const infoMessage = ref($page.props.flash?.info || null);
                         <Button as-child size="lg" class="h-12 px-8 font-semibold">
                             <a :href="fleet.url()">
                                 <CarIcon class="mr-2 size-5" />
-                                View Complete Fleet
+                                Voir Toute la Flotte
                             </a>
                         </Button>
                     </div>
@@ -291,10 +291,10 @@ const infoMessage = ref($page.props.flash?.info || null);
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="mb-16 text-center space-y-4">
                         <h2 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                            Why Choose RealRent?
+                            Pourquoi Choisir RealRent ?
                         </h2>
                         <p class="mx-auto max-w-2xl text-lg text-muted-foreground">
-                            We're committed to providing an unparalleled car rental experience with premium service at every touchpoint.
+                            Nous nous engageons à offrir une expérience de location de voiture inégalée avec un service premium à chaque point de contact.
                         </p>
                     </div>
 
@@ -304,11 +304,11 @@ const infoMessage = ref($page.props.flash?.info || null);
                                 <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
                                     <Shield class="size-6" />
                                 </div>
-                                <CardTitle>Premium Quality</CardTitle>
+                                <CardTitle>Qualité Premium</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p class="text-muted-foreground leading-relaxed">
-                                    Every vehicle undergoes comprehensive inspection and maintenance to guarantee your safety, comfort, and peace of mind.
+                                    Chaque véhicule subit une inspection et un entretien complets pour garantir votre sécurité, votre confort et votre tranquillité d'esprit.
                                 </p>
                             </CardContent>
                         </Card>
@@ -318,11 +318,11 @@ const infoMessage = ref($page.props.flash?.info || null);
                                 <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
                                     <Clock class="size-6" />
                                 </div>
-                                <CardTitle>24/7 Support</CardTitle>
+                                <CardTitle>Support 24/7</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p class="text-muted-foreground leading-relaxed">
-                                    Our dedicated support team is available around the clock to assist you with any questions or concerns during your rental.
+                                    Notre équipe de support dédiée est disponible 24 heures sur 24 pour vous aider avec toutes vos questions ou préoccupations pendant votre location.
                                 </p>
                             </CardContent>
                         </Card>
@@ -332,11 +332,11 @@ const infoMessage = ref($page.props.flash?.info || null);
                                 <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
                                     <DollarSign class="size-6" />
                                 </div>
-                                <CardTitle>Best Value</CardTitle>
+                                <CardTitle>Meilleure Valeur</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p class="text-muted-foreground leading-relaxed">
-                                    Transparent pricing with no hidden fees. Get premium car rental services at competitive rates with exceptional value.
+                                    Tarification transparente sans frais cachés. Obtenez des services de location de voitures premium à des tarifs compétitifs avec une valeur exceptionnelle.
                                 </p>
                             </CardContent>
                         </Card>

@@ -118,6 +118,17 @@ const total = computed(() => {
     return subtotal.value + tax.value;
 });
 
+const depositPercentage = computed(() => $page.props.settings?.booking_deposit_percentage || 20);
+const securityDeposit = computed(() => $page.props.settings?.security_deposit_amount || 0);
+
+const depositAmount = computed(() => {
+    return total.value * (depositPercentage.value / 100);
+});
+
+const remainingAmount = computed(() => {
+    return total.value - depositAmount.value;
+});
+
 const canSubmit = computed(() => {
     return (
         form.start_date &&
@@ -137,13 +148,13 @@ const submitBooking = () => {
     }
 
     if (user.role === 'admin') {
-        roleErrorMessage.value = "You cannot book as an admin.";
+        roleErrorMessage.value = "Vous ne pouvez pas réserver en tant qu'administrateur.";
         showRoleError.value = true;
         return;
     }
 
     if (user.role !== 'client') {
-        roleErrorMessage.value = "Your role does not allow booking.";
+        roleErrorMessage.value = "Votre rôle ne permet pas la réservation.";
         showRoleError.value = true;
         return;
     }
@@ -202,7 +213,7 @@ const images = computed(() => {
                         <a
                             href="/fleet"
                             class="font-black uppercase tracking-widest transition-colors duration-200 hover:text-primary"
-                            >Fleet</a
+                            >Flotte</a
                         >
                         <ChevronRight class="size-4 text-gray-400" />
                         <span class="font-medium text-gray-900"
@@ -219,10 +230,10 @@ const images = computed(() => {
                             <h1
                                 class="text-4xl leading-tight font-black tracking-tight text-slate-900"
                             >
-                                Book <span class="text-primary">{{ car.make }}</span> {{ car.model }}
+                                Réserver <span class="text-primary">{{ car.make }}</span> {{ car.model }}
                             </h1>
                             <p class="mt-1 text-base font-bold text-slate-400 uppercase tracking-widest">
-                                Complete your reservation in just a few steps
+                                Complétez votre réservation en quelques étapes
                             </p>
                         </div>
                     </div>
@@ -240,7 +251,7 @@ const images = computed(() => {
                             >
                                 <img
                                     :src="images[0]?.url"
-                                    alt="car image"
+                                    alt="image de voiture"
                                     class="h-full w-full object-cover transition-all duration-500"
                                 />
                             </div>
@@ -276,7 +287,7 @@ const images = computed(() => {
                                         <div class="mt-6 flex flex-wrap gap-4">
                                             <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-2.5 border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-md">
                                                 <Users class="size-4 text-primary" />
-                                                <span class="text-xs font-black text-slate-700 uppercase tracking-widest">{{ car.seats }} Seats</span>
+                                                <span class="text-xs font-black text-slate-700 uppercase tracking-widest">{{ car.seats }} Sièges</span>
                                             </div>
                                             <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-2.5 border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-md">
                                                 <Cog class="size-4 text-primary" />
@@ -288,7 +299,7 @@ const images = computed(() => {
                                             </div>
                                             <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-2.5 border border-slate-100 shadow-sm transition-all hover:bg-white hover:shadow-md">
                                                 <span class="size-4 rounded-full border-2 border-slate-200/50 shadow-sm" :style="{ backgroundColor: getCarColorHex(car.color) }"></span>
-                                                <span class="text-xs font-black text-slate-700 uppercase tracking-widest capitalize">{{ car.color }} Paint</span>
+                                                <span class="text-xs font-black text-slate-700 uppercase tracking-widest capitalize">Couleur {{ car.color }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -301,7 +312,7 @@ const images = computed(() => {
                                             >
                                             <span
                                                 class="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1"
-                                                >PER DAY</span
+                                                >PAR JOUR</span
                                             >
                                         </div>
                                     </div>
@@ -325,9 +336,9 @@ const images = computed(() => {
                                 </div>
                                 <div>
                                     <h3 class="text-2xl font-black tracking-tight text-slate-900">
-                                        Booking Details
+                                        Détails de la réservation
                                     </h3>
-                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Configure your journey</p>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Configurez votre voyage</p>
                                 </div>
                             </div>
 
@@ -338,13 +349,13 @@ const images = computed(() => {
                                         class="flex items-center text-sm font-black uppercase tracking-widest text-slate-900 mb-6"
                                     >
                                         <Clock class="mr-3 h-4 w-4 text-primary" />
-                                        Rental Dates
+                                        Dates de location
                                     </h4>
                                     <div class="grid gap-6 md:grid-cols-2">
                                         <div class="space-y-3">
                                             <Label class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                                                Pickup Date *
-                                                <HelpTooltip content="Select the date your journey begins. Earlier booking ensures better availability." />
+                                                Date de collecte *
+                                                <HelpTooltip content="Sélectionnez la date de début de votre voyage. Une réservation précoce garantit une meilleure disponibilité." />
                                             </Label>
                                             <Input
                                                 v-model="form.start_date"
@@ -359,8 +370,8 @@ const images = computed(() => {
 
                                         <div class="space-y-3">
                                             <Label class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                                                Return Date *
-                                                <HelpTooltip content="Select your return date. Standard daily rates apply per 24-hour period." />
+                                                Date de retour *
+                                                <HelpTooltip content="Sélectionnez votre date de retour. Les tarifs journaliers standard s'appliquent par période de 24 heures." />
                                             </Label>
                                             <Input
                                                 v-model="form.end_date"
@@ -381,17 +392,17 @@ const images = computed(() => {
                                         class="flex items-center text-sm font-black uppercase tracking-widest text-slate-900 mt-12 mb-6"
                                     >
                                         <MapPin class="mr-3 h-4 w-4 text-primary" />
-                                        Pickup & Return
+                                        Collecte & Retour
                                     </h4>
                                     <div class="grid gap-6 md:grid-cols-2">
                                         <div class="space-y-3">
                                             <Label class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                                                Pickup Location *
-                                                <HelpTooltip content="Choose your collection point. Our VIP meet & greet service is available at all airports." />
+                                                Lieu de collecte *
+                                                <HelpTooltip content="Choisissez votre point de collecte. Notre service VIP est disponible dans tous les aéroports." />
                                             </Label>
                                             <Select v-model="form.pickup_location">
                                                 <SelectTrigger class="h-14 rounded-2xl border-none bg-slate-50 px-6 font-black text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all" :class="{ 'ring-rose-500': form.errors.pickup_location }">
-                                                    <SelectValue placeholder="Select venue" />
+                                                    <SelectValue placeholder="Sélectionner le lieu" />
                                                 </SelectTrigger>
                                                 <SelectContent class="rounded-2xl border-none shadow-2xl ring-1 ring-slate-100 font-bold">
                                                     <SelectItem v-for="location in locations" :key="location.id" :value="location.name" class="py-3 px-4 rounded-xl cursor-pointer">
@@ -404,12 +415,12 @@ const images = computed(() => {
 
                                         <div class="space-y-3">
                                             <Label class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                                                Return Location *
-                                                <HelpTooltip content="Specify where you will return the vehicle. One-way rentals may be available." />
+                                                Lieu de retour *
+                                                <HelpTooltip content="Précisez où vous rendrez le véhicule. Des locations en aller simple peuvent être disponibles." />
                                             </Label>
                                             <Select v-model="form.return_location">
                                                 <SelectTrigger class="h-14 rounded-2xl border-none bg-slate-50 px-6 font-black text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all" :class="{ 'ring-rose-500': form.errors.return_location }">
-                                                    <SelectValue placeholder="Select venue" />
+                                                    <SelectValue placeholder="Sélectionner le lieu" />
                                                 </SelectTrigger>
                                                 <SelectContent class="rounded-2xl border-none shadow-2xl ring-1 ring-slate-100 font-bold">
                                                     <SelectItem v-for="location in locations" :key="location.id" :value="location.name" class="py-3 px-4 rounded-xl cursor-pointer">
@@ -437,7 +448,7 @@ const images = computed(() => {
                                     <ReceiptText class="h-6 w-6" />
                                 </div>
                                 <h3 class="text-2xl font-black tracking-tight text-slate-900">
-                                    Summary
+                                    Résumé
                                 </h3>
                             </div>
 
@@ -449,12 +460,12 @@ const images = computed(() => {
                                         class="flex items-center justify-between"
                                     >
                                         <span class="text-xs font-black uppercase tracking-widest text-slate-400"
-                                            >Period</span
+                                            >Période</span
                                         >
                                         <span class="text-sm font-black text-slate-900">
                                             {{
                                                 rentalDays > 0
-                                                    ? `${rentalDays} day${rentalDays > 1 ? 's' : ''}`
+                                                    ? `${rentalDays} jour${rentalDays > 1 ? 's' : ''}`
                                                     : '—'
                                             }}
                                         </span>
@@ -464,7 +475,7 @@ const images = computed(() => {
                                         class="flex items-center justify-between"
                                     >
                                         <span class="text-xs font-black uppercase tracking-widest text-slate-400"
-                                            >Daily</span
+                                            >Journalier</span
                                         >
                                         <span class="text-sm font-black text-slate-900"
                                             >{{ $page.props.currency.symbol }}{{ car.price_per_day }}</span
@@ -472,57 +483,40 @@ const images = computed(() => {
                                     </div>
                                 </div>
  
+                                <!-- Detailed Price Breakdown -->
                                 <div class="space-y-4 px-2">
-                                    <div
-                                        class="flex items-center justify-between py-2"
-                                    >
-                                        <span class="text-sm font-bold text-slate-500"
-                                            >Subtotal</span
-                                        >
-                                        <span
-                                            class="text-base font-black text-slate-900"
-                                        >
-                                            {{ $page.props.currency.symbol }}{{
-                                                rentalDays > 0
-                                                    ? subtotal.toFixed(2)
-                                                    : '0.00'
-                                            }}
-                                        </span>
+                                    <div class="flex items-center justify-between py-1">
+                                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Sélection Totale</span>
+                                        <span class="text-sm font-black text-slate-900">{{ $page.props.currency.symbol }}{{ rentalDays > 0 ? total.toFixed(2) : '0.00' }}</span>
                                     </div>
- 
-                                    <div
-                                        class="flex items-center justify-between py-2"
-                                    >
-                                        <span class="text-sm font-bold text-slate-500"
-                                            >Tax ({{ (taxRate * 100).toFixed(0) }}%)</span
-                                        >
-                                        <span
-                                            class="text-base font-black text-slate-900"
-                                        >
-                                            {{ $page.props.currency.symbol }}{{
-                                                rentalDays > 0
-                                                    ? tax.toFixed(2)
-                                                    : '0.00'
-                                            }}
-                                        </span>
-                                    </div>
- 
-                                    <div
-                                        class="border-t-2 border-slate-50 pt-6"
-                                    >
-                                        <div
-                                            class="flex items-end justify-between"
-                                        >
+                                    
+                                    <!-- Hero Payment Box -->
+                                    <div class="bg-primary/5 p-6 rounded-[2rem] border border-primary/20 space-y-4">
+                                        <div class="flex items-center justify-between">
                                             <div class="space-y-1">
-                                                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Total Price</span>
-                                                <p class="text-4xl font-black text-slate-900">
-                                                    {{ $page.props.currency.symbol }}{{
-                                                        rentalDays > 0
-                                                            ? Math.floor(total)
-                                                            : '0'
-                                                    }}<span class="text-lg opacity-30">.{{ (rentalDays > 0 ? total.toFixed(2).split('.')[1] : '00') }}</span>
+                                                <span class="text-[10px] font-black uppercase tracking-widest text-primary">Acompte à payer maintenant</span>
+                                                <p class="text-4xl font-black text-primary tracking-tighter">
+                                                    {{ $page.props.currency.symbol }}{{ rentalDays > 0 ? depositAmount.toFixed(2) : '0.00' }}
                                                 </p>
                                             </div>
+                                            <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                                                <CreditCard class="size-5 text-primary" />
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="pt-4 border-t border-primary/10 flex justify-between items-center">
+                                            <span class="text-[10px] font-black uppercase tracking-widest text-primary/60">Payer en agence à la collecte</span>
+                                            <span class="font-black text-primary">{{ $page.props.currency.symbol }}{{ rentalDays > 0 ? remainingAmount.toFixed(2) : '0.00' }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Security Deposit (Informational) -->
+                                    <div v-if="securityDeposit > 0" class="bg-amber-50 p-4 rounded-2xl border border-amber-200">
+                                        <div class="flex items-start gap-3">
+                                            <ShieldCheck class="size-4 text-amber-600 mt-0.5" />
+                                            <p class="text-[9px] font-bold text-amber-800 leading-relaxed uppercase tracking-wider">
+                                                Un dépôt de garantie remboursable de {{ $page.props.currency.symbol }}{{ securityDeposit.toFixed(2) }} est requis lors de la collecte.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -539,21 +533,21 @@ const images = computed(() => {
                                     class="flex items-center justify-center gap-3"
                                 >
                                     <LoaderCircle class="size-4 animate-spin" />
-                                    Confirming...
+                                    Confirmation...
                                 </span>
                                 <span
                                     v-else-if="!$page.props.auth.user"
                                     class="flex items-center justify-center gap-3"
                                 >
                                     <LogIn class="size-4" />
-                                    Sign In to Book
+                                    Se connecter pour réserver
                                 </span>
                                 <span
                                     v-else
                                     class="flex items-center justify-center gap-3"
                                 >
                                     <CheckCircle class="size-4" />
-                                    Book This Car
+                                    Réserver ce véhicule
                                 </span>
                             </Button>
                         </div>
@@ -576,12 +570,12 @@ const images = computed(() => {
                                 <ShieldCheck class="size-6 text-white" />
                             </div>
                             <div>
-                                <DialogTitle class="text-xl font-black tracking-tight text-white uppercase">Critical Rental Terms</DialogTitle>
-                                <DialogDescription class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Mandatory acknowledgment</DialogDescription>
+                                <DialogTitle class="text-xl font-black tracking-tight text-white uppercase">Conditions de location critiques</DialogTitle>
+                                <DialogDescription class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Reconnaissance obligatoire</DialogDescription>
                             </div>
                         </div>
                         <p class="text-sm font-bold text-slate-300 leading-relaxed max-w-md">
-                            To ensure a smooth pickup process, please carefully review and confirm each of the following operational requirements.
+                            Pour garantir un processus de collecte fluide, veuillez revoir et confirmer chacune des exigences opérationnelles suivantes.
                         </p>
                     </div>
                 </div>
@@ -597,8 +591,8 @@ const images = computed(() => {
                             <Clock class="size-5" />
                         </div>
                         <div class="flex-1">
-                            <h4 class="text-sm font-black text-slate-900">Minimum Experience Verified</h4>
-                            <p class="text-xs font-bold text-slate-500 mt-1.5 leading-relaxed">I confirm that I possess a valid driver's license with at least <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-black">{{ $page.props.settings.min_driving_experience }} years</span> of driving experience.</p>
+                            <h4 class="text-sm font-black text-slate-900">Expérience minimale vérifiée</h4>
+                            <p class="text-xs font-bold text-slate-500 mt-1.5 leading-relaxed">Je confirme posséder un permis de conduire valide avec au moins <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-black">{{ $page.props.settings.min_driving_experience }} ans</span> d'expérience de conduite.</p>
                         </div>
                         <div class="pt-1">
                             <input type="checkbox" v-model="acceptExperience" class="h-6 w-6 rounded-lg border-2 border-slate-300 text-primary focus:ring-primary focus:ring-offset-0 transition-colors" />
@@ -613,17 +607,17 @@ const images = computed(() => {
                             <IdCard class="size-5" />
                         </div>
                         <div class="flex-1">
-                            <h4 class="text-sm font-black text-slate-900">Required Documents Readiness</h4>
-                            <p class="text-xs font-bold text-slate-500 mt-1.5 leading-relaxed">I understand I must physically present the following upon arrival, or my booking will be denied without refund:</p>
+                            <h4 class="text-sm font-black text-slate-900">Préparation des documents requis</h4>
+                            <p class="text-xs font-bold text-slate-500 mt-1.5 leading-relaxed">Je comprends que je dois présenter physiquement les documents suivants à mon arrivée, faute de quoi ma réservation sera refusée sans remboursement :</p>
                             <ul class="mt-3 space-y-2">
                                 <li class="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-2">
-                                    <div class="size-1.5 rounded-full bg-violet-400"></div> National ID or Passport
+                                    <div class="size-1.5 rounded-full bg-violet-400"></div> Pièce d'identité nationale ou Passeport
                                 </li>
                                 <li class="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-2">
-                                    <div class="size-1.5 rounded-full bg-violet-400"></div> Original Driver's License
+                                    <div class="size-1.5 rounded-full bg-violet-400"></div> Permis de conduire original
                                 </li>
                                 <li class="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-2">
-                                    <div class="size-1.5 rounded-full bg-violet-400"></div> Credit Card for Security Deposit
+                                    <div class="size-1.5 rounded-full bg-violet-400"></div> Carte de crédit pour le dépôt de garantie
                                 </li>
                             </ul>
                         </div>
@@ -640,8 +634,8 @@ const images = computed(() => {
                             <MapPin class="size-5" />
                         </div>
                         <div class="flex-1">
-                            <h4 class="text-sm font-black text-slate-900">Pickup Location Awareness</h4>
-                            <p class="text-xs font-bold text-slate-500 mt-1.5 leading-relaxed">I confirm that I am responsible for arriving at the selected pickup location: <span class="bg-sky-50 text-sky-600 px-1.5 py-0.5 rounded-md font-black">{{ form.pickup_location || 'the agency' }}</span> at the scheduled time.</p>
+                            <h4 class="text-sm font-black text-slate-900">Connaissance du lieu de collecte</h4>
+                            <p class="text-xs font-bold text-slate-500 mt-1.5 leading-relaxed">Je confirme être responsable de mon arrivée au lieu de collecte sélectionné : <span class="bg-sky-50 text-sky-600 px-1.5 py-0.5 rounded-md font-black">{{ form.pickup_location || 'l\'agence' }}</span> à l'heure prévue.</p>
                         </div>
                         <div class="pt-1">
                             <input type="checkbox" v-model="acceptLocation" class="h-6 w-6 rounded-lg border-2 border-slate-300 text-sky-500 focus:ring-sky-500 focus:ring-offset-0 transition-colors" />
@@ -656,9 +650,9 @@ const images = computed(() => {
                             <FileCheck class="size-5" />
                         </div>
                         <div class="flex-1 min-w-0">
-                            <h4 class="text-sm font-black text-slate-900">General Conditions & Liability</h4>
+                            <h4 class="text-sm font-black text-slate-900">Conditions générales et responsabilité</h4>
                             <div class="mt-2 text-xs font-bold text-slate-500 leading-relaxed whitespace-pre-wrap bg-slate-50 p-3 rounded-xl border border-slate-100 italic">"{{ $page.props.settings.rental_terms }}"</div>
-                            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-3">I accept these terms</p>
+                            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-3">J'accepte ces conditions</p>
                         </div>
                         <div class="pt-1 shrink-0">
                             <input type="checkbox" v-model="acceptTerms" class="h-6 w-6 rounded-lg border-2 border-slate-300 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0 transition-colors" />
@@ -670,7 +664,7 @@ const images = computed(() => {
                 <!-- Footer (Sticky) -->
                 <div class="px-6 py-5 bg-white border-t border-slate-100 flex-shrink-0 flex gap-4">
                     <Button variant="ghost" @click="showPolicyModal = false" class="flex-1 h-14 rounded-xl font-black uppercase tracking-widest text-xs text-slate-400 hover:bg-slate-50 hover:text-slate-600 shrink-0">
-                        Cancel
+                        Annuler
                     </Button>
                     <Button 
                         @click="confirmBookingAfterPolicy" 
@@ -679,13 +673,13 @@ const images = computed(() => {
                     >
                         <!-- Animated background for disabled state -->
                         <div v-if="!policyAccepted" class="absolute inset-0 bg-slate-800 flex items-center justify-center">
-                            <span class="text-[10px]">Accept all terms to continue</span>
+                            <span class="text-[10px]">Accepter toutes les conditions pour continuer</span>
                         </div>
                         
                         <div class="flex items-center justify-center" :class="{'opacity-0': !policyAccepted}">
                             <LoaderCircle v-if="form.processing" class="size-4 animate-spin mr-2" />
                             <ShieldCheck v-else class="size-4 mr-2 group-hover:scale-110 transition-transform" />
-                            {{ form.processing ? 'Reserving...' : 'Confirm & Request' }}
+                            {{ form.processing ? 'Réservation...' : 'Confirmer & Demander' }}
                         </div>
                     </Button>
                 </div>
@@ -698,7 +692,7 @@ const images = computed(() => {
                 <DialogHeader>
                     <DialogTitle class="flex items-center gap-3 text-xl font-black text-rose-600">
                         <div class="p-2 rounded-xl bg-rose-50"><TriangleAlert class="size-5" /></div>
-                        Booking Restricted
+                        Réservation restreinte
                     </DialogTitle>
                     <DialogDescription class="text-sm font-bold text-slate-500 pt-4 leading-relaxed">
                         {{ roleErrorMessage }}
@@ -706,7 +700,7 @@ const images = computed(() => {
                 </DialogHeader>
                 <DialogFooter class="sm:justify-start pt-6">
                     <Button type="button" variant="secondary" @click="showRoleError = false" class="h-12 rounded-2xl font-black uppercase tracking-widest text-xs bg-slate-100 hover:bg-slate-200 px-8">
-                        I Understand
+                        Je comprends
                     </Button>
                 </DialogFooter>
             </DialogContent>

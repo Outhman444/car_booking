@@ -7,7 +7,7 @@ import StatusBadge from '@/components/StatusBadge.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
-import { show, index, quickUpdate, markAsPaid } from '@/routes/admin/reservations';
+import { show, index, quickUpdate } from '@/routes/admin/reservations';
 import {
   Table,
   TableBody,
@@ -96,14 +96,6 @@ function doQuickUpdate(id: number, status: string) {
         });
     }
 }
-
-function doMarkAsPaid(id: number) {
-    if (confirm('Mark this reservation as paid?')) {
-        router.post(markAsPaid(id).url, {}, {
-            preserveScroll: true
-        });
-    }
-}
 </script>
 
 <template>
@@ -113,8 +105,8 @@ function doMarkAsPaid(id: number) {
         <main class="w-full p-4 sm:p-8 space-y-8 sm:space-y-10 bg-background min-h-screen">
             <div class="mx-auto max-w-[1400px] flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
                 <Heading 
-                    title="Reservations & Bookings" 
-                    description="Monitor all rental activity, process payments, and manage vehicle delivery."
+                    title="Réservations & Locations" 
+                    description="Surveillez toute l'activité de location, gérez les paiements et la livraison des véhicules."
                     size="lg"
                 />
             </div>
@@ -127,12 +119,12 @@ function doMarkAsPaid(id: number) {
                             <Search class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 group-focus-within:text-primary transition-colors" />
                             <Input
                                 v-model="search"
-                                placeholder="Search #, client, car, plate..."
+                                placeholder="Rechercher #, client, voiture, plaque..."
                                 class="pl-12 h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:text-slate-400 w-full shadow-inner"
                                 @keyup.enter="doSearch"
                             />
                         </div>
-                        <Button @click="doSearch" class="h-14 px-8 rounded-2xl bg-slate-900 text-sm font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all border-none">Search</Button>
+                        <Button @click="doSearch" class="h-14 px-8 rounded-2xl bg-slate-900 text-sm font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all border-none">Rechercher</Button>
                     </div>
 
                     <!-- Status Filter -->
@@ -152,7 +144,7 @@ function doMarkAsPaid(id: number) {
                                     'text-slate-400 hover:text-slate-600': statusFilter !== 'all'
                                 }"
                             >
-                                All ({{ totalCount }})
+                                Tout ({{ totalCount }})
                             </div>
                         </label>
 
@@ -192,24 +184,24 @@ function doMarkAsPaid(id: number) {
                                     <TableHead class="h-16 px-4 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[140px]">
                                         <div class="flex items-center gap-2">
                                             <Fingerprint class="size-3.5" /> ID
-                                            <HelpTooltip content="The unique alphanumeric code for this reservation. Use this for all internal and client references." />
+                                            <HelpTooltip content="Le code alphanumérique unique pour cette réservation. Utilisez-le pour toutes les références internes et clients." />
                                         </div>
                                     </TableHead>
                                     <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[160px]">
                                         <div class="flex items-center gap-2">
                                             <User class="size-3.5" /> Client
-                                            <HelpTooltip content="Customer identification details. Click on any row to view full profile and contact logs." />
+                                            <HelpTooltip content="Détails d'identification du client. Cliquez sur une ligne pour voir le profil complet et les journaux de contact." />
                                         </div>
                                     </TableHead>
                                     <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[160px]">
-                                        <div class="flex items-center gap-2"><Car class="size-3.5" /> Vehicle</div>
+                                        <div class="flex items-center gap-2"><Car class="size-3.5" /> Véhicule</div>
                                     </TableHead>
                                     <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[100px]">Total</TableHead>
-                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[100px]">Status</TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[100px]">Statut</TableHead>
                                     <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[120px]">
                                         <div class="flex items-center gap-2">
-                                            Payment
-                                            <HelpTooltip content="Track transaction states. 'COD' means payment will be collected at the agency during vehicle delivery." />
+                                            Paiement
+                                            <HelpTooltip content="Suivez les états des transactions. 'ESP' signifie que le paiement sera perçu à l'agence lors de la livraison du véhicule." />
                                         </div>
                                     </TableHead>
                                     <TableHead class="h-16 px-4 w-[100px] text-right">Actions</TableHead>
@@ -269,7 +261,7 @@ function doMarkAsPaid(id: number) {
                                                 ? 'bg-emerald-50 text-emerald-600 ring-emerald-200' 
                                                 : (res.status === 'confirmed' ? 'bg-amber-50 text-amber-600 ring-amber-200' : 'bg-slate-50 text-slate-500 ring-slate-200')"
                                         >
-                                            {{ res.is_paid ? 'Paid' : (res.status === 'confirmed' ? 'COD' : 'Pending') }}
+                                            {{ res.is_paid ? 'Payé' : (res.status === 'confirmed' ? 'ESP' : 'En attente') }}
                                         </Badge>
                                     </TableCell>
                                     <TableCell @click.stop class="px-4 text-right">
@@ -281,7 +273,7 @@ function doMarkAsPaid(id: number) {
                                                 class="h-8 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all border-none"
                                                 @click="doQuickUpdate(res.id, 'confirmed')"
                                             >
-                                                Confirm
+                                                Confirmer
                                             </Button>
                                             <Button 
                                                 v-if="res.status === 'confirmed'"
@@ -290,7 +282,7 @@ function doMarkAsPaid(id: number) {
                                                 class="h-8 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all border-none"
                                                 @click="doQuickUpdate(res.id, 'active')"
                                             >
-                                                Start
+                                                Démarrer
                                             </Button>
                                             <Button 
                                                 v-if="res.status === 'active'"
@@ -299,7 +291,7 @@ function doMarkAsPaid(id: number) {
                                                 class="h-8 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all border-none"
                                                 @click="doQuickUpdate(res.id, 'completed')"
                                             >
-                                                End
+                                                Terminer
                                             </Button>
                                             <Button
                                                 v-if="['pending', 'confirmed'].includes(res.status)"
@@ -308,7 +300,7 @@ function doMarkAsPaid(id: number) {
                                                 class="h-8 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all border-none"
                                                 @click="doQuickUpdate(res.id, 'cancelled')"
                                             >
-                                                Cancel
+                                                Annuler
                                             </Button>
                                             <Button variant="ghost" size="icon" class="h-8 w-8 rounded-lg hover:bg-slate-100 transition-all border-none">
                                                 <ChevronRight class="size-4 text-slate-400 group-hover:text-primary transition-colors" />
@@ -322,8 +314,8 @@ function doMarkAsPaid(id: number) {
                                             <div class="p-6 rounded-full bg-slate-50 ring-1 ring-slate-100">
                                                 <Search class="size-8 text-slate-300" />
                                             </div>
-                                            <div class="text-lg font-black text-slate-900">No Reservations Found</div>
-                                            <p class="text-sm font-bold text-slate-400">Try adjusting your search or filters.</p>
+                                            <div class="text-lg font-black text-slate-900">Aucune réservation trouvée</div>
+                                            <p class="text-sm font-bold text-slate-400">Essayez d'ajuster votre recherche ou vos filtres.</p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
