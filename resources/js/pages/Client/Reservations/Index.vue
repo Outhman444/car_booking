@@ -3,7 +3,6 @@ import ClientLayout from '@/layouts/ClientLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { show } from '@/routes/client/reservations';
 import { computed } from 'vue';
-import { computed } from 'vue';
 import {
     Hash,
     Car,

@@ -33,6 +33,13 @@ class PaymentController extends Controller
             abort(403);
         }
 
+        // Check if pending reservation has expired
+        if ($reservation->status === \App\Enums\ReservationStatus::PENDING && $reservation->pending_expires_at <= now()) {
+            $stateService = app(ReservationStateService::class);
+            $stateService->transition($reservation, \App\Enums\ReservationStatus::CANCELLED, 'Session de paiement expirée.');
+            return redirect()->route('fleet')->with('error', 'Votre session de réservation a expiré. Veuillez recommencer.');
+        }
+
         // Check if already paid
         $existingPayment = Payment::where('reservation_id', $reservation->id)
             ->where('status', PaymentStatus::COMPLETED)
@@ -63,6 +70,7 @@ class PaymentController extends Controller
                 'booking_deposit_percentage' => Setting::getValue('booking_deposit_percentage', 20),
                 'security_deposit_amount' => Setting::getValue('security_deposit_amount', 0),
                 'rental_terms' => Setting::getValue('rental_terms', ''),
+                'reservation_hold_time_minutes' => Setting::getValue('reservation_hold_time_minutes', 60),
             ],
         ]);
     }

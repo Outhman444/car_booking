@@ -162,11 +162,13 @@ class Reservation extends Model
      */
     public function getPendingExpiresAtAttribute($value)
     {
-        if ($value) return $value;
+        if (!$value) {
+            $holdMinutes = (int) \App\Models\Setting::getValue('reservation_hold_time_minutes', 60);
+            return $this->created_at ? $this->created_at->addMinutes($holdMinutes)->toIso8601ZuluString() : null;
+        }
 
-        // Fallback for old reservations: created_at + hold_minutes
-        $holdMinutes = (int) \App\Models\Setting::getValue('reservation_hold_time_minutes', 60);
-        return $this->created_at ? $this->created_at->addMinutes($holdMinutes) : null;
+        // Convert to UTC/Zulu for frontend consistency
+        return \Carbon\Carbon::parse($value)->toIso8601ZuluString();
     }
 
     /**

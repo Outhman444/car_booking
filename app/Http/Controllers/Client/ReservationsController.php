@@ -7,6 +7,7 @@ use App\Enums\ReservationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Models\Setting;
+use App\Services\ReservationStateService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -14,8 +15,19 @@ class ReservationsController extends Controller
 {
     public function index(Request $request)
     {
+        $stateService = app(ReservationStateService::class);
+        $stateService->expirePendingReservations();
 
         $reservations = Reservation::where('user_id', auth()->user()->id)
+            ->where(function($query) {
+                // Strictly exclude PENDING reservations that have expired
+                // Only show active PENDING reservations
+                $query->where('status', '!=', ReservationStatus::PENDING)
+                      ->orWhere(function($q) {
+                          $q->where('status', ReservationStatus::PENDING)
+                            ->where('pending_expires_at', '>', now());
+                      });
+            })
             ->with('car')
             ->orderByDesc('created_at')
             ->paginate(10)
@@ -28,9 +40,18 @@ class ReservationsController extends Controller
 
     public function show($id)
     {
+        $stateService = app(ReservationStateService::class);
+        $stateService->expirePendingReservations();
+
         $reservation = Reservation::where('id', $id)
             ->where('user_id', auth()->id())
             ->firstOrFail();
+
+        // Redirect if pending and expired
+        if ($reservation->status === ReservationStatus::PENDING && $reservation->pending_expires_at <= now()) {
+            return redirect()->route('fleet')->with('error', 'Votre session de réservation a expiré. Veuillez recommencer.');
+        }
+
         $reservation->load(['user', 'car', 'payments']);
 
         $hasPayment = $reservation->payments()

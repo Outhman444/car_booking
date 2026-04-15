@@ -44,9 +44,19 @@ class ReservationStateService
 
     /**
      * Check if a reservation transition is valid.
+     * Automatically handles expiration if check is for PENDING state.
      */
     public function canTransition(Reservation $reservation, ReservationStatus $newStatus): bool
     {
+        // If it's a pending reservation, check if it should have expired first
+        if ($reservation->status === ReservationStatus::PENDING && $reservation->pending_expires_at <= now()) {
+            // Self-correction: if we're not already trying to cancel it, cancel it now
+            if ($newStatus !== ReservationStatus::CANCELLED) {
+                $this->transition($reservation, ReservationStatus::CANCELLED, 'Payment session expired during transition check.');
+                return false;
+            }
+        }
+
         $currentStatus = $reservation->status->value;
         $allowed = self::RESERVATION_TRANSITIONS[$currentStatus] ?? [];
 
@@ -106,6 +116,12 @@ class ReservationStateService
      */
     public function syncCarStatus(Reservation $reservation): void
     {
+        // First, check if this reservation itself should be expired
+        if ($reservation->status === ReservationStatus::PENDING && $reservation->pending_expires_at <= now()) {
+            $this->transition($reservation, ReservationStatus::CANCELLED, 'Expired during status sync.');
+            return;
+        }
+
         $car = $reservation->car;
         if (!$car) {
             return;

@@ -108,7 +108,7 @@ const destroyCar = () => {
 };
 
 function doQuickUpdate(id: number, status: string) {
-    if (confirm(`Change car status to ${status}?`)) {
+    if (confirm(`Changer le statut du véhicule en ${status} ?`)) {
         router.post(quickUpdate(id).url, { status }, {
             preserveScroll: true
         });
@@ -117,19 +117,19 @@ function doQuickUpdate(id: number, status: string) {
 </script>
 
 <template>
-    <Head title="Cars" />
+    <Head title="Véhicules" />
     <AdminLayout>
         <!-- Main -->
         <main class="w-full p-4 sm:p-8 space-y-8 sm:space-y-10 bg-background min-h-screen">
             <div class="mx-auto max-w-[1400px] flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
                 <Heading 
-                    title="Fleet Management" 
-                    description="Manage your vehicles, track status, and update rental rates."
+                    title="Gestion de la flotte" 
+                    description="Gérez vos véhicules, suivez leur statut et mettez à jour les tarifs de location."
                     size="lg"
                 />
                 <Link :href="create()">
                     <Button class="h-14 px-8 rounded-2xl bg-primary text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all border-none active:scale-[0.98]">
-                        <Car class="mr-2 size-5" /> Add New Vehicle
+                        <Car class="mr-2 size-5" /> Ajouter un nouveau véhicule
                     </Button>
                 </Link>
             </div>
@@ -141,11 +141,11 @@ function doQuickUpdate(id: number, status: string) {
                         <div class="relative flex-1 group">
                             <Search class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 group-focus-within:text-primary transition-colors" />
                             <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10">
-                                <HelpTooltip content="Filter your fleet by manufacturer, model name, or license plate for rapid inventory access." />
+                                <HelpTooltip content="Filtrez votre flotte par constructeur, nom de modèle ou plaque d'immatriculation pour un accès rapide à l'inventaire." />
                             </div>
                             <Input
                               v-model="search"
-                              placeholder="Search make, model, plate..."
+                              placeholder="Rechercher marque, modèle, plaque..."
                               class="pl-12 h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:text-slate-400 w-full"
                               @keyup.enter="doSearch"
                             />
@@ -170,7 +170,7 @@ function doQuickUpdate(id: number, status: string) {
                                     'text-slate-400 hover:text-slate-600': statusFilter !== 'all'
                                 }"
                             >
-                                All ({{ Object.values(statuses).reduce((acc, curr) => acc + curr.count, 0) }})
+                                Tous ({{ Object.values(statuses).reduce((acc, curr) => acc + curr.count, 0) }})
                             </div>
                         </label>
                         
@@ -211,17 +211,17 @@ function doQuickUpdate(id: number, status: string) {
                                         <ImageIcon class="size-4" />
                                     </TableHead>
                                     <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[160px]">
-                                        <div class="flex items-center gap-2"><Car class="size-4" /> Vehicle</div>
+                                        <div class="flex items-center gap-2"><Car class="size-4" /> Véhicule</div>
                                     </TableHead>
                                     <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[110px]">
-                                        <div class="flex items-center gap-2"><Hash class="size-4" /> Plate</div>
+                                        <div class="flex items-center gap-2"><Hash class="size-4" /> Plaque</div>
                                     </TableHead>
-                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[110px]">Rate</TableHead>
-                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[110px]">Status</TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[110px]">Tarif</TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[110px]">Statut</TableHead>
                                     <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[160px]">
                                         <div class="flex items-center gap-2">
-                                            Quick Status
-                                            <HelpTooltip content="Instant availability management. Use these to quickly cycle cars through cleaning or maintenance states." />
+                                            Statut rapide
+                                            <HelpTooltip content="Gestion instantanée de la disponibilité. Utilisez-les pour basculer rapidement les voitures vers les états de nettoyage ou de maintenance." />
                                         </div>
                                     </TableHead>
                                     <TableHead class="h-16 px-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right w-[100px]">Actions</TableHead>

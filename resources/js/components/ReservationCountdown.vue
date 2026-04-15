@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Clock, AlertCircle } from 'lucide-vue-next';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 
 const props = defineProps<{
     expiresAt?: string;
@@ -10,11 +10,19 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['expired']);
+const $page = usePage<any>();
 
 const remainingTime = ref('');
 const isExpired = ref(false);
 const progress = ref(100);
 let timerInterval: any = null;
+
+// Calculate offset between server time and client time
+// This prevents premature expiry when browser timezone differs from server UTC
+const serverTimeStr = $page.props.server_time as string | undefined;
+const serverNowMs = serverTimeStr ? new Date(serverTimeStr).getTime() : 0;
+const clientNowMs = Date.now();
+const timeOffset = serverNowMs ? serverNowMs - clientNowMs : 0;
 
 const calculateTimeLeft = () => {
     const target = props.expiresAt;
@@ -29,11 +37,13 @@ const calculateTimeLeft = () => {
         return;
     }
 
-    const now = new Date().getTime();
+    // Use server-adjusted "now" instead of raw client time
+    const now = Date.now() + timeOffset;
     const difference = expiryTime - now;
     
-    // Calculate progress based on 60m session
-    const totalPotential = 60 * 60 * 1000;
+    // Calculate progress based on configured hold time (fallback to 60m)
+    const holdMinutes = Number($page.props.settings?.reservation_hold_time_minutes) || 60;
+    const totalPotential = holdMinutes * 60 * 1000;
     progress.value = Math.max(0, Math.min(100, (difference / totalPotential) * 100));
 
     if (difference <= 0) {
@@ -42,6 +52,12 @@ const calculateTimeLeft = () => {
         if (!isExpired.value) {
             isExpired.value = true;
             emit('expired');
+            // Auto-redirect to fleet on expiry if in payment context
+            if (props.variant === 'payment') {
+                setTimeout(() => {
+                    window.location.href = '/fleet?error=session_expired';
+                }, 3000);
+            }
         }
         clearInterval(timerInterval);
         return;
@@ -71,9 +87,9 @@ const isUrgent = computed(() => {
 
 <template>
     <transition name="compact-fade">
-        <div v-if="!isExpired && expiresAt && !isPaid" class="relative max-w-xl mx-auto mb-8">
+        <div v-if="expiresAt && !isPaid" class="relative max-w-xl mx-auto mb-8">
             <!-- Compact Pill Style -->
-            <div class="group relative flex items-center gap-4 overflow-hidden rounded-full p-2 pr-6 shadow-lg shadow-slate-200/50 backdrop-blur-md transition-all duration-500 hover:scale-[1.02]"
+            <div v-if="!isExpired" class="group relative flex items-center gap-4 overflow-hidden rounded-full p-2 pr-6 shadow-lg shadow-slate-200/50 backdrop-blur-md transition-all duration-500 hover:scale-[1.02]"
                 :class="isUrgent ? 'bg-rose-600 ring-2 ring-rose-500/20' : 'bg-slate-900 ring-1 ring-white/10'"
             >
                 <!-- Circular Clock Widget (Compact) -->
@@ -147,14 +163,14 @@ const isUrgent = computed(() => {
                     <AlertCircle class="size-8" />
                 </div>
                 <div>
-                    <h3 class="text-sm font-black uppercase tracking-widest text-rose-900">Selection Expired</h3>
+                    <h3 class="text-sm font-black uppercase tracking-widest text-rose-900">Session Expirée</h3>
                     <p class="text-[10px] font-bold text-rose-600/70 uppercase tracking-widest leading-relaxed mt-1">
-                        Please restart your booking to continue.
+                        Votre session de réservation a expiré. Veuillez recommencer pour garantir la disponibilité du véhicule.
                     </p>
                 </div>
                 <Link href="/fleet" class="block">
                     <button class="h-12 w-full rounded-xl bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all">
-                        Return to Fleet
+                        Retour à la Flotte
                     </button>
                 </Link>
             </div>

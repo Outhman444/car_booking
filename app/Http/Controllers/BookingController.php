@@ -31,6 +31,7 @@ class BookingController extends Controller
             'settings' => [
                 'booking_deposit_percentage' => (int) Setting::getValue('booking_deposit_percentage', 20),
                 'security_deposit_amount' => (float) Setting::getValue('security_deposit_amount', 0),
+                'reservation_hold_time_minutes' => (int) Setting::getValue('reservation_hold_time_minutes', 60),
             ],
         ]);
     }
@@ -172,6 +173,7 @@ class BookingController extends Controller
             'settings' => [
                 'booking_deposit_percentage' => Setting::getValue('booking_deposit_percentage', 20),
                 'security_deposit_amount' => Setting::getValue('security_deposit_amount', 0),
+                'reservation_hold_time_minutes' => Setting::getValue('reservation_hold_time_minutes', 60),
             ],
         ]);
     }

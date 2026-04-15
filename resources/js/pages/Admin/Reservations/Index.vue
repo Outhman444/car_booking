@@ -90,7 +90,7 @@ function doSearch() {
 }
 
 function doQuickUpdate(id: number, status: string) {
-    if (confirm(`Change status to ${status}?`)) {
+    if (confirm(`Changer le statut en ${status} ?`)) {
         router.post(quickUpdate(id).url, { status }, {
             preserveScroll: true
         });
@@ -99,14 +99,14 @@ function doQuickUpdate(id: number, status: string) {
 </script>
 
 <template>
-    <Head title="Reservations" />
+    <Head title="Réservations" />
     <AdminLayout>
         <!-- Main -->
         <main class="w-full p-4 sm:p-8 space-y-8 sm:space-y-10 bg-background min-h-screen">
             <div class="mx-auto max-w-[1400px] flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
                 <Heading 
-                    title="Réservations & Locations" 
-                    description="Surveillez toute l'activité de location, gérez les paiements et la livraison des véhicules."
+                    title="Gestion des réservations" 
+                    description="Suivez, gérez et examinez tous les contrats de location et les états de paiement des clients."
                     size="lg"
                 />
             </div>
@@ -117,11 +117,14 @@ function doQuickUpdate(id: number, status: string) {
                     <div class="flex items-center gap-3 w-full xl:max-w-md">
                         <div class="relative flex-1 group">
                             <Search class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10">
+                                <HelpTooltip content="Recherchez par numéro de réservation, nom du client, email ou détails du véhicule pour un filtrage précis des données." />
+                            </div>
                             <Input
-                                v-model="search"
-                                placeholder="Rechercher #, client, voiture, plaque..."
-                                class="pl-12 h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:text-slate-400 w-full shadow-inner"
-                                @keyup.enter="doSearch"
+                              v-model="search"
+                              placeholder="Numéro, client, véhicule..."
+                              class="pl-12 h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:text-slate-400 w-full"
+                              @keyup.enter="doSearch"
                             />
                         </div>
                         <Button @click="doSearch" class="h-14 px-8 rounded-2xl bg-slate-900 text-sm font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all border-none">Rechercher</Button>
@@ -144,7 +147,7 @@ function doQuickUpdate(id: number, status: string) {
                                     'text-slate-400 hover:text-slate-600': statusFilter !== 'all'
                                 }"
                             >
-                                Tout ({{ totalCount }})
+                                Toutes ({{ Object.values(statuses).reduce((acc, curr) => acc + curr.count, 0) }})
                             </div>
                         </label>
 
@@ -181,30 +184,13 @@ function doQuickUpdate(id: number, status: string) {
                         <Table>
                             <TableHeader>
                                 <TableRow class="hover:bg-transparent border-b border-slate-50">
-                                    <TableHead class="h-16 px-4 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[140px]">
-                                        <div class="flex items-center gap-2">
-                                            <Fingerprint class="size-3.5" /> ID
-                                            <HelpTooltip content="Le code alphanumérique unique pour cette réservation. Utilisez-le pour toutes les références internes et clients." />
-                                        </div>
-                                    </TableHead>
-                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[160px]">
-                                        <div class="flex items-center gap-2">
-                                            <User class="size-3.5" /> Client
-                                            <HelpTooltip content="Détails d'identification du client. Cliquez sur une ligne pour voir le profil complet et les journaux de contact." />
-                                        </div>
-                                    </TableHead>
-                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[160px]">
-                                        <div class="flex items-center gap-2"><Car class="size-3.5" /> Véhicule</div>
-                                    </TableHead>
-                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[100px]">Total</TableHead>
-                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 w-[100px]">Statut</TableHead>
-                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 min-w-[120px]">
-                                        <div class="flex items-center gap-2">
-                                            Paiement
-                                            <HelpTooltip content="Suivez les états des transactions. 'ESP' signifie que le paiement sera perçu à l'agence lors de la livraison du véhicule." />
-                                        </div>
-                                    </TableHead>
-                                    <TableHead class="h-16 px-4 w-[100px] text-right">Actions</TableHead>
+                                    <TableHead class="h-16 px-8 text-[10px] font-black uppercase tracking-widest text-slate-500">Référence</TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500">Client</TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500">Véhicule</TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Total</TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Statut</TableHead>
+                                    <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Paiement</TableHead>
+                                    <TableHead class="h-16 px-8 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

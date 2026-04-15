@@ -46,10 +46,10 @@ const submit = () => {
 };
 
 const groupMap = {
-    general: { label: 'General', icon: Globe, color: 'text-blue-500', bg: 'bg-blue-50' },
+    general: { label: 'Général', icon: Globe, color: 'text-blue-500', bg: 'bg-blue-50' },
     contact: { label: 'Contact', icon: Mail, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-    booking: { label: 'Booking Rules', icon: Calendar, color: 'text-amber-500', bg: 'bg-amber-50' },
-    social: { label: 'Social Media', icon: LinkIcon, color: 'text-purple-500', bg: 'bg-purple-50' },
+    booking: { label: 'Règles de réservation', icon: Calendar, color: 'text-amber-500', bg: 'bg-amber-50' },
+    social: { label: 'Réseaux sociaux', icon: LinkIcon, color: 'text-purple-500', bg: 'bg-purple-50' },
 };
 
 const getGroupInfo = (group: string) => {
@@ -70,30 +70,54 @@ const getSettingIcon = (key: string) => {
 
 const getPlaceholder = (key: string) => {
     const k = key.toLowerCase();
-    if (k.includes('app_name')) return "e.g. Real Rent Car";
-    if (k.includes('app_url')) return "e.g. https://yourdomain.com";
-    if (k.includes('email')) return "e.g. contact@yourbusiness.com";
-    if (k.includes('phone')) return "e.g. +212 600 000 000";
-    if (k.includes('currency_symbol')) return "e.g. DH or $";
-    if (k.includes('currency_code')) return "e.g. MAD or USD";
-    if (k.includes('meta_description')) return "e.g. Premium car rental services in Morocco...";
-    if (k.includes('footer')) return "e.g. © 2024 Real Rent Car. All rights reserved.";
-    if (k.includes('min_rental')) return "e.g. 1";
-    if (k.includes('max_rental')) return "e.g. 30";
-    if (k.includes('tax')) return "e.g. 20";
-    return "Enter value...";
+    if (k.includes('app_name')) return "ex: Real Rent Car";
+    if (k.includes('app_url')) return "ex: https://votredomaine.com";
+    if (k.includes('email')) return "ex: contact@votreentreprise.com";
+    if (k.includes('phone')) return "ex: +212 600 000 000";
+    if (k.includes('currency_symbol')) return "ex: DH ou $";
+    if (k.includes('currency_code')) return "ex: MAD ou USD";
+    if (k.includes('meta_description')) return "ex: Service de location de voitures premium au Maroc...";
+    if (k.includes('footer')) return "ex: © 2024 Real Rent Car. Tous droits réservés.";
+    if (k.includes('min_rental')) return "ex: 1";
+    if (k.includes('max_rental')) return "ex: 30";
+    if (k.includes('tax')) return "ex: 20";
+    return "Entrez la valeur...";
+};
+
+const getHelpText = (setting: { key: string; description?: string }) => {
+    if (setting.description) return setting.description;
+    const k = setting.key.toLowerCase();
+    if (k.includes('app_name')) return "Le nom commercial de votre plateforme affiché dans le navigateur et les emails.";
+    if (k.includes('app_url')) return "L'URL principale de votre site web, utilisée pour les liens et les redirections.";
+    if (k.includes('email')) return "L'adresse email de contact pour les communications avec les clients.";
+    if (k.includes('phone')) return "Le numéro de téléphone affiché sur le site pour que les clients puissent vous joindre.";
+    if (k.includes('currency_symbol')) return "Le symbole monétaire affiché à côté des prix (ex: DH, €, $).";
+    if (k.includes('currency_code')) return "Le code ISO de la devise utilisé pour les transactions financières (ex: MAD, EUR, USD).";
+    if (k.includes('meta_description')) return "La description affichée dans les résultats des moteurs de recherche pour améliorer le référencement.";
+    if (k.includes('footer')) return "Le texte affiché en bas de chaque page du site, généralement les droits d'auteur.";
+    if (k.includes('min_rental')) return "La durée minimale de location en jours imposée aux clients lors de la réservation.";
+    if (k.includes('max_rental')) return "La durée maximale de location en jours autorisée pour une seule réservation.";
+    if (k.includes('tax')) return "Le pourcentage de taxe appliqué sur les montants de location (ex: 20 pour 20%).";
+    if (k.includes('deposit')) return "Le pourcentage d'acompte requis lors de la confirmation de la réservation.";
+    if (k.includes('address')) return "L'adresse physique de votre agence affichée sur le site et les documents.";
+    if (k.includes('facebook') || k.includes('instagram') || k.includes('twitter') || k.includes('linkedin') || k.includes('youtube') || k.includes('tiktok')) return "Le lien vers votre page ou profil sur ce réseau social.";
+    if (k.includes('logo')) return "L'URL du logo de votre entreprise affiché dans l'en-tête du site.";
+    if (k.includes('booking')) return "Paramètre lié aux règles et conditions de réservation.";
+    if (k.includes('cancel')) return "Politique d'annulation appliquée aux réservations des clients.";
+    if (k.includes('security')) return "Montant de la caution de sécurité exigée lors de la prise en charge du véhicule.";
+    return "Ce paramètre contrôle un aspect de la configuration de votre plateforme de location.";
 };
 </script>
 
 <template>
-    <Head title="System Configuration" />
+    <Head title="Configuration du système" />
 
     <AdminLayout>
         <main class="w-full p-4 sm:p-8 space-y-8 sm:space-y-10 bg-background min-h-screen pb-32">
             <div class="mx-auto max-w-[1400px] flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
                 <Heading 
-                    title="System Configuration" 
-                    description="Tailor the application logic, contact details, and visual appearance to your brand."
+                    title="Configuration du système" 
+                    description="Adaptez la logique de l'application, les coordonnées et l'aspect visuel à votre marque."
                     size="lg"
                 />
             </div>
@@ -118,7 +142,7 @@ const getPlaceholder = (key: string) => {
                         <div class="flex items-center gap-4 w-full xl:w-auto">
                             <div v-if="form.isDirty" class="hidden xl:flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-2 rounded-xl ring-1 ring-amber-100">
                                 <AlertTriangle class="size-4" />
-                                <span class="text-[10px] font-black uppercase tracking-widest">Unsaved Changes</span>
+                                <span class="text-[10px] font-black uppercase tracking-widest">Modifications non enregistrées</span>
                             </div>
                             <Button 
                                 type="submit" 
@@ -127,11 +151,11 @@ const getPlaceholder = (key: string) => {
                             >
                                 <template v-if="form.processing">
                                     <Loader2 class="w-5 h-5 mr-3 animate-spin" />
-                                    Synchronizing...
+                                    Synchronisation...
                                 </template>
                                 <template v-else>
                                     <Save class="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform" />
-                                    Save Preferences
+                                    Enregistrer les préférences
                                 </template>
                             </Button>
                         </div>
@@ -151,9 +175,9 @@ const getPlaceholder = (key: string) => {
                                             <component :is="getGroupInfo(group).icon" class="h-8 w-8 text-white" />
                                         </div>
                                         <div>
-                                            <h3 class="text-2xl font-black text-white capitalize tracking-tight">{{ group }} Hub</h3>
+                                            <h3 class="text-2xl font-black text-white capitalize tracking-tight">Espace {{ group }}</h3>
                                             <p class="text-white/50 font-bold mt-3 text-sm leading-relaxed">
-                                                These settings control the engine of your rental platform. Every change is tracked and applied instantly upon saving.
+                                                Ces paramètres contrôlent le moteur de votre plateforme de location. Chaque modification est suivie et appliquée instantanément après l'enregistrement.
                                             </p>
                                         </div>
                                         <div class="pt-8 border-t border-white/5">
@@ -162,8 +186,8 @@ const getPlaceholder = (key: string) => {
                                                     <ShieldCheck class="size-6" />
                                                 </div>
                                                 <div>
-                                                    <div class="text-[10px] font-black uppercase tracking-widest text-white/40">Security Status</div>
-                                                    <div class="text-xs font-black text-white">Encrypted & Validated</div>
+                                                    <div class="text-[10px] font-black uppercase tracking-widest text-white/40">Statut de sécurité</div>
+                                                    <div class="text-xs font-black text-white">Chiffré & Validé</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -175,22 +199,20 @@ const getPlaceholder = (key: string) => {
                                         <div class="p-2 rounded-xl bg-indigo-100 text-indigo-500">
                                             <Sparkles class="size-4" />
                                         </div>
-                                        <h4 class="text-[11px] font-black uppercase tracking-widest text-indigo-400">Pro Tip</h4>
+                                        <h4 class="text-[11px] font-black uppercase tracking-widest text-indigo-400">Conseil Pro</h4>
                                     </div>
-                                    <p class="text-xs font-bold text-slate-500 leading-relaxed">Ensure your contact information is up to date to maintain trust with your customers and improve communication efficiency.</p>
+                                    <p class="text-xs font-bold text-slate-500 leading-relaxed">Assurez-vous que vos coordonnées sont à jour pour maintenir la confiance de vos clients et améliorer l'efficacité de la communication.</p>
                                 </div>
                             </div>
 
                             <!-- Form Main Area -->
                             <Card class="lg:col-span-8 rounded-[2.5rem] bg-white border-none ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
                                 <CardHeader class="p-10 border-b border-slate-50">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <CardTitle class="text-2xl font-black text-slate-900 capitalize">{{ group }} Global Variables</CardTitle>
-                                            <CardDescription class="font-bold text-slate-400 mt-2">
-                                                Update the core parameters for the <span class="text-primary font-black uppercase tracking-widest text-[10px]">{{ group }}</span> group.
-                                            </CardDescription>
-                                        </div>
+                                    <div>
+                                        <CardTitle class="text-2xl font-black text-slate-900 capitalize">Variables Globales {{ group }}</CardTitle>
+                                        <CardDescription class="font-bold text-slate-400 mt-2">
+                                            Mettre à jour les paramètres principaux pour le groupe <span class="text-primary font-black uppercase tracking-widest text-[10px]">{{ group }}</span>.
+                                        </CardDescription>
                                     </div>
                                 </CardHeader>
                                 <CardContent class="p-10 space-y-12">
@@ -205,8 +227,8 @@ const getPlaceholder = (key: string) => {
                                                 </Label>
                                                 
                                                 <HelpTooltip 
-                                                    v-if="setting.description" 
-                                                    :content="setting.description" 
+                                                    :content="getHelpText(setting)" 
+                                                    title="Aide"
                                                 />
                                             </div>
                                             <div class="h-px flex-1 mx-6 bg-slate-50"></div>
@@ -246,7 +268,7 @@ const getPlaceholder = (key: string) => {
                                             <!-- Field Status Indicator -->
                                             <div class="absolute right-5 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none opacity-0 group-focus-within/input:opacity-100 transition-opacity">
                                                 <div class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
-                                                <span class="text-[9px] font-black uppercase tracking-widest text-primary">Editing</span>
+                                                <span class="text-[9px] font-black uppercase tracking-widest text-primary">Modification en cours</span>
                                             </div>
                                         </div>
                                     </div>

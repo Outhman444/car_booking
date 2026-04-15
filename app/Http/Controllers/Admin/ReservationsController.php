@@ -24,6 +24,9 @@ class ReservationsController extends Controller
      */
     public function index(Request $request): Response
     {
+        $stateService = app(ReservationStateService::class);
+        $stateService->expirePendingReservations();
+
         $status = $request->input('status');
 
         // Status counts for filter chips
@@ -87,6 +90,9 @@ class ReservationsController extends Controller
      */
     public function show(Reservation $reservation): Response
     {
+        $stateService = app(ReservationStateService::class);
+        $stateService->expirePendingReservations();
+
         $reservation->load(['user', 'car', 'payments']);
 
         return Inertia::render('Admin/Reservations/Show', [

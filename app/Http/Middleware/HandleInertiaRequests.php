@@ -58,6 +58,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'paymentMethods' => PaymentMethodSetting::getEnabledMethods(),
             'stripeKey' => config('services.stripe.key'),
+            'server_time' => now('UTC')->toIso8601ZuluString(),
             'settings' => \App\Models\Setting::all()->pluck('value', 'key'),
             'flash' => [
                 'success' => $request->session()->get('success'),

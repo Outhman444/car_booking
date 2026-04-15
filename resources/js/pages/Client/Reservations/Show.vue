@@ -2,8 +2,8 @@
 import ClientLayout from '@/layouts/ClientLayout.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { computed } from 'vue';
 import { trans } from '@/lib/translations';
+import ReservationCountdown from '@/components/ReservationCountdown.vue';
 import {
     CreditCard,
     AlertCircle,
@@ -80,6 +80,15 @@ const isPayAtAgencySelected = computed(() => {
             
             <!-- Booking Stepper -->
             <BookingStepper v-if="['pending', 'confirmed', 'active'].includes(reservation.status)" :current-step="4" :status="reservation.status" :is-paid="reservation.is_paid" class="mb-4 xl:-mt-6 xl:mb-10 max-w-4xl mx-auto" />
+
+            <!-- Reservation Expiry Countdown -->
+            <div v-if="reservation.status === 'pending' && !hasPayment" class="max-w-4xl mx-auto">
+                <ReservationCountdown 
+                    :expires-at="reservation.pending_expires_at" 
+                    variant="payment"
+                    :is-paid="hasPayment"
+                />
+            </div>
 
             <!-- Alert Section: Confirmed Status -->
             <transition name="slide-up">
