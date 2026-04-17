@@ -18,6 +18,8 @@ php artisan migrate
 php artisan db:seed
 
 
+php artisan storage:link
+
 
 # Start the development server
 php artisan serve
