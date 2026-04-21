@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { 
     TrendingUp, 
     TrendingDown, 
-    DollarSign, 
+    Euro, 
     Calendar, 
     Car, 
     Users, 
@@ -125,7 +125,7 @@ const statusColors: Record<string, string> = {
                     <div class="flex flex-wrap items-center gap-6">
                         <div class="flex items-center gap-2 px-6 py-4 rounded-2xl bg-emerald-50 ring-1 ring-emerald-100">
                             <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-200">
-                                <DollarSign class="h-5 w-5" />
+                                <Euro class="h-5 w-5" />
                             </div>
                             <div>
                                 <div class="text-[10px] font-black uppercase tracking-widest text-emerald-600/60">Profitability</div>
@@ -141,7 +141,7 @@ const statusColors: Record<string, string> = {
                     <Card class="rounded-[2.5rem] border-none bg-white ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 p-8 hover:shadow-2xl transition-all">
                         <div class="flex items-start justify-between">
                             <div class="p-4 rounded-3xl bg-indigo-50 text-indigo-600">
-                                <DollarSign class="h-8 w-8" />
+                                <Euro class="h-8 w-8" />
                             </div>
                             <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black" :class="stats.revenue_change_percent >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'">
                                 <component :is="stats.revenue_change_percent >= 0 ? ArrowUpRight : ArrowDownRight" class="h-3.5 w-3.5" />

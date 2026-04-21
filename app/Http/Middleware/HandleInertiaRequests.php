@@ -38,10 +38,12 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        
+        $settings = \App\Models\Setting::all()->pluck('value', 'key');
 
         return [
             ...parent::share($request),
-            'name' => config('app.name'),
+            'name' => $settings->get('site_name', config('app.name')),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $request->user(),
@@ -53,13 +55,13 @@ class HandleInertiaRequests extends Middleware
                 'chunkSize' => config('vilt-filepond.chunk_size'),
             ],
             'currency' => [
-                'symbol' => config('app.currency_symbol'),
-                'code' => config('app.currency_code'),
+                'symbol' => $settings->get('currency_symbol', config('app.currency_symbol')),
+                'code' => $settings->get('currency_code', config('app.currency_code')),
             ],
             'paymentMethods' => PaymentMethodSetting::getEnabledMethods(),
             'stripeKey' => config('services.stripe.key'),
             'server_time' => now('UTC')->toIso8601ZuluString(),
-            'settings' => \App\Models\Setting::all()->pluck('value', 'key'),
+            'settings' => $settings,
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),

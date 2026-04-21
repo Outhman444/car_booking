@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/AdminLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -17,10 +19,11 @@ import {
     Hash, 
     User, 
     Calendar, 
-    DollarSign, 
+    Euro, 
     Wallet, 
     Activity, 
-    Clock 
+    Clock,
+    Search
 } from 'lucide-vue-next';
 
 import Heading from '@/components/Heading.vue';
@@ -40,9 +43,26 @@ const props = defineProps<{
         }>;
         links: Array<{ url: string | null; label: string; active: boolean }>;
     };
-    statuses: Array<{ value: string; label: string; color: string }>;
+    filters: {
+        search?: string;
+        status?: string;
+    };
+    statuses: Array<{ value: string; label: string; color: string; count: number }>;
     currency: { symbol: string; code: string };
 }>();
+
+const search = ref(props.filters?.search || '');
+const statusFilter = ref(props.filters?.status || 'all');
+
+function doSearch() {
+    router.get('/admin/payments', {
+        search: search.value,
+        status: statusFilter.value === 'all' ? null : statusFilter.value
+    }, {
+        preserveState: true,
+        replace: true,
+    });
+}
 
 function fmtMoney(n?: number | string) {
     const v = Number(n ?? 0);
@@ -103,7 +123,74 @@ const getStatusColor = (status: string) => {
                 />
             </div>
 
-            <div class="mx-auto max-w-[1400px]">
+            <div class="mx-auto max-w-[1400px] flex flex-col gap-8">
+                <!-- Toolbar -->
+                <div class="flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between bg-white p-6 rounded-[2.5rem] ring-1 ring-slate-100 shadow-xl shadow-slate-200/50">
+                    <div class="flex items-center gap-3 w-full xl:max-w-md">
+                        <div class="relative flex-1 group">
+                            <Search class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                            <div class="absolute -top-6 left-1 flex items-center gap-1.5">
+                                <span class="text-[9px] font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase tracking-tighter">Rq</span>
+                                <span class="text-[10px] font-bold text-slate-400">Paiement, Client (Nom/Email) ou Numéro Réservation</span>
+                            </div>
+                            <Input
+                              v-model="search"
+                              placeholder="Rechercher paiement, client, réservation..."
+                              class="pl-12 h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:text-slate-400 w-full"
+                              @keyup.enter="doSearch"
+                            />
+                        </div>
+                        <Button @click="doSearch" class="h-14 px-8 rounded-2xl bg-slate-900 text-sm font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all border-none">Rechercher</Button>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-2xl ring-1 ring-slate-200/50 w-full xl:w-auto">
+                        <label class="inline-flex items-center">
+                            <input
+                                type="radio"
+                                class="hidden"
+                                v-model="statusFilter"
+                                value="all"
+                                @change="doSearch"
+                            />
+                            <div 
+                                class="cursor-pointer whitespace-nowrap px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                :class="{
+                                    'bg-white text-primary shadow-sm shadow-slate-200 ring-1 ring-slate-100': statusFilter === 'all',
+                                    'text-slate-400 hover:text-slate-600': statusFilter !== 'all'
+                                }"
+                            >
+                                Tous ({{ (props.statuses || []).reduce((acc, curr) => acc + (curr.count || 0), 0) }})
+                            </div>
+                        </label>
+
+                        <template v-for="status in props.statuses" :key="status.value">
+                            <label class="inline-flex items-center">
+                                <input
+                                    type="radio"
+                                    class="hidden"
+                                    v-model="statusFilter"
+                                    :value="status.value"
+                                    @change="doSearch"
+                                />
+                                <div 
+                                    class="cursor-pointer whitespace-nowrap px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                                    :class="{
+                                        'bg-white text-primary shadow-sm shadow-slate-200 ring-1 ring-slate-100': statusFilter === status.value,
+                                        'text-slate-400 hover:text-slate-600': statusFilter !== status.value
+                                    }"
+                                >
+                                    <span
+                                        class="h-1.5 w-1.5 rounded-full"
+                                        :style="{ backgroundColor: status.color }"
+                                    ></span>
+                                    {{ status.label }} ({{ status.count || 0 }})
+                                </div>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+
                 <Card class="rounded-[2.5rem] bg-white ring-1 ring-slate-100 shadow-xl shadow-slate-200/50 border-none overflow-hidden">
                     <div class="overflow-x-auto">
                         <Table>
@@ -119,7 +206,7 @@ const getStatusColor = (status: string) => {
                                         <div class="flex items-center gap-3"><Calendar class="size-4" /> Booking</div>
                                     </TableHead>
                                     <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right min-w-[120px]">
-                                        <div class="flex items-center justify-end gap-3"><DollarSign class="size-4" /> Amount</div>
+                                        <div class="flex items-center justify-end gap-3"><Euro class="size-4" /> Amount</div>
                                     </TableHead>
                                     <TableHead class="h-16 text-[10px] font-black uppercase tracking-widest text-slate-500 pl-8 min-w-[120px]">
                                         <div class="flex items-center gap-3"><Wallet class="size-4" /> Method</div>

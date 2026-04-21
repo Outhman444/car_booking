@@ -266,6 +266,10 @@ const hasActiveFilters = computed(() => {
                         
                         <form @submit.prevent="handleSearch" class="flex-1 relative flex items-center">
                             <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
+                            <div class="absolute -top-6 left-1 flex items-center gap-1.5">
+                                <span class="text-[8px] font-black bg-primary text-primary-foreground px-1.5 py-0.5 rounded uppercase tracking-tighter shadow-sm shadow-primary/20">Rq</span>
+                                <span class="text-[9px] font-bold text-muted-foreground">Marque, Modèle ou Mot-clé</span>
+                            </div>
                             <Input 
                                 v-model="searchQuery" 
                                 placeholder="Rechercher des véhicules..." 

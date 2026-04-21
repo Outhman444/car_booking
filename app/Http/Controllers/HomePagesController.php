@@ -107,8 +107,30 @@ class HomePagesController extends Controller
             });
         }
 
+        if ($request->filled('min_price')) {
+            $query->where('price_per_day', '>=', $request->min_price);
+        }
+
         if ($request->filled('max_price')) {
             $query->where('price_per_day', '<=', $request->max_price);
+        }
+
+        // Sorting
+        $sort = $request->get('sort', 'make_asc');
+        switch ($sort) {
+            case 'price_asc':
+                $query->orderBy('price_per_day', 'asc');
+                break;
+            case 'price_desc':
+                $query->orderBy('price_per_day', 'desc');
+                break;
+            case 'year_desc':
+                $query->orderBy('year', 'desc');
+                break;
+            case 'make_asc':
+            default:
+                $query->orderBy('make', 'asc')->orderBy('model', 'asc');
+                break;
         }
 
         $cars = $query->paginate(10)->withQueryString();
@@ -116,21 +138,25 @@ class HomePagesController extends Controller
         // Get filter options
         $makes = Car::where('status', CarStatus::AVAILABLE)
             ->distinct()
+            ->orderBy('make', 'asc')
             ->pluck('make')
             ->toArray();
 
         $fuelTypes = Car::where('status', CarStatus::AVAILABLE)
             ->distinct()
+            ->orderBy('fuel_type', 'asc')
             ->pluck('fuel_type')
             ->toArray();
 
         $years = Car::where('status', CarStatus::AVAILABLE)
             ->distinct()
+            ->orderBy('year', 'desc')
             ->pluck('year')
             ->toArray();
 
         $transmissions = Car::where('status', CarStatus::AVAILABLE)
             ->distinct()
+            ->orderBy('transmission', 'asc')
             ->pluck('transmission')
             ->toArray();
 
@@ -138,12 +164,13 @@ class HomePagesController extends Controller
             ->distinct()
             ->pluck('seats')
             ->toArray();
+        sort($seats);
 
         $colors = \App\Enums\CarColor::forFrontend();
 
         $maxMileage = Car::where('status', CarStatus::AVAILABLE)->max('mileage') ?? 100000;
 
-        $filters = $request->only(['search', 'make', 'fuel_type', 'min_price', 'max_price', 'year', 'start_date', 'end_date', 'pickup_location', 'transmission', 'seats', 'color', 'max_mileage']);
+        $filters = $request->only(['search', 'make', 'fuel_type', 'min_price', 'max_price', 'year', 'start_date', 'end_date', 'pickup_location', 'transmission', 'seats', 'color', 'max_mileage', 'sort']);
 
         return inertia('Fleet', compact('cars', 'makes', 'fuelTypes', 'years', 'transmissions', 'seats', 'colors', 'maxMileage', 'filters'));
     }

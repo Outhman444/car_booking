@@ -18,7 +18,7 @@ class ReservationsController extends Controller
         $stateService = app(ReservationStateService::class);
         $stateService->expirePendingReservations();
 
-        $reservations = Reservation::where('user_id', auth()->user()->id)
+        $query = Reservation::where('user_id', auth()->user()->id)
             ->where(function($query) {
                 // Strictly exclude PENDING reservations that have expired
                 // Only show active PENDING reservations
@@ -28,13 +28,27 @@ class ReservationsController extends Controller
                             ->where('pending_expires_at', '>', now());
                       });
             })
-            ->with('car')
-            ->orderByDesc('created_at')
+            ->with('car');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('reservation_number', 'like', "%{$search}%")
+                  ->orWhereHas('car', function($carQuery) use ($search) {
+                      $carQuery->where('make', 'like', "%{$search}%")
+                               ->orWhere('model', 'like', "%{$search}%")
+                               ->orWhere('license_plate', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $reservations = $query->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();
 
         return inertia('Client/Reservations/Index', [
             'reservations' => $reservations,
+            'filters'      => $request->only('search'),
         ]);
     }
 

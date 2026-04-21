@@ -124,8 +124,8 @@ return [
     ],
 
     // Currency
-    'currency_symbol' => env('APP_CURRENCY_SYMBOL', '$'),
-    'currency_code' => env('APP_CURRENCY_CODE', 'USD'),
+    'currency_symbol' => env('APP_CURRENCY_SYMBOL', '€'),
+    'currency_code' => env('APP_CURRENCY_CODE', 'EUR'),
 
     // Tax
     'tax_rate' => env('TAX_RATE', 7),

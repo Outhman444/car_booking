@@ -2,7 +2,7 @@
 import ClientLayout from '@/layouts/ClientLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { show } from '@/routes/client/reservations';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
     Hash,
     Car,
@@ -48,10 +48,25 @@ const props = defineProps<{
         }>;
         links: Array<{ url: string | null; label: string; active: boolean }>;
     };
-    currency?: { symbol: string; code: string }
+    filters?: { search?: string };
+    currency?: { symbol: string; code: string };
 }>();
 
-const currency = computed(() => props.currency || ($page.props as any).currency || { symbol: '$', code: 'USD' });
+const search = ref(props.filters?.search || '');
+
+let searchTimeout: any = null;
+watch(search, (value) => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        router.get('/client/reservations', { search: value }, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true
+        });
+    }, 300);
+});
+
+const currency = computed(() => props.currency || ($page.props as any).currency || { symbol: '€', code: 'EUR' });
 
 const navigateToReservation = (id: number) => {
     router.visit(show(id).url);
@@ -103,7 +118,11 @@ function formatPaymentStatus(status: string): string {
                 <div class="flex items-center gap-3">
                     <div class="relative hidden sm:block">
                         <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                        <Input placeholder="Rechercher une réservation..." class="h-12 w-80 rounded-xl border-none bg-white pl-10 ring-1 ring-slate-200 focus:ring-slate-900 shadow-sm transition-all" />
+                        <div class="absolute -top-6 left-1 flex items-center gap-1.5">
+                            <span class="text-[8px] font-black bg-slate-900 text-white px-1.5 py-0.5 rounded uppercase tracking-tighter">Rq</span>
+                            <span class="text-[9px] font-bold text-slate-400">Rechercher par référence, modèle ou plaque</span>
+                        </div>
+                        <Input v-model="search" placeholder="Rechercher une réservation..." class="h-12 w-80 rounded-xl border-none bg-white pl-10 ring-1 ring-slate-200 focus:ring-slate-900 shadow-sm transition-all" />
                     </div>
                 </div>
             </div>

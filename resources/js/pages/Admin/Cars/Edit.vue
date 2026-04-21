@@ -1,4 +1,13 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import InputError from '@/components/InputError.vue';
 import { 
     Select, 
@@ -11,9 +20,21 @@ import { Textarea } from '@/components/ui/textarea';
 import FileUpload from '@/components/ViltFilePond/FileUpload.vue';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Heading from '@/components/Heading.vue';
+import { 
+    ArrowLeft, 
+    Save, 
+    ImageIcon, 
+    Tag, 
+    Info, 
+    Calendar, 
+    Settings2, 
+    Fuel, 
+    Cog, 
+    Gauge 
+} from 'lucide-vue-next';
 import { index, store, update } from '@/routes/admin/cars';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import HelpTooltip from '@/components/HelpTooltip.vue';
 
 const props = defineProps<{
@@ -21,7 +42,7 @@ const props = defineProps<{
     imageFiles: Array<{ id: number; url: string }>;
     enums: {
         colors: Array<{ name: string; value: string; hex: string }>;
-        fuelTypes: string[];
+        fuelTypes: Array<{ value: string; label: string }>;
         statuses: Array<{ value: string; label: string; color: string }>;
     };
 }>();
@@ -30,22 +51,20 @@ const isEdit = computed(() => !!props.car);
 
 // Form state
 const carColors = computed(() =>
-    props.enums.colors.map((color) => ({
+    (props.enums?.colors || []).map((color) => ({
         ...color,
         value: color.value.toLowerCase(),
         name: color.name.charAt(0).toUpperCase() + color.name.slice(1),
     })),
 );
 
-const fuelTypes = computed(() =>
-    props.enums.fuelTypes.map((fuel) => ({
-        value: fuel.toLowerCase(),
-        label: fuel.charAt(0).toUpperCase() + fuel.slice(1),
-    })),
-);
+const fuelTypes = computed(() => props.enums?.fuelTypes || []);
+
+// Debug
+watch(() => props.car, (c) => console.log('Car Prop Data:', c), { immediate: true });
 
 const statuses = computed(() =>
-    props.enums.statuses
+    (props.enums?.statuses || [])
         .filter((status) => ['available', 'maintenance', 'out_of_service'].includes(status.value))
         .map((status) => ({
             value: status.value,
@@ -73,6 +92,31 @@ const form = useForm({
     image_removed_files: [] as number[],
 });
 
+// Update form when car prop changes
+watch(() => props.car, (newCar) => {
+    if (newCar) {
+        form.make = newCar.make ?? '';
+        form.model = newCar.model ?? '';
+        form.year = newCar.year ?? '';
+        form.license_plate = newCar.license_plate ?? '';
+        form.color = (newCar.color || 'white').toLowerCase();
+        form.price_per_day = newCar.price_per_day ?? '';
+        form.mileage = newCar.mileage ?? '';
+        form.transmission = newCar.transmission ?? 'automatic';
+        form.seats = newCar.seats ?? '';
+        form.fuel_type = (newCar.fuel_type || 'gasoline').toLowerCase();
+        form.description = newCar.description ?? '';
+        form.status = newCar.status ?? 'available';
+    }
+}, { immediate: true, deep: true });
+
+const indexUrl = index().url;
+const storeUrl = store().url;
+
+onMounted(() => {
+    console.log('Edit.vue mounted', { isEdit: isEdit.value, car: props.car });
+});
+
 const fileUploadRef = ref<InstanceType<typeof FileUpload> | null>(null);
 const tempFolders = ref<string[]>([]);
 const removedFileIds = ref<number[]>([]);
@@ -87,11 +131,18 @@ function handleFileRemoved(data: { type: string; fileId?: number }) {
 }
 
 function submit() {
-    if (isEdit.value) {
-        form.put(update(props.car.id).url);
+    console.log('Submit button clicked');
+    if (isEdit.value && props.car) {
+        const targetId = props.car.id;
+        console.log('Updating car', targetId);
+        form.put(update(targetId).url, {
+            onSuccess: () => console.log('Update successful'),
+            onError: (err) => console.error('Update failed', err)
+        });
     } else {
+        console.log('Creating new car');
         form.image = [...tempFolders.value];
-        form.post(store().url, {
+        form.post(storeUrl, {
             onSuccess: () => {
                 form.reset();
                 tempFolders.value = [];
@@ -103,27 +154,28 @@ function submit() {
 </script>
 
 <template>
-    <Head :title="isEdit ? `Edit ${car.make} ${car.model}` : 'Add New Car'" />
+    <Head :title="isEdit ? `Edit ${props.car?.make} ${props.car?.model}` : 'Add New Car'" />
     <AdminLayout>
         <main class="flex-1 p-4 md:p-8 space-y-8 md:space-y-12 bg-background min-h-screen pb-32 max-w-[1600px] mx-auto">
             <!-- Header -->
             <div class="flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
                 <div class="space-y-4">
-                    <Link :href="index()" class="group inline-flex items-center text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-all">
+                    <Link :href="indexUrl" class="group inline-flex items-center text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-all">
                         <ArrowLeft class="size-4 mr-2 group-hover:-translate-x-1 transition-transform" />
                         Retour à l'inventaire
                     </Link>
                     <Heading
                         :title="isEdit ? `Modifier le véhicule` : 'Ajouter un véhicule'"
-                        :description="isEdit ? `Modification de ${car.year} ${car.make} ${car.model}` : 'Ajoutez un nouveau véhicule à votre flotte premium.'"
+                        :description="isEdit ? `Modification de ${props.car?.year} ${props.car?.make} ${props.car?.model}` : 'Ajoutez un nouveau véhicule à votre flotte premium.'"
                         size="lg"
                     />
                 </div>
                 <div class="flex items-center gap-4">
-                    <Link :href="index()">
+                    <Link :href="indexUrl">
                         <Button variant="ghost" class="h-14 px-8 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">Annuler</Button>
                     </Link>
                     <Button
+                        type="button"
                         @click="submit"
                         :disabled="form.processing"
                         class="h-14 px-10 rounded-2xl bg-primary text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all border-none active:scale-[0.98]"
@@ -190,11 +242,11 @@ function submit() {
                                     />
                                 </div>
                                 <!-- System-controlled status warning -->
-                                <div v-if="isEdit && ['rented', 'reserved', 'pending'].includes(car?.status)" class="rounded-2xl bg-violet-50 p-4 ring-1 ring-violet-200 space-y-2">
+                                <div v-if="isEdit && ['rented', 'reserved', 'pending'].includes(props.car?.status)" class="rounded-2xl bg-violet-50 p-4 ring-1 ring-violet-200 space-y-2">
                                     <p class="text-[10px] font-black uppercase tracking-widest text-violet-600">Contrôlé par le système</p>
                                     <p class="text-xs font-bold text-violet-500">Le statut de ce véhicule est géré par une réservation active. Complétez ou annulez la réservation pour modifier la disponibilité.</p>
                                 </div>
-                                <Select v-model="form.status" :disabled="isEdit && ['rented', 'reserved', 'pending'].includes(car?.status)">
+                                <Select v-model="form.status" :disabled="isEdit && ['rented', 'reserved', 'pending'].includes(props.car?.status)">
                                     <SelectTrigger id="status" class="h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all disabled:opacity-60 disabled:cursor-not-allowed">
                                         <SelectValue placeholder="Select status" />
                                     </SelectTrigger>
@@ -221,7 +273,7 @@ function submit() {
                                     />
                                 </div>
                                 <div class="relative group">
-                                    <span class="absolute left-5 top-1/2 -translate-y-1/2 text-lg font-black text-slate-400 group-focus-within:text-primary transition-colors">$</span>
+                                    <span class="absolute left-5 top-1/2 -translate-y-1/2 text-lg font-black text-slate-400 group-focus-within:text-primary transition-colors">€</span>
                                     <Input
                                         id="price_per_day"
                                         v-model="form.price_per_day"
@@ -263,9 +315,12 @@ function submit() {
                                     <InputError :message="form.errors.make" />
                                 </div>
                                 <div class="space-y-4">
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Modèle du véhicule</label>
                                         <HelpTooltip
                                             content="Le nom du modèle spécifique (ex : C-Class, A4, RAV4)."
                                         />
+                                    </div>
                                     <Input id="model" v-model="form.model" placeholder="e.g. C-Class, Corolla..." class="h-14 rounded-2xl border-none bg-slate-50 font-bold text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-ring transition-all placeholder:font-medium placeholder:text-slate-400" />
                                     <InputError :message="form.errors.model" />
                                 </div>

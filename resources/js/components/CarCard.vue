@@ -39,7 +39,7 @@ const handleImageError = () => {
     imageError.value = true;
 };
 
-const currencySymbol = computed(() => ($page.props.currency as any)?.symbol || '$');
+const currencySymbol = computed(() => ($page.props.currency as any)?.symbol || '€');
 
 const bookCar = (carId: number) => {
     router.get(show(carId).url);

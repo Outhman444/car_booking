@@ -15,13 +15,14 @@ import {
     MoreHorizontal,
     Flag,
     AlertCircle,
-    Loader2
+    Loader2,
+    Activity
 } from 'lucide-vue-next';
 import { index, reply, close } from '@/routes/admin/support';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useInitials } from '@/composables/useInitials';
+import { getInitials } from '@/composables/useInitials';
 
 // Types
 interface Message {
@@ -253,7 +254,7 @@ function closeTicket(){
                                 <Avatar class="h-12 w-12 rounded-xl ring-2 ring-white/20">
                                     <AvatarImage v-if="ticket.user?.avatar" :src="ticket.user.avatar" />
                                     <AvatarFallback class="bg-primary/20 text-white font-black">
-                                        {{ useInitials(ticket.user?.name || ticket.guest_name || 'G').initials.value }}
+                                        {{ getInitials(ticket.user?.name || ticket.guest_name || 'G') }}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div>

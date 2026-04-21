@@ -27,7 +27,7 @@ class BookingController extends Controller
         return inertia('Booking', [
             'car' => $car,
             'locations' => Location::where('is_active', true)->get(),
-            'taxRate' => ((float) Setting::getValue('tax_rate', config('app.tax_rate', 7))) / 100,
+            'taxRate' => 0,
             'settings' => [
                 'booking_deposit_percentage' => (int) Setting::getValue('booking_deposit_percentage', 20),
                 'security_deposit_amount' => (float) Setting::getValue('security_deposit_amount', 0),
@@ -106,12 +106,11 @@ class BookingController extends Controller
         // ensure daily rate is positive
         $dailyRate = abs($car->price_per_day);
 
-        // Fetch tax rate from settings
-        $taxRate    = ((float) Setting::getValue('tax_rate', config('app.tax_rate', 7))) / 100;
+        $taxRate    = 0;
         $subtotal   = $dailyRate * $days;
-        $taxAmount  = round($subtotal * $taxRate, 2);
+        $taxAmount  = 0;
         $discount   = 0;
-        $total      = $subtotal + $taxAmount - $discount;
+        $total      = $subtotal - $discount;
 
         // Atomic transaction with pessimistic locking to prevent race conditions.
         // lockForUpdate() ensures that if two users try to book the same car at the exact

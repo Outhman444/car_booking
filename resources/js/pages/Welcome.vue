@@ -12,7 +12,7 @@ import {
     Zap, 
     Shield, 
     Clock, 
-    DollarSign, 
+    Euro, 
     ArrowRight,
     Car as CarIcon,
     CheckCircle, 
@@ -66,7 +66,7 @@ const infoMessage = ref($page.props.flash?.info || null);
 
 <template>
     <Head>
-        <title>Real Rent Car - Service de Location de Voitures Premium</title>
+        <title>{{ $page.props.settings.site_name || 'Real Rent Car' }} - Service de Location de Voitures Premium</title>
         <meta
             name="description"
             content="Real Rent Car est une plateforme de location de voitures premium offrant des solutions de transport fiables. Nous proposons une large gamme de voitures, de l'économique au luxe, pour des locations à court et à long terme."
@@ -330,7 +330,7 @@ const infoMessage = ref($page.props.flash?.info || null);
                         <Card class="bg-muted/20 border-none shadow-none hover:shadow-md transition-shadow">
                             <CardHeader>
                                 <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                    <DollarSign class="size-6" />
+                                    <Euro class="size-6" />
                                 </div>
                                 <CardTitle>Meilleure Valeur</CardTitle>
                             </CardHeader>

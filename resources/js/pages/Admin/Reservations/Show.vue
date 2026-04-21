@@ -11,7 +11,7 @@ import {
   Wallet, 
   Receipt,
   FileText,
-  DollarSign
+  Euro
 } from 'lucide-vue-next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -372,10 +372,7 @@ const isAlreadyPaid = computed(() => {
                             <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valeur brute de location</div>
                             <div class="text-base font-black text-slate-900">{{ fmtMoney(reservation.subtotal) }}</div>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Taxes et frais</div>
-                            <div class="text-sm font-black text-slate-900">{{ fmtMoney(reservation.tax_amount) }}</div>
-                        </div>
+
                         <div v-if="reservation.discount_amount > 0" class="flex items-center justify-between text-emerald-600 bg-emerald-50/50 p-2 rounded-xl ring-1 ring-emerald-100">
                             <div class="text-[10px] font-black uppercase tracking-widest">Déduction fidélité</div>
                             <div class="text-sm font-black">-{{ fmtMoney(reservation.discount_amount) }}</div>

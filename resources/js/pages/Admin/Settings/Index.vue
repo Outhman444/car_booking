@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { 
     Save, Mail, Globe, LayoutDashboard, Calendar, Settings, Sparkles, ShieldCheck, 
-    Link as LinkIcon, Phone, DollarSign, Hash, Type, FileText, Info, AlertTriangle, Loader2,
+    Link as LinkIcon, Phone, Euro, Hash, Type, FileText, Info, AlertTriangle, Loader2,
     HelpCircle
 } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
@@ -61,7 +61,7 @@ const getSettingIcon = (key: string) => {
     if (k.includes('email')) return Mail;
     if (k.includes('url')) return LinkIcon;
     if (k.includes('phone')) return Phone;
-    if (k.includes('currency_symbol')) return DollarSign;
+    if (k.includes('currency_symbol')) return Euro;
     if (k.includes('currency_code')) return Hash;
     if (k.includes('name')) return Type;
     if (k.includes('description') || k.includes('footer')) return FileText;
@@ -74,7 +74,7 @@ const getPlaceholder = (key: string) => {
     if (k.includes('app_url')) return "ex: https://votredomaine.com";
     if (k.includes('email')) return "ex: contact@votreentreprise.com";
     if (k.includes('phone')) return "ex: +212 600 000 000";
-    if (k.includes('currency_symbol')) return "ex: DH ou $";
+    if (k.includes('currency_symbol')) return "ex: DH ou €";
     if (k.includes('currency_code')) return "ex: MAD ou USD";
     if (k.includes('meta_description')) return "ex: Service de location de voitures premium au Maroc...";
     if (k.includes('footer')) return "ex: © 2024 Real Rent Car. Tous droits réservés.";
@@ -91,7 +91,7 @@ const getHelpText = (setting: { key: string; description?: string }) => {
     if (k.includes('app_url')) return "L'URL principale de votre site web, utilisée pour les liens et les redirections.";
     if (k.includes('email')) return "L'adresse email de contact pour les communications avec les clients.";
     if (k.includes('phone')) return "Le numéro de téléphone affiché sur le site pour que les clients puissent vous joindre.";
-    if (k.includes('currency_symbol')) return "Le symbole monétaire affiché à côté des prix (ex: DH, €, $).";
+    if (k.includes('currency_symbol')) return "Le symbole monétaire affiché à côté des prix (ex: DH, €, USD).";
     if (k.includes('currency_code')) return "Le code ISO de la devise utilisé pour les transactions financières (ex: MAD, EUR, USD).";
     if (k.includes('meta_description')) return "La description affichée dans les résultats des moteurs de recherche pour améliorer le référencement.";
     if (k.includes('footer')) return "Le texte affiché en bas de chaque page du site, généralement les droits d'auteur.";
@@ -216,7 +216,7 @@ const getHelpText = (setting: { key: string; description?: string }) => {
                                     </div>
                                 </CardHeader>
                                 <CardContent class="p-10 space-y-12">
-                                    <div v-for="setting in settings.filter(s => s.group === group)" :key="setting.key" class="group/field animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                    <div v-for="setting in settings.filter(s => s.group === group && s.key !== 'tax_rate')" :key="setting.key" class="group/field animate-in fade-in slide-in-from-bottom-2 duration-500">
                                         <div class="flex items-center justify-between mb-4">
                                             <div class="flex items-center gap-2">
                                                 <Label 

@@ -338,7 +338,7 @@ function getPaymentMethodName(value: string): string {
                         <CardContent class="p-4 flex items-center gap-4">
                             <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                                 <component
-                                    :is="method.icon === 'paypal' ? Wallet : (method.icon === 'banknote' ? Banknote : CreditCard)"
+                                    :is="method.icon === 'paypal' ? Wallet : CreditCard"
                                     class="h-6 w-6 text-primary"
                                 />
                             </div>
@@ -391,7 +391,7 @@ function getPaymentMethodName(value: string): string {
                         Traitement...
                     </template>
                     <template v-else>
-                        Payer maintenant - {{ fmtMoney(depositAmount) }}
+                        Payer maintenant - {{ fmtMoney(props.reservation.deposit_amount) }}
                     </template>
                 </Button>
 

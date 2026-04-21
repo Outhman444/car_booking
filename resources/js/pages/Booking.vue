@@ -74,7 +74,7 @@ const $page = usePage<any>();
 const car = computed<Car>(() => $page.props.car as Car);
 
 const locations = computed(() => $page.props.locations as any[]);
-const taxRate = computed(() => ($page.props.taxRate as number) || 0.07);
+const taxRate = computed(() => 0);
 
 const form = useForm({
     start_date: '',
@@ -111,11 +111,11 @@ const subtotal = computed(() => {
 });
 
 const tax = computed(() => {
-    return subtotal.value * taxRate.value;
+    return 0;
 });
 
 const total = computed(() => {
-    return subtotal.value + tax.value;
+    return subtotal.value;
 });
 
 const depositPercentage = computed(() => $page.props.settings?.booking_deposit_percentage || 20);

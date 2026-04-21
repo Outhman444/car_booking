@@ -65,12 +65,9 @@ function fmtDate(d?: string) {
 
 function fmtMoney(n?: number | string) {
   const v = Number(n ?? 0)
-  return `${props.currency?.symbol || '$'}${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `${props.currency?.symbol || '€'}${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-const isPayAtAgencySelected = computed(() => {
-    return props.reservation?.notes && props.reservation.notes.toLowerCase().includes('agency');
-});
 </script>
 
 <template>
@@ -120,11 +117,7 @@ const isPayAtAgencySelected = computed(() => {
                                         <p class="text-base font-black text-slate-800">Documents Requis</p>
                                         <p class="text-xs text-slate-500 mt-1.5 font-semibold whitespace-pre-wrap leading-relaxed">{{ $page.props.settings.rental_terms || 'Permis de conduire et pièce d\'identité valides requis.' }}</p>
                                     </div>
-                                    <div v-if="reservation.status === 'pending' && reservation.notes && reservation.notes.includes('Pay at Agency')" class="rounded-2xl bg-yellow-50 p-6 ring-1 ring-yellow-200">
-                                        <p class="text-[10px] font-black uppercase tracking-widest text-yellow-600 mb-3">TEMPS LIMITÉ</p>
-                                        <p class="text-base font-black text-yellow-900">Délai de paiement en espèces</p>
-                                        <p class="text-xs text-yellow-800 mt-1.5 font-semibold leading-relaxed">Veuillez vous présenter à l'agence dans les {{ $page.props.settings.cash_reservation_timeout || 24 }} heures pour confirmer votre réservation.</p>
-                                    </div>
+
                                 </div>
                                 <!-- Button removed to prevent duplication: Use the top Action Bar button instead -->
                             </div>
@@ -158,7 +151,7 @@ const isPayAtAgencySelected = computed(() => {
                             <FileText class="mr-3 size-4 text-primary" /> Imprimer l'état
                         </a>
                     </Button>
-                    <template v-if="!hasPayment && reservation.status === 'pending' && !isPayAtAgencySelected">
+                    <template v-if="!hasPayment && reservation.status === 'pending'">
                         <!-- Fresh reservation needing payment -->
                         <Button as-child class="h-14 rounded-2xl bg-slate-900 hover:bg-black font-black uppercase tracking-widest text-[10px] px-10 text-white shadow-xl shadow-slate-200 border-none transition-all hover:-translate-y-1">
                             <Link :href="`/client/payment/${reservation.id}`">
@@ -290,10 +283,7 @@ const isPayAtAgencySelected = computed(() => {
                                 <span>LOCATION DE BASE ({{ fmtMoney(reservation.daily_rate) }} x {{ reservation.total_days }} jours)</span>
                                 <span class="text-slate-900">{{ fmtMoney(reservation.subtotal) }}</span>
                             </div>
-                            <div class="flex justify-between items-center text-xs font-black uppercase tracking-widest text-slate-500">
-                                <span>Frais de Service et Taxes</span>
-                                <span class="text-slate-900">{{ fmtMoney(reservation.tax_amount) }}</span>
-                            </div>
+
                             <div v-if="Number(reservation.discount_amount) > 0" class="flex justify-between items-center text-xs font-black uppercase tracking-widest text-emerald-500 italic">
                                 <span>Remise Fidélité</span>
                                 <span>-{{ fmtMoney(reservation.discount_amount) }}</span>
@@ -331,10 +321,7 @@ const isPayAtAgencySelected = computed(() => {
                                     <span>Tarif de Base ({{ reservation.total_days }} Jours @ {{ fmtMoney(reservation.daily_rate) }})</span>
                                     <span class="text-slate-900">{{ fmtMoney(reservation.subtotal) }}</span>
                                 </div>
-                                <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                    <span>Frais de Service & Taxes</span>
-                                    <span class="text-slate-900">{{ fmtMoney(reservation.tax_amount) }}</span>
-                                </div>
+
                                 <div v-if="Number(reservation.discount_amount) > 0" class="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-emerald-500 italic">
                                     <span>Remise Appliquée</span>
                                     <span>-{{ fmtMoney(reservation.discount_amount) }}</span>

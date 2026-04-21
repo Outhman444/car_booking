@@ -117,6 +117,10 @@ function doQuickUpdate(id: number, status: string) {
                     <div class="flex items-center gap-3 w-full xl:max-w-md">
                         <div class="relative flex-1 group">
                             <Search class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                            <div class="absolute -top-6 left-1 flex items-center gap-1.5">
+                                <span class="text-[9px] font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase tracking-tighter">Rq</span>
+                                <span class="text-[10px] font-bold text-slate-400">Rechercher par numéro, client (nom/email) ou véhicule</span>
+                            </div>
                             <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10">
                                 <HelpTooltip content="Recherchez par numéro de réservation, nom du client, email ou détails du véhicule pour un filtrage précis des données." />
                             </div>

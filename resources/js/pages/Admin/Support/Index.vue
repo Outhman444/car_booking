@@ -11,7 +11,8 @@ import {
     MessageSquare, 
     Clock, 
     Hash,
-    Activity
+    Activity,
+    ChevronRight
 } from 'lucide-vue-next';
 import { index, show } from '@/routes/admin/support';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -182,6 +183,10 @@ function goToTicket(id: number) {
                     <div class="flex items-center gap-3 w-full xl:max-w-md">
                         <div class="relative flex-1 group">
                             <Search class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                            <div class="absolute -top-6 left-1 flex items-center gap-1.5">
+                                <span class="text-[9px] font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase tracking-tighter">Rq</span>
+                                <span class="text-[10px] font-bold text-slate-400">Filtrer par sujet, nom de l'expéditeur ou email</span>
+                            </div>
                             <Input
                                 v-model="search"
                                 :placeholder="`Search ${ticketType} tickets...`"

@@ -51,7 +51,10 @@ class PaymentController extends Controller
                 ->with('info', $msg . ' You can safely print your invoice below.');
         }
 
-        $enabledMethods = PaymentMethodSetting::getEnabledMethods();
+        $enabledMethods = collect(PaymentMethodSetting::getEnabledMethods())
+            ->filter(fn($m) => $m['value'] !== 'cash')
+            ->values()
+            ->toArray();
 
         if (empty($enabledMethods)) {
             return redirect()->route('client.reservations.show', $reservation->id)

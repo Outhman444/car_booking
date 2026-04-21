@@ -35,7 +35,7 @@ return new class extends Migration
             ],
             [
                 'key' => 'currency_symbol',
-                'value' => '$',
+                'value' => '€',
                 'display_name' => 'Currency Symbol',
                 'group' => 'general',
                 'type' => 'text',
@@ -43,7 +43,7 @@ return new class extends Migration
             ],
             [
                 'key' => 'currency_code',
-                'value' => 'USD',
+                'value' => 'EUR',
                 'display_name' => 'Currency Code',
                 'group' => 'general',
                 'type' => 'text',

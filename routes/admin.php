@@ -13,8 +13,8 @@ Route::middleware(['auth', 'verified', 'active', 'admin', 'cancel_expired'])
     ->prefix('admin')
     ->as('admin.')
     ->group(function () {
-        // Redirect '/admin' to '/admin/cars' with a named route we can reference
-        Route::redirect('/', '/admin/cars')->name('home');
+        // Redirect '/admin' to '/admin/reports' (Dashboard)
+        Route::redirect('/', '/admin/reports')->name('home');
 
         // Cars
         Route::post('cars/{car}/quick-status', [CarsController::class, 'quickUpdate'])->name('cars.quick-update');

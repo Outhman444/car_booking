@@ -151,9 +151,9 @@ class ReservationsController extends Controller
         $totalDays = max(1, $start->diffInDays($end) + 1);
         $reservation->total_days = $totalDays;
         $reservation->subtotal = $reservation->daily_rate * $totalDays;
-        $taxRate = ((float) \App\Models\Setting::getValue('tax_rate', config('app.tax_rate', 7))) / 100;
-        $reservation->tax_amount = round($reservation->subtotal * $taxRate, 2);
-        $reservation->total_amount = $reservation->subtotal + $reservation->tax_amount - (float)($reservation->discount_amount ?? 0);
+        $taxRate = 0;
+        $reservation->tax_amount = 0;
+        $reservation->total_amount = $reservation->subtotal - (float)($reservation->discount_amount ?? 0);
 
         // Maintain cancellation metadata
         if ($reservation->status === ReservationStatus::CANCELLED && !$reservation->cancelled_at) {

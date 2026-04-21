@@ -32,7 +32,7 @@ import { create, index, destroy, quickUpdate } from '@/routes/admin/cars';
 import { 
     Car, 
     Hash, 
-    DollarSign, 
+    Euro, 
     Edit, 
     Trash2, 
     CheckCircle, 
@@ -139,8 +139,12 @@ function doQuickUpdate(id: number, status: string) {
                 <div class="flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between bg-white p-6 rounded-[2.5rem] ring-1 ring-slate-100 shadow-xl shadow-slate-200/50">
                     <div class="flex items-center gap-3 w-full xl:max-w-md">
                         <div class="relative flex-1 group">
-                            <Search class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                            <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10">
+                                <Search class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                <div class="absolute -top-6 left-1 flex items-center gap-1.5 capitalize">
+                                    <span class="text-[9px] font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase tracking-tighter">Rq</span>
+                                    <span class="text-[10px] font-bold text-slate-400">Filtrage par constructeur, modèle ou plaque</span>
+                                </div>
+                                <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10">
                                 <HelpTooltip content="Filtrez votre flotte par constructeur, nom de modèle ou plaque d'immatriculation pour un accès rapide à l'inventaire." />
                             </div>
                             <Input
